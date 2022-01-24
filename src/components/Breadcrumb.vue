@@ -1,0 +1,20 @@
+<template>
+  <el-breadcrumb separator="/" >
+        <el-breadcrumb-item  v-for="(item, index) in breadcrumbs" :key="index" :to="item.to">{{ item.name }}</el-breadcrumb-item>
+  </el-breadcrumb>
+</template>
+
+<script>
+
+export default{
+    computed: {
+        breadcrumbs: function() {
+            if (typeof this.$route.meta.breadcrumb === 'function') {
+                return this.$route.meta.breadcrumb(this.$route, this.$store.state)
+            } else {
+                return []
+            }
+        }
+    }
+}
+</script>
