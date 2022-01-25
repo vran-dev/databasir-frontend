@@ -1,13 +1,21 @@
 import { createStore } from 'vuex'
+import { user } from '../utils/auth'
 
 const store = createStore({
     state() {
+        const data = user.loadUserLoginData()
+        const userData = {
+            nickname: null,
+            usernmae: null,
+            email: null,
+        }
+        if (data != null) {
+            userData.nickname = data.nickname
+            userData.usernmae = data.usernmae
+            userData.email = data.email;
+        }
         return {
-            user: {
-                nickname: null,
-                usernmae: null,
-                email: null,
-            }
+            user: userData
         }
     },
     mutations: {
