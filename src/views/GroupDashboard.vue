@@ -26,11 +26,11 @@
             </el-col>
         </el-row>
         <el-row>
-            <el-table :data="projectPageData.data"  border>
+            <el-table :data="projectPageData.data" border>
                 <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
                 <el-table-column label="项目名称" min-width="120" fixed="left" resizable>
                     <template v-slot="scope">
-                        <el-link :underline="false" @click="onClickShowProjectDetail(scope.row.id)">{{ scope.row.name }}<el-icon><View /></el-icon></el-link>
+                        <el-link :underline="true" :icon="Edit" @click.stop="onClickShowProjectDetail(scope.row)">{{ scope.row.name }}</el-link>
                     </template>
                 </el-table-column>
                 <el-table-column prop="databaseName" label="数据库" width="200"  resizable />
@@ -49,9 +49,9 @@
                 <el-table-column prop="createAt" label="创建时间" min-width="120" resizable ></el-table-column>
                 <el-table-column fixed="right" label="操作" min-width="180" align="center"  resizable>
                     <template v-slot="scope">
-                        <el-button type="primary" size="small" @click="toProjectEditPage(scope.row)">编辑</el-button>
-                        <el-button type="primary" size="small" @Click="toDocumentPage(scope.row)">查看文档</el-button>
-                        <el-button type="danger" size="small" @click="onProjectDelete(scope.row.id)">删除</el-button>
+                        <el-button type="primary" size="small" @click.stop="toProjectEditPage(scope.row)">编辑</el-button>
+                        <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)">查看文档</el-button>
+                        <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.id)">删除</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -489,8 +489,8 @@ export default {
             })
         },
 
-        onClickShowProjectDetail(projectId) {
-            getProjectById(projectId).then(resp => {
+        onClickShowProjectDetail(row) {
+            getProjectById(row.id).then(resp => {
                         this.projectDetailData =  resp.data
                         this.isShowProjectDetailDrawer = true
                     })

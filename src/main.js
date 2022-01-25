@@ -14,19 +14,27 @@ Object.keys(Icons).forEach(key => {
 app.directive('require-roles', {
     mounted(el, binding) {
         const roles = binding.value
-        console.log(user.hasAnyRoles(roles))
         if (!user.hasAnyRoles(roles)) {
             el.parentNode && el.parentNode.removeChild(el)
         }
     },
-    // updated(el, binding) {
-    //     const roles = binding.value
-    //     console.log(user.hasAnyRoles(roles))
-    //     if (!user.hasAnyRoles(roles)) {
-    //         el.parentNode && el.parentNode.removeChild(el)
-    //     }
-    // }
 })
+
+app.directive("select-more", {
+    updated(el, binding) {
+        const child = el.querySelector('.select-trigger');
+        const id = child.getAttribute('aria-describedby');
+        const poper = document.getElementById(id);
+        const selector = poper.querySelector('.el-scrollbar .el-select-dropdown__wrap');
+        selector.addEventListener('scroll', function () {
+            const condition = this.scrollHeight - this.scrollTop - 1 <= this.clientHeight;
+            if (condition) {
+                binding.value();
+            }
+        });
+    },
+});
+
 app.use(store)
 app.use(ElementPlus)
 app.use(router)

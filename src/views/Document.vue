@@ -1,7 +1,7 @@
 <template>
   <div v-if="isShowNoDataPage">
       <el-empty description="似乎还没有同步过文档" >
-          <el-button type="primary" icon='refresh' round size='large' @click="handleSync" :loading="state.buttonLoading.handleSync">同步</el-button>
+          <el-button type="primary" icon='refresh' round size='large' @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
       </el-empty>
   </div>
   <div v-else-if="isShowLoadingPage">
@@ -12,13 +12,13 @@
       <el-header>
           <el-row :gutter="20">
             <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-              <el-button type="success" style="width:100%" icon="Refresh" @click="handleSync" :loading="state.buttonLoading.handleSync">同步</el-button>
+              <el-button type="success" style="width:100%" icon="Refresh" @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
             </el-col>
             <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
                 <el-button type="primary" style="width:100%" icon="Download">导出</el-button>
             </el-col>
             <el-col :span="4">
-                <el-select @change="handleVersionFilter" v-model="state.databaseDocumentFilter.version" placeholder="历史版本" clearable>
+                <el-select @change="onProjectDocumentVersionChange" v-model="state.databaseDocumentFilter.version" placeholder="历史版本" v-select-more="loadMoreDocumentVersions" v-loading="state.loadings.loadingVersions" clearable>
                   <el-option
                   v-for="item in state.databaseDocumentVersions"
                   :key="item.version"
@@ -54,7 +54,7 @@
         <el-row>
           <el-col>
             <el-table :data="state.databaseDocument.tables"  border width='80%'>
-              <el-table-column type="index" :index="indexMethod" />
+              <el-table-column type="index" />
               <el-table-column prop="name" label="Name" min-width="160" resizable />
               <el-table-column prop="type" label="Type" width="200"  resizable />
               <el-table-column prop="comment" label="comment" min-width="160" resizable />
@@ -78,7 +78,7 @@
           <el-row>
             <el-col >
               <el-table :data="tableMeta.columns" border fit width='80%'>
-                <el-table-column type="index" :index="indexMethod" />
+                <el-table-column type="index" />
                 <el-table-column prop="name" label="Name" min-width="120" />
                 <el-table-column prop="type" :formatter="columnTypeFormat" label="Type" width="140" />
                 <el-table-column prop="nullable" label="Is Nullable" width="120" />
@@ -98,7 +98,7 @@
             <el-row>
               <el-col >
                 <el-table :data="tableMeta.indexes" border fit width='80%'>
-                  <el-table-column type="index" :index="indexMethod" />
+                  <el-table-column type="index" />
                   <el-table-column prop="name" label="Name" min-width="120" />
                   <el-table-column prop="isPrimary" label="IsPrimary" width="120" />
                   <el-table-column prop="isUnique" label="Is Unique" width="120" />
@@ -118,7 +118,7 @@
             <el-row>
               <el-col >
                 <el-table :data="tableMeta.triggers" fit border width='80%'>
-                  <el-table-column type="index" :index="indexMethod" />
+                  <el-table-column type="index" />
                   <el-table-column prop="name" label="Name" min-width="120" />
                   <el-table-column prop="timing" label="timing" />
                   <el-table-column prop="manipulation" label="manipulation" width="120" />
@@ -130,6 +130,12 @@
           </div>
 
         </template>
+        <el-tooltip
+          content="回到顶部"
+          placement="top"
+        >
+          <el-backtop :bottom="100"></el-backtop>
+        </el-tooltip>
       </el-main>
     </el-container>
   </div>
@@ -143,17 +149,23 @@ import { ElMessage } from 'element-plus'
 
 export default {
   setup() {
-
     const route = useRoute()
     const state = reactive({
-      databaseDocument: null,
+      databaseDocumentVersionFilter: {
+        page: 0,
+        size: 10,
+      },
       databaseDocumentVersions: [],
+      databaseDocumentVersionTotalPages: 0,
+
       databaseDocumentFilter: {
         version: null
       },
+      databaseDocument: null,
       init: false,
-      buttonLoading: {
+      loadings: {
         handleSync: false,
+        loadingVersions: false
       },
       projectId: null,
       groupId: null
@@ -177,6 +189,7 @@ export default {
       // fetch version
       const versionResp = await getVersionByProjectId(route.params.projectId)
       state.databaseDocumentVersions = versionResp.data.content
+      state.databaseDocumentVersionTotalPages = versionResp.data.totalPages
 
       // fetch meta
       const resp = await getOneByProjectId(route.params.projectId)
@@ -190,15 +203,6 @@ export default {
       state.init = true
     }
 
-    const fetchDatabaseMetaDataByCondition = async () => {
-      const resp =  await getOneByProjectId(route.params.projectId, state.databaseDocumentFilter)
-      if (resp.data) {
-        state.databaseDocument = resp.data
-        messageNotify('success', '切换成功')
-      } else {
-        messageNotify('warn', '无可用数据')
-      }
-    }
 
     const columnTypeFormat = (column) => {
       if (column.decimalDigits == null) {
@@ -208,29 +212,68 @@ export default {
       }
     }
 
-    const handleSync = () => {
+    const onProjectDocumentVersionChange = async () => {
+      const resp =  await getOneByProjectId(route.params.projectId, state.databaseDocumentFilter)
+      if (resp.data) {
+        state.databaseDocument = resp.data
+        messageNotify('success', '切换成功')
+      } else {
+        messageNotify('warn', '无可用数据')
+      }
+    }
+
+    const onSyncProjectDocument = () => {
       const projectId = route.params.projectId
-      state.buttonLoading.handleSync = true
-      syncByProjectId(projectId).then(resp => {
+      state.loadings.handleSync = true
+      syncByProjectId(projectId)
+      .then(resp => {
         if (!resp.errCode) {
           fetchDatabaseMetaData()
           messageNotify('success', '同步成功')
         }
-        state.buttonLoading.handleSync = false
+        state.loadings.handleSync = false
       })
-      .catch(() => state.buttonLoading.handleSync = false)
+      .catch(() => state.loadings.handleSync = false)
     }
 
-    const handleVersionFilter = fetchDatabaseMetaDataByCondition
+    const loadMoreDocumentVersions = debounce(async () => {
+        state.loadings.loadingVersions = true
+        if (state.databaseDocumentVersionFilter.page + 1  < state.databaseDocumentVersionTotalPages) {
+          state.databaseDocumentVersionFilter.page++
+          const versionResp = await  getVersionByProjectId(route.params.projectId, state.databaseDocumentVersionFilter)
+          state.databaseDocumentVersionTotalPages = versionResp.data.totalPages
+          if (versionResp.data.content.length > 0){
+            versionResp.data.content.forEach(element => state.databaseDocumentVersions.push(element))
+          }
+        }
+        state.loadings.loadingVersions = false
+    }, 800)
+
+    // 节流
+    function debounce(fn, delay) {
+      let timer = null
+      return function () {
+        let context = this
+        let args = arguments
+        if(timer) {
+            clearTimeout(timer)
+        }
+        timer = setTimeout(function () {
+          fn.apply(context, args)
+        }, delay)
+      }
+    }
 
     fetchDatabaseMetaData()
+
     return {
       state,
       isShowNoDataPage,
       isShowLoadingPage,
       columnTypeFormat,
-      handleVersionFilter,
-      handleSync
+      loadMoreDocumentVersions,
+      onProjectDocumentVersionChange,
+      onSyncProjectDocument
     }
   }
 }
