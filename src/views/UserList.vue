@@ -24,13 +24,13 @@
             </el-row>
         </el-header>
         <el-main>
-            <el-table :data="userPageData.content"  border width='80%'>
+            <el-table :data="userPageData.content" border width='80%'>
                 <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
                 <el-table-column prop="nickname" label="昵称" min-width="120" fixed="left" resizable />
                 <el-table-column prop="username" label="用户名" min-width="120" resizable />
                 <el-table-column label="邮箱" width="200"  resizable>
                     <template v-slot="scope">
-                        <el-link @click="onGetUserDetail(scope.row)">{{ scope.row.email }} <el-icon><View /></el-icon></el-link>
+                        <el-link :underline="true" @click="onGetUserDetail(scope.row)">{{ scope.row.email }}</el-link>
                     </template>
                 </el-table-column>
                 <el-table-column label="启用状态" resizable >
@@ -48,7 +48,7 @@
                 <el-table-column prop="createAt" label="创建时间" min-width="140"/>
                 <el-table-column label="操作" min-width="120" resizable >
                     <template v-slot="scope">
-                        <el-button type="danger" size="small" @Click="onRenewPassword(scope.row.id)">重置密码</el-button>
+                        <el-button type="danger" size="small" @Click.stop="onRenewPassword(scope.row.id)">重置密码</el-button>
                     </template>
                 </el-table-column>
             </el-table>
