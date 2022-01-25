@@ -66,6 +66,18 @@
                     <el-tab-pane label="高级配置">
                         <!-- schema meta sync rule-->
                         <h2>同步规则</h2>
+                        <el-form-item label="定时同步">
+                            <el-space wrap :size="33">
+                                <el-switch v-model="form.projectSyncRule.isAutoSync"></el-switch>
+                                <el-input 
+                                    v-model="form.projectSyncRule.autoSyncCron" 
+                                    v-if="form.projectSyncRule.isAutoSync" 
+                                    placeholder="CRON 表达式" 
+                                    >
+                                </el-input>    
+                            </el-space>
+                        </el-form-item>
+
                         <!-- ignore table name regex -->
                         <el-form-item :label="index > 0 ? '': '忽略表名称（支持正则表达式）'" v-for="(item, index) in form.projectSyncRule.ignoreTableNameRegexes" :key="index">
                             <el-col :span="6">
@@ -132,6 +144,8 @@ export default {
                 properties: []
             },
             projectSyncRule: {
+                isAutoSync: false,
+                autoSyncCron: null,
                 ignoreTableNameRegexes: [],
                 ignoreColumnNameRegexes: []
             }
@@ -197,6 +211,7 @@ export default {
                     return false
                 }
 
+                console.log(form)
                 createOrUpdateProject(form).then(resp => {
                     if (!resp.errCode) {
                         message('保存成功', 'success', () => router.push({path: '/groups/'+route.params.groupId}))
