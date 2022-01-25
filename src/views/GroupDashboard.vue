@@ -36,6 +36,16 @@
                 <el-table-column prop="databaseName" label="数据库" width="200"  resizable />
                 <el-table-column prop="databaseType" label="数据库类型" resizable ></el-table-column>
                 <el-table-column prop="description" label="说明" min-width="160" resizable />
+                <el-table-column label="定时同步" align="center">
+                    <template v-slot="scope">
+                        <el-tag v-if="scope.row.isAutoSync">
+                            {{ scope.row.autoSyncCron }}
+                        </el-tag>
+                        <span v-else>
+                            无
+                        </span>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="createAt" label="创建时间" min-width="120" resizable ></el-table-column>
                 <el-table-column fixed="right" label="操作" min-width="180" align="center"  resizable>
                     <template v-slot="scope">
@@ -45,59 +55,7 @@
                     </template>
                 </el-table-column>
             </el-table>
-            <el-drawer
-                v-model="isShowProjectDetailDrawer"
-                title="项目详情"
-                size="50%"
-            >
-                <el-descriptions
-                    title="基础信息"
-                    :column="1"
-                    border
-                >
-                    <el-descriptions-item label="项目名称">{{ projectDetailData.name }}</el-descriptions-item>
-                    <el-descriptions-item label="项目描述">{{ projectDetailData.description }}</el-descriptions-item>
-                    <el-descriptions-item label="创建时间" :span="2">{{ projectDetailData.createAt }}</el-descriptions-item>
-                </el-descriptions>
-                <br/>
-
-                <el-descriptions
-                    title="数据源"
-                    :column="1"
-                    border
-                >
-                    <el-descriptions-item label="地址">{{ projectDetailData.dataSource.url }}</el-descriptions-item>
-                    <el-descriptions-item label="用户名">{{ projectDetailData.dataSource.username }}</el-descriptions-item>
-                    <el-descriptions-item label="数据库名称">{{ projectDetailData.dataSource.databaseName }}</el-descriptions-item>
-                    <el-descriptions-item label="数据库类型">{{ projectDetailData.dataSource.databaseType }}</el-descriptions-item>
-                    <el-descriptions-item label="连接属性">
-                        <ul>
-                            <li v-for="(item, index) in projectDetailData.dataSource.properties" :key="index">
-                                {{ item.key +' = '+item.value}}
-                            </li>
-                        </ul>
-                    </el-descriptions-item>
-
-                </el-descriptions>
-                <br/>
-                <el-descriptions
-                    title="高级配置"
-                    :column="1"
-                    direction="vertical"
-                    border
-                >
-                    <el-descriptions-item label="过滤表配置">
-                        <el-space direction="vertical">
-                            <el-tag v-for="(item, index) in projectDetailData.projectSyncRule.ignoreTableNameRegexes" :key="index">{{ item }}  </el-tag>
-                        </el-space>
-                    </el-descriptions-item><br>
-                    <el-descriptions-item label="过滤列配置">
-                        <el-space direction="vertical">
-                            <el-tag v-for="(item, index) in projectDetailData.projectSyncRule.ignoreColumnNameRegexes" :key="index">{{ item }}  </el-tag>
-                        </el-space>
-                    </el-descriptions-item>
-                </el-descriptions>
-            </el-drawer>
+            
         </el-row>
         <el-row>
             <el-col>
@@ -111,6 +69,69 @@
                 </el-pagination>
             </el-col>
         </el-row>
+
+        <!-- project detail -->
+        <el-drawer
+            v-model="isShowProjectDetailDrawer"
+            title="项目详情"
+            size="50%"
+        >
+            <el-descriptions
+                title="基础信息"
+                :column="1"
+                border
+            >
+                <el-descriptions-item label="项目名称">{{ projectDetailData.name }}</el-descriptions-item>
+                <el-descriptions-item label="项目描述">{{ projectDetailData.description }}</el-descriptions-item>
+                <el-descriptions-item label="创建时间" :span="2">{{ projectDetailData.createAt }}</el-descriptions-item>
+            </el-descriptions>
+            <br/>
+
+            <el-descriptions
+                title="数据源"
+                :column="1"
+                border
+            >
+                <el-descriptions-item label="地址">{{ projectDetailData.dataSource.url }}</el-descriptions-item>
+                <el-descriptions-item label="用户名">{{ projectDetailData.dataSource.username }}</el-descriptions-item>
+                <el-descriptions-item label="数据库名称">{{ projectDetailData.dataSource.databaseName }}</el-descriptions-item>
+                <el-descriptions-item label="数据库类型">{{ projectDetailData.dataSource.databaseType }}</el-descriptions-item>
+                <el-descriptions-item label="连接属性">
+                    <ul>
+                        <li v-for="(item, index) in projectDetailData.dataSource.properties" :key="index">
+                            {{ item.key +' = '+item.value}}
+                        </li>
+                    </ul>
+                </el-descriptions-item>
+
+            </el-descriptions>
+            <br/>
+            <el-descriptions
+                title="高级配置"
+                :column="1"
+                direction="vertical"
+                border
+            >
+                <el-descriptions-item label="自动同步配置">
+                    <el-tag v-if="projectDetailData.projectSyncRule.isAutoSync">
+                        {{ projectDetailData.projectSyncRule.autoSyncCron }}
+                    </el-tag>
+                    <span v-else>
+                        无
+                    </span>
+                </el-descriptions-item>
+                <el-descriptions-item label="过滤表配置">
+                    <el-space direction="vertical">
+                        <el-tag v-for="(item, index) in projectDetailData.projectSyncRule.ignoreTableNameRegexes" :key="index">{{ item }}</el-tag>
+                    </el-space>
+                </el-descriptions-item><br>
+                <el-descriptions-item label="过滤列配置">
+                    <el-space direction="vertical">
+                        <el-tag v-for="(item, index) in projectDetailData.projectSyncRule.ignoreColumnNameRegexes" :key="index">{{ item }}  </el-tag>
+                    </el-space>
+                </el-descriptions-item>
+            </el-descriptions>
+        </el-drawer>
     </el-tab-pane>
     
     <el-tab-pane label="分组成员">
