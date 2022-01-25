@@ -43,8 +43,12 @@ export const user = {
     },
 
     loadUserLoginData() {
-        const data =window.localStorage.getItem(userLoginDataKey)
-        return JSON.parse(data)
+        if (!window.localStorage.getItem(userLoginDataKey)) {
+            return null;
+        } else {
+            const data =window.localStorage.getItem(userLoginDataKey)
+            return JSON.parse(data)
+        }
     },
 
     hasAnyRoles(roles) {
