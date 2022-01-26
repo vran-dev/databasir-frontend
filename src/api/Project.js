@@ -24,6 +24,10 @@ export const createProject = (request) => {
    return axios.post(base, request);
 }
 
+export const testConnection = (request) => {
+    return axios.post(base + '/test_connection', request)
+}
+
 
 const groupProjectBase = '/api/v1.0/groups'
 

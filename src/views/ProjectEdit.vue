@@ -61,6 +61,21 @@
                         <el-form-item label="属性" v-if="form.dataSource.properties.length == 0">
                             <el-button type="text" size="small" @click="addDataSourceProperty" >+ 添加</el-button>
                         </el-form-item>
+
+                        <el-form-item>
+                            <el-col>
+                                <el-button v-if="testConnectionState.isTest" plain circle :type="testConnectionState.buttonType" size="small">
+                                    <el-icon v-if="testConnectionState.success"><check /></el-icon>
+                                    <el-icon v-else><close /></el-icon>
+                                </el-button>
+                                <el-button :type="testConnectionState.buttonType" plain size="small" @click="onTestConnection" :loading="loading.testConnection">
+                                    测试连接
+                                </el-button>
+                            </el-col>
+                            <el-col v-if="testConnectionState.isTest && !testConnectionState.success">
+                                <el-link type="danger" :underline="false">{{ testConnectionState.message }}</el-link>
+                            </el-col>
+                        </el-form-item>
                     </el-tab-pane>
 
                     <el-tab-pane label="高级配置">
@@ -118,10 +133,10 @@
 </template>
 
 <script>
-import { reactive, onMounted, ref } from 'vue'
+import { reactive, onMounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElForm } from 'element-plus'
-import { getProjectById, createOrUpdateProject } from '@/api/Project'
+import { getProjectById, createOrUpdateProject, testConnection } from '@/api/Project'
 import { databaseTypes } from '../api/Const'
 
 
@@ -150,15 +165,47 @@ export default {
                 ignoreColumnNameRegexes: []
             }
         })
-
-       const requiredInputValidRule = (message) => {
+        const loading = reactive({
+            testConnection: false
+        })
+        const testConnectionState = reactive({
+            buttonType: 'primary',
+            isTest: false,
+            success: false,
+            message: null,
+        })
+        watch(
+            () => form.dataSource,
+            () => {
+                testConnectionState.isTest = false
+                testConnectionState.buttonType = 'primary'
+            },
+            { deep: true }
+        )
+        onMounted(async () => {
+            router.isReady().then(async () => {
+                if (route.params.projectId){
+                    form.id = route.params.projectId
+                    getProjectById(route.params.projectId).then(resp => {
+                        const res = resp.data
+                        form.name = res.name
+                        form.groupId = res.groupId
+                        form.description = res.description
+                        form.dataSource = res.dataSource
+                        form.projectSyncRule = res.projectSyncRule
+                    })
+                } else {
+                     form.groupId = route.params.groupId
+                }
+            })
+        });
+        const requiredInputValidRule = (message) => {
             return {
                 required: true,
                 message: message,
                 trigger: 'blur',
             }
         }
-
         const formRules = reactive({
             name: [
                 requiredInputValidRule('名称不能为空'),
@@ -179,25 +226,6 @@ export default {
                 ],
             }
         })
-
-        onMounted(async () => {
-            router.isReady().then(async () => {
-                if (route.params.projectId){
-                    form.id = route.params.projectId
-                    getProjectById(route.params.projectId).then(resp => {
-                        const res = resp.data
-                        form.name = res.name
-                        form.groupId = res.groupId
-                        form.description = res.description
-                        form.dataSource = res.dataSource
-                        form.projectSyncRule = res.projectSyncRule
-                    })
-                } else {
-                     form.groupId = route.params.groupId
-                }
-            })
-        });
-
         const ruleFormRef = ref(ElForm)
         const onSubmit = () => {
             ruleFormRef.value.validate((valid) => {
@@ -211,7 +239,6 @@ export default {
                     return false
                 }
 
-                console.log(form)
                 createOrUpdateProject(form).then(resp => {
                     if (!resp.errCode) {
                         message('保存成功', 'success', () => router.push({path: '/groups/'+route.params.groupId}))
@@ -261,8 +288,47 @@ export default {
             form.projectSyncRule.ignoreColumnNameRegexes.splice(index, 1)
         }
 
+        const onTestConnection = () => {
+            loading.testConnection = true
+            ruleFormRef.value.validate((valid) => {
+                if(!valid) {
+                    message('请填写表单必填项', 'error')
+                    return false
+                } 
+
+                if (!form.id && !form.dataSource.password) {
+                    message('请填写数据库连接密码', 'error')
+                    return false
+                }
+                const request = {
+                    projectId: form.id,
+                    databaseType: form.dataSource.databaseType,
+                    databaseName: form.dataSource.databaseName,
+                    username: form.dataSource.username,
+                    password: form.dataSource.password,
+                    url: form.dataSource.url,
+                    properties: form.dataSource.properties
+                }
+                testConnection(request).then(resp => {
+                    if (!resp.errCode) {
+                        testConnectionState.success = true
+                        testConnectionState.buttonType = 'success'
+                        message('连接成功', 'success')
+                    } else {
+                        testConnectionState.success = false
+                        testConnectionState.buttonType = 'danger'
+                    }
+                    testConnectionState.isTest = true
+                    testConnectionState.message = resp.errMessage
+                }).finally(() => loading.testConnection = false)
+            })
+            
+        }
+
         return {
             form,
+            loading,
+            testConnectionState,
             formRules,
             databaseTypes,
             ruleFormRef,
@@ -273,7 +339,8 @@ export default {
             addIgnoreTableName,
             removeIgnoreTableName,
             addIgnoreColumnName,
-            removeIgnoreColumnName
+            removeIgnoreColumnName,
+            onTestConnection
         }
     }
 }
