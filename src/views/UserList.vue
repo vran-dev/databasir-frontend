@@ -227,7 +227,7 @@ export default {
             })
         },
         onPageChange(currentPage) {
-            if (currentPage) {
+            if (currentPage && (currentPage - 1) != this.userPageQuery.page) {
                 this.userPageQuery.page = currentPage - 1
                 this.fetchUsers()
             }

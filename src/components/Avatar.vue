@@ -1,6 +1,6 @@
 <template>
     <el-dropdown>
-        <el-avatar :size="36" :src="circleUrl" icon="avatar"></el-avatar>
+        <el-avatar :size="36" :src="avatarUrl" icon="avatar"></el-avatar>
         <template #dropdown>
         <el-dropdown-menu>
             <el-dropdown-item>{{ userNickname }}</el-dropdown-item>
@@ -16,6 +16,11 @@
 import { user } from '../utils/auth'
 
 export default {
+    data(){
+        return {
+            avatarUrl: null
+        }
+    },
     computed: {
         userNickname() {
             return this.$store.state.user.nickname 
