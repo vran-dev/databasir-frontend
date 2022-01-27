@@ -1,32 +1,43 @@
 <template>
-    <el-container style="">
+    <el-container>
         <el-header>
 
         </el-header>
         <el-main class="login-main">
-            <div class="login-form">
-                <el-form ref="formRef" :model="form" label-width="120px">
-                    <el-form-item>
-                        <h1>Databasir</h1>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-input v-model="form.username" placeholder="用户名或邮箱" suffix-icon="User">
-                        </el-input>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-input v-model="form.password" type="password" placeholder="密码" suffix-icon="Key" input-style="login-input">
-                        </el-input>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-button rounded type="primary" style="width: 100%" @click="onLogin">
-                            登录
-                        </el-button>
-                    </el-form-item>
-                </el-form>
-            </div>
+                <div class="login-card">
+                    <el-form ref="formRef" :rules="formRule" :model="form" style="border:none;">
+                        <el-form-item>
+                            <el-divider content-position="left">
+                                <el-link href="https://github.com/vran-dev/databasir" target="_blank" :underline="false" type="info">
+                                <h1>Databasir</h1>
+                                </el-link>
+                            </el-divider>
+                        </el-form-item>
+                        <el-form-item  prop="username">
+                            <input type="text" class="login-input" placeholder="用户名或邮箱" v-model="form.username">
+                        </el-form-item>
+                        <el-form-item prop="password">
+                            <input type="password" class="login-input" placeholder="密码" v-model="form.password">
+                        </el-form-item>
+                        <el-form-item>
+                            <el-space :size="32">
+                                <el-button  style="width: 120px; margin-top:10px" color="#000" @click="onLogin('formRef')" plain round >
+                                    登录
+                                </el-button>
+
+                                <el-link href="#" target="_blank" :underline="false" type="info">
+                                忘记密码？
+                                </el-link>
+                            </el-space>
+                            
+                        </el-form-item>
+                    </el-form>
+                </div>
         </el-main>
         <el-footer>
+            <el-space>
 
+            </el-space>
         </el-footer>
     </el-container>
 </template>
@@ -34,20 +45,35 @@
 <style>
 .login-main {
     margin: 0 auto;
-}
-.login-form {
-    min-width: 380px;
-    max-width: 600px;
+    margin-top: 200px;
 }
 
 .login-input {
-    border-width: 0 2 1 0;
+    border-width: 0 0 1px 0;
+    border-style: solid;
+    width: 100%;
+    min-height: 33px;
+}
+
+.login-input::placeholder {
+    color: rgba(180, 180, 180, 0.808);
+}
+
+.login-input:focus {
+    outline: none;
+    border-color: #000;
+}
+
+.login-card {
+    max-width: 600px;
+    min-width: 500px;
+    border-color: black;
+    /* border-style: solid; */
 }
 
 </style>
 <script>
 import { login } from "../api/Login"
-import { ElMessage } from "element-plus"
 import { user } from "../utils/auth"
 
 export default {
@@ -56,6 +82,11 @@ export default {
             form: {
                 username: null,
                 password: null
+            },
+
+            formRule: {
+                username: [{required: true,message: '请输入用户名或邮箱',trigger: 'blur'}],
+                password: [{required: true,message: '请输入密码',trigger: 'blur'}],
             }
         }
     },
@@ -64,30 +95,23 @@ export default {
         toIndexPage() {
             this.$router.push({path: '/groups'})
         },
-        
-        errorMessage(msg) {
-            ElMessage({
-                showClose: true,
-                message: msg,
-                type: 'error',
-                duration: 0.8 * 1000,
-            })
-        },
 
         onLogin() {
-            login(this.form).then(resp => {
-                if (!resp.errCode) {
-                    user.saveUserLoginData(resp.data)
-                    this.$store.commit('userUpdate', {
-                        nickname: resp.data.nickname,
-                        username: resp.data.username,
-                        email: resp.data.email,
+             this.$refs.formRef.validate(valid => {
+                 if (valid) {
+                    login(this.form).then(resp => {
+                        if (!resp.errCode) {
+                            user.saveUserLoginData(resp.data)
+                            this.$store.commit('userUpdate', {
+                                nickname: resp.data.nickname,
+                                username: resp.data.username,
+                                email: resp.data.email,
+                            })
+                            this.toIndexPage()
+                        }
                     })
-                    this.toIndexPage()
-                } else {
-                    this.errorMessage(resp.errMessage)   
-                }
-            })
+                 }
+             })
         }
     }
 }
