@@ -142,7 +142,7 @@
                 </el-tooltip>
             </el-col>
             <el-col :span="3">
-                <el-select @change="onGroupMemberQuery()" @clear="onGroupRoleFilterClear()" v-model="groupMemberFilter.role" placeholder="选择角色过滤" clearable>
+                <el-select @change="onGroupMemberQuery" @clear="onGroupRoleFilterClear" v-model="groupMemberFilter.role" placeholder="选择角色过滤" clearable>
                     <el-option
                     v-for="item in roleTypes"
                     :key="item"
@@ -188,7 +188,7 @@
                 :currentPage="groupMemberPageData.number" 
                 :page-size="groupMemberPageData.size" 
                 :page-count="groupMemberPageData.totalPages"
-                @current-change="fetchGroupMembers">
+                @current-change="onGroupMemberCurrentPageChange">
 
                 </el-pagination>
             </el-col>
@@ -361,7 +361,16 @@ export default {
         },
         onGroupMemberQuery() {
             this.groupMemberFilter.page = 0
+            if (this.groupMemberFilter.role == '') {
+                this.groupMemberFilter.role = null
+            }
             this.fetchGroupMembers()
+        },
+        onGroupMemberCurrentPageChange(currentPage) {
+            if (currentPage && (currentPage -1) != this.groupMemberFilter.page) {
+                this.groupMemberFilter.page = currentPage - 1
+                this.fetchGroupMembers()
+            }
         },
         onGroupMemberRemove(nickname, userId) {
             const groupId = this.$route.params.groupId
@@ -464,7 +473,7 @@ export default {
             this.fetchGroupProjects()
         },
         onProjectListCurrentPageChange(currentPage) {
-            if (currentPage) {
+            if (currentPage && (currentPage -1) != this.projectFilter.page) {
                 this.projectFilter.page = currentPage - 1
                 this.fetchGroupProjects()
             }
