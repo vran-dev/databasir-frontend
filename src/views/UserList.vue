@@ -100,8 +100,8 @@
         </el-drawer>
 
         <!-- user create dialog -->
-        <el-dialog v-model="isShowEditUserDialog" width="38%" center destroy-on-close>
-            <el-form :model="userData" label-position="top" :rules="userFormRef" ref="userFormRef">
+        <el-dialog v-model="isShowEditUserDialog" width="38%" center destroy-on-close title="创建用户">
+            <el-form :model="userData" label-position="top" :rules="userFormRule" ref="userFormRef">
                 <el-form-item label="昵称"  prop="nickname">
                     <el-input v-model="userData.nickname"></el-input>
                 </el-form-item>
@@ -148,7 +148,7 @@ export default {
             userData: {
                 enabled: false
             },
-            userFormRef: {
+            userFormRule: {
                 nickname: [this.requiredInputValidRule('昵称不能为空')],
                 username: [this.requiredInputValidRule('用户名不能为空')],
                 email: [this.requiredInputValidRule('邮箱不能为空'), { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }],
@@ -251,16 +251,24 @@ export default {
             })
         },
         onSaveUserData() {
-            createUser(this.userData).then(resp => {
-                if (!resp.errCode) {
-                    this.$message.success("保存用户成功")
-                    this.isShowEditUserDialog = false
-                    this.userData = {
-                        enabled: false
-                    }
-                    this.fetchUsers()
+            this.$refs.userFormRef.validate(valid => {
+                if (valid) {
+                    createUser(this.userData).then(resp => {
+                        if (!resp.errCode) {
+                            this.$message.success("保存用户成功")
+                            this.isShowEditUserDialog = false
+                            this.userData = {
+                                enabled: false
+                            }
+                            this.fetchUsers()
+                        }
+                    })
+                    return true
+                } else {
+                    return false
                 }
             })
+            
         },
         onChangeSysOwner(user) {
             const userId = user.id
