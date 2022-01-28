@@ -1,6 +1,6 @@
 <template>
     <el-container>
-        <el-aside>
+        <el-aside class="databasir-nav">
             <AppNav></AppNav>
         </el-aside>
         <el-header class="databasir-main-header">
@@ -18,7 +18,7 @@
 </template>
 
 <style>
-.el-aside {
+.databasir-nav {
     display: block;
     position: fixed;
     left: 0;
