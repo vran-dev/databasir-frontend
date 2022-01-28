@@ -8,7 +8,7 @@
     <el-skeleton v-loading="!state.init" :rows="12" />
   </div>
   <div v-else>
-    <el-container class="document-content">
+    <el-container class="document-container">
       <el-header>
           <el-row :gutter="20">
             <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
@@ -31,7 +31,9 @@
           </el-row>
       </el-header>
       
-      <el-main>
+      <el-main class="document-content-wrapper">
+        
+        <div class="document-content">
         <el-row>
           <!-- database overview -->
           <el-col>
@@ -48,7 +50,7 @@
         <!-- table overview -->
         <el-row>
           <el-col>
-            <h2 :id="state.databaseDocument.name + '.overview'">Overview</h2>
+            <h2 :id="state.databaseDocument.databaseName + '.overview'">Overview</h2>
           </el-col>
         </el-row>
         <el-row>
@@ -66,7 +68,7 @@
         <template v-for="tableMeta in state.databaseDocument.tables" :key="tableMeta">
           <el-row>
             <el-col>
-              <h2 :id="state.databaseDocument.name + '.' + tableMeta.name">{{ tableMeta.name }}</h2>
+              <h2 :id="state.databaseDocument.databaseName + '.' + tableMeta.name">{{ tableMeta.name }}</h2>
             </el-col>
           </el-row>
           
@@ -107,7 +109,6 @@
               </el-col>
             </el-row>
           </div>
- 
           
           <div  v-if="tableMeta.triggers.length > 0">
             <el-row>
@@ -130,6 +131,21 @@
           </div>
 
         </template>
+        </div>
+        <div class="toc-wrapper">
+          <div class="toc">
+            <ul>
+              <li v-for="(item, index) in state.toc" :key="index">
+                <el-link :underline="false" @click="onClickToc(state.databaseDocument.databaseName +'.'+ item.name)">
+                  {{ item.name }}
+                </el-link>
+                <ul>
+                  <li v-for="(childItem, childIndex) in item.child" :key="index+'-'+childIndex"><el-link :underline="false">{{ childItem.name }}</el-link></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
         <el-tooltip
           content="回到顶部"
           placement="top"
@@ -140,6 +156,49 @@
     </el-container>
   </div>
 </template>
+
+<style>
+.toc-wrapper {
+  right:0;
+  top: 60;
+  z-index: 0;
+  bottom: auto;
+  padding-left: 60px;
+  margin-left: 10px;
+  
+}
+
+.toc {
+  top: 130px;
+  position: fixed;
+  margin-left: 0;
+  transform: scale(1, 1);
+  bottom:0;
+  position:fixed;
+  overflow-y:hidden;
+  overflow-x:hidden;
+}
+
+.toc:hover {
+  overflow-y: auto;
+}
+
+.toc-wrapper .toc ul {
+    list-style: none;
+    line-height: 1.7;
+}
+
+.document-content-wrapper {
+  display: flex;
+  margin: 0;
+  min-width: 50rem;
+}
+
+.document-content {
+  min-width: 50rem;
+}
+
+</style>
 
 <script>
 import { reactive, computed } from 'vue'
@@ -157,11 +216,11 @@ export default {
       },
       databaseDocumentVersions: [],
       databaseDocumentVersionTotalPages: 0,
-
       databaseDocumentFilter: {
         version: null
       },
       databaseDocument: null,
+      toc: [],
       init: false,
       loadings: {
         handleSync: false,
@@ -197,10 +256,36 @@ export default {
         messageNotify('error', '同步失败：'+resp.errMessage)
       } else if (resp.data) {
         state.databaseDocument = resp.data
+        initTocByDocumentData(resp.data)
       } else {
         messageNotify('warn', '无可用数据')
       }
       state.init = true
+    }
+
+    const initTocByDocumentData = (data) => {
+      state.toc.push({ name: 'overview', child: [] })
+      data.tables.forEach(item => {
+        const child = []
+        state.toc.push({ name: item.name, child: child })
+      })
+    }
+
+    const onClickToc = (id) => {
+      const ele = document.getElementById(id)
+      if (ele) {
+        var headerOffset = -100;
+        var actualTop = ele.offsetTop;
+        var current = ele.offsetParent;
+          while (current !== null){
+          actualTop += current.offsetTop;
+          current = current.offsetParent;
+        }
+        window.scrollTo({
+          top: actualTop + headerOffset,
+          behavior: "smooth"
+        })
+      }
     }
 
 
@@ -270,6 +355,7 @@ export default {
       state,
       isShowNoDataPage,
       isShowLoadingPage,
+      onClickToc,
       columnTypeFormat,
       loadMoreDocumentVersions,
       onProjectDocumentVersionChange,
