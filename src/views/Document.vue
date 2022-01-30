@@ -264,11 +264,13 @@ export default {
     }
 
     const initTocByDocumentData = (data) => {
-      state.toc.push({ name: 'overview', child: [] })
+      const toc = []
+      toc.push({ name: 'overview', child: [] })
       data.tables.forEach(item => {
         const child = []
-        state.toc.push({ name: item.name, child: child })
+        toc.push({ name: item.name, child: child })
       })
+      state.toc = toc
     }
 
     const onClickToc = (id) => {
@@ -298,13 +300,16 @@ export default {
     }
 
     const onProjectDocumentVersionChange = async () => {
+      state.loadings.loadingVersions = true
       const resp =  await getOneByProjectId(route.params.projectId, state.databaseDocumentFilter)
       if (resp.data) {
         state.databaseDocument = resp.data
+        initTocByDocumentData(resp.data)
         messageNotify('success', '切换成功')
       } else {
         messageNotify('warn', '无可用数据')
       }
+      state.loadings.loadingVersions = false
     }
 
     const onSyncProjectDocument = () => {
