@@ -1,5 +1,6 @@
 <template>
   <el-tabs>
+    <!-- project list -->
     <el-tab-pane label="项目列表">
         <el-row :gutter="12">
             <el-col :span="3" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId, 'GROUP_MEMBER?groupId='+groupId]">
@@ -49,9 +50,11 @@
                 <el-table-column prop="createAt" label="创建时间" min-width="120" resizable ></el-table-column>
                 <el-table-column fixed="right" label="操作" min-width="180" align="center"  resizable>
                     <template v-slot="scope">
-                        <el-button type="primary" size="small" @click.stop="toProjectEditPage(scope.row)">编辑</el-button>
-                        <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)">查看文档</el-button>
-                        <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.id)">删除</el-button>
+                        <el-space>
+                            <el-button type="primary" size="small" @click.stop="toProjectEditPage(scope.row)">编辑</el-button>
+                            <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)">查看文档</el-button>
+                            <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.id)">删除</el-button>
+                        </el-space>
                     </template>
                 </el-table-column>
             </el-table>

@@ -2,18 +2,18 @@ import axios from '@/utils/fetch';
 
 const base = '/api/v1.0'
 
-export const getOneByProjectId = (proejctId, parameters) => {
-    return axios.get(base + '/projects/'+proejctId+'/documents', {
+export const getOneByProjectId = (projectId, parameters) => {
+    return axios.get(base + '/projects/'+projectId+'/documents', {
         params: parameters
     })
 }
 
-export const syncByProjectId = (proejctId) => {
-    return axios.post(base + "/projects/"+proejctId+"/documents")
+export const syncByProjectId = (projectId) => {
+    return axios.post(base + "/projects/"+projectId+"/documents")
 }
 
-export const getVersionByProjectId =(proejctId, parameters) => {
-    return axios.get(base + "/projects/"+proejctId+"/document_versions", {
+export const getVersionByProjectId =(projectId, parameters) => {
+    return axios.get(base + "/projects/"+projectId+"/document_versions", {
         params: parameters
     })
 }
