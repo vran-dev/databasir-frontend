@@ -60,6 +60,11 @@
               <el-table-column prop="name" label="Name" min-width="160" resizable />
               <el-table-column prop="type" label="Type" width="200"  resizable />
               <el-table-column prop="comment" label="comment" min-width="160" resizable />
+              <el-table-column prop="remark" label="remark" min-width="160" resizable >
+                <template v-slot="scope">
+                    <el-button @click="showRemarkDrawer(scope.row.name)" size="small" :icon="Edit"></el-button>
+                </template>
+              </el-table-column>
             </el-table>
           </el-col>
         </el-row>
@@ -87,6 +92,11 @@
                 <el-table-column prop="autoIncrement" label="Auto increment" width="140" />
                 <el-table-column prop="defaultValue" label="default" min-width="120" />
                 <el-table-column prop="comment" label="comment"  />
+                <el-table-column prop="remark" label="remark" min-width="160" resizable fixed="right">
+                  <template v-slot="scope">
+                      <el-button @click="showRemarkDrawer(tableMeta.name, scope.row.name)" size="small" :icon="Edit"></el-button>
+                  </template>
+                </el-table-column>
               </el-table>
             </el-col>
           </el-row>
@@ -152,20 +162,134 @@
         >
           <el-backtop :bottom="100"></el-backtop>
         </el-tooltip>
+
+        <!-- remarks -->
+        <el-drawer
+          v-model="remarkData.isShowDrawer"
+          title="更多"
+          size="50%"
+        >
+
+          <el-row v-for="(remark, index) in remarkData.pageData.content" :key="index">
+            <el-col>
+              <el-card shadow="never" class="remark-card"> 
+                <template #header>
+                <div class="remark-header">
+                  <span>
+                    <span class="remark-user">{{remark.remarkBy.nickname}}</span>  
+                    <span class="remark-time">{{remark.createAt}}</span>
+                  </span>
+                  <span v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
+<el-popconfirm
+                    confirm-button-text="确定"
+                    cancel-button-text="取消"
+                    icon="InfoFilled"
+                    icon-color="red"
+                    title="确定要删除该记录吗？"
+                    @confirm="onDeleteRemark(remark.id)"
+                    
+                    >
+                      <template #reference>
+                        <el-button type="danger" :icon="Delete" circle plain size="small"></el-button>
+                      </template>
+                    </el-popconfirm>
+                  </span>
+                    
+                  
+                </div>
+                </template>
+                  <div class="item text remark-content">
+                    {{ remark.remark }}
+                  </div>
+              </el-card>
+            </el-col>
+          </el-row>
+          <el-row v-if="remarkData.pageData.content.length == 0">
+            <el-col>
+              <el-empty></el-empty>
+            </el-col>
+          </el-row>
+
+          <el-row>
+            <el-col>
+              <el-pagination layout="prev, pager, next" 
+                :hide-on-single-page="false"
+                :currentPage="remarkData.pageData.page" 
+                :page-size="remarkData.pageData.size" 
+                :page-count="remarkData.pageData.totalPages"
+                @current-change="onRemarkPageChange">
+              </el-pagination>
+            </el-col>
+          </el-row>
+          <el-divider></el-divider>
+          <el-row v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
+            <el-col>
+              <el-input
+                v-model="remarkData.formData.remark"
+                :rows="5"
+                type="textarea" 
+                placeholder="请输入内容"
+              />
+            </el-col>
+          </el-row>
+          <el-divider></el-divider>
+
+          <el-row v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
+            <el-col>
+              <el-button @click="onCreateRemark">提交</el-button>
+            </el-col>
+          </el-row>
+        </el-drawer>
       </el-main>
     </el-container>
   </div>
 </template>
 
 <style>
+
+.remark-card {
+  margin-bottom: 30px;
+}
+
+.remark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.remark-header .remark-user {
+  color: rgb(109, 109, 109);
+}
+
+.remark-header .remark-time {
+  color: rgb(109, 109, 109);
+  font-size: 0.8rem;
+  margin-left: 10px;
+}
+
+
+.remark-content {
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.3rem;
+}
+
+.item {
+  margin-top: 10px;
+  margin-right: 40px;
+}
+
 .toc-wrapper {
   right:0;
   top: 60;
   z-index: 0;
   bottom: auto;
-  padding-left: 60px;
+  padding-left: 33px;
   margin-left: 10px;
-  
 }
 
 .toc {
@@ -186,17 +310,25 @@
 .toc-wrapper .toc ul {
     list-style: none;
     line-height: 1.7;
+    inline-size: 200px;
+    overflow-wrap: break-word;
+}
+
+.toc-wrapper .toc a {
+    display: inherit;
 }
 
 .document-content-wrapper {
   display: flex;
   margin: 0;
   min-width: 50rem;
+  max-width: 60rem;
 }
 
 .document-content {
   min-width: 50rem;
 }
+
 
 </style>
 
@@ -205,6 +337,8 @@ import { reactive, computed } from 'vue'
 import {  useRoute } from 'vue-router'
 import { getOneByProjectId, syncByProjectId, getVersionByProjectId } from '@/api/Document'
 import { ElMessage } from 'element-plus'
+import { Delete, More, Edit } from '@element-plus/icons'
+import { listRemarks, createRemark, deleteRemark } from '@/api/DocumentRemark'
 
 export default {
   setup() {
@@ -290,7 +424,6 @@ export default {
       }
     }
 
-
     const columnTypeFormat = (column) => {
       if (column.decimalDigits == null) {
         return column.type + '('+column.size+')' 
@@ -339,6 +472,8 @@ export default {
         state.loadings.loadingVersions = false
     }, 800)
 
+    fetchDatabaseMetaData()
+
     // 节流
     function debounce(fn, delay) {
       let timer = null
@@ -354,9 +489,91 @@ export default {
       }
     }
 
-    fetchDatabaseMetaData()
+    // remarks
+    const remarkData = reactive({
+      isShowDrawer: false,
+      formData: {
+        remark: null,
+      },
+      pageFilter: {
+        page: 0,
+        size: 5,
+        tableName: null,
+        columnName: null
+      },
+      pageData: {
+        content: [],
+        page: 0,
+        size: 10,
+        totalPages: 0
+      },
+    })
+    const showRemarkDrawer = (tableName, columnName) => {
+      remarkData.isShowDrawer = true
+      if (tableName) {
+        remarkData.pageFilter.tableName = tableName
+      } else {
+        remarkData.pageFilter.tableName = null
+      }
+      if(columnName) {
+        remarkData.pageFilter.columnName = columnName
+      } else {
+        remarkData.pageFilter.columnName = null
+      }
+      const projectId = route.params.projectId
+      const groupId = route.params.groupId
+      listRemarks(groupId, projectId, remarkData.pageFilter).then(resp => {
+        remarkData.pageData = resp.data
+        remarkData.pageData.page = resp.data.number + 1
+      })
+    }
+
+    const onRemarkPageChange = (currentPage) => {
+      remarkData.pageFilter.page = currentPage - 1
+      const projectId = route.params.projectId
+      const groupId = route.params.groupId
+      listRemarks(groupId, projectId, remarkData.pageFilter).then(resp => {
+        remarkData.pageData = resp.data
+        remarkData.pageData.page = resp.data.number + 1
+      })
+    }
+
+    const onCreateRemark = () => {
+      if(!remarkData.formData.remark || remarkData.formData.remark == '') {
+        messageNotify('warning', '内容不能为空')
+        return
+      }
+      const projectId = route.params.projectId
+      const groupId = route.params.groupId
+      const body  = {
+        tableName: remarkData.pageFilter.tableName,
+        columnName: remarkData.pageFilter.columnName,
+        remark: remarkData.formData.remark
+      }
+      createRemark(groupId, projectId, body).then(resp => {
+        if(!resp.errCode) {
+          remarkData.formData.remark = null
+          messageNotify('success', '提交成功')
+          onRemarkPageChange(1)
+        }
+      })
+    }
+
+    const onDeleteRemark = (remarkId) => {
+      const projectId = route.params.projectId
+      const groupId = route.params.groupId
+      deleteRemark(groupId, projectId, remarkId).then(resp => {
+        if(!resp.errCode) {
+          messageNotify('success', '删除成功')
+          onRemarkPageChange(1)
+        }
+      })
+    }
 
     return {
+      Delete,
+      More,
+      Edit,
       state,
       isShowNoDataPage,
       isShowLoadingPage,
@@ -364,7 +581,12 @@ export default {
       columnTypeFormat,
       loadMoreDocumentVersions,
       onProjectDocumentVersionChange,
-      onSyncProjectDocument
+      onSyncProjectDocument,
+      remarkData,
+      showRemarkDrawer,
+      onRemarkPageChange,
+      onCreateRemark,
+      onDeleteRemark
     }
   }
 }
