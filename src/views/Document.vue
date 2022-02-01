@@ -15,7 +15,7 @@
               <el-button type="success" style="width:100%" icon="Refresh" @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
             </el-col>
             <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-                <el-button type="primary" style="width:100%" icon="Download">导出</el-button>
+                <el-button type="primary" style="width:100%" icon="Download" @click="onDocumentExport()" :loading="state.loadings.export">导出</el-button>
             </el-col>
             <el-col :span="4">
                 <el-select @change="onProjectDocumentVersionChange" v-model="state.databaseDocumentFilter.version" placeholder="历史版本" v-select-more="loadMoreDocumentVersions" v-loading="state.loadings.loadingVersions" clearable>
@@ -351,7 +351,7 @@
 <script>
 import { reactive, computed } from 'vue'
 import {  useRoute } from 'vue-router'
-import { getOneByProjectId, syncByProjectId, getVersionByProjectId } from '@/api/Document'
+import { getOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument } from '@/api/Document'
 import { ElMessage } from 'element-plus'
 import { Delete, More, Edit } from '@element-plus/icons'
 import { listRemarks, createRemark, deleteRemark } from '@/api/DocumentRemark'
@@ -374,7 +374,8 @@ export default {
       init: false,
       loadings: {
         handleSync: false,
-        loadingVersions: false
+        loadingVersions: false,
+        export: false,
       },
       projectId: null,
       groupId: null
@@ -473,6 +474,14 @@ export default {
         state.loadings.handleSync = false
       })
       .catch(() => state.loadings.handleSync = false)
+    }
+
+    const onDocumentExport = () => {
+      const projectId = route.params.projectId
+      state.loadings.export = true
+      exportDocument(projectId, {
+        version: state.databaseDocumentFilter.version
+      }, state.databaseDocument.databaseName, () => state.loadings.export = false)
     }
 
     const loadMoreDocumentVersions = debounce(async () => {
@@ -598,6 +607,7 @@ export default {
       loadMoreDocumentVersions,
       onProjectDocumentVersionChange,
       onSyncProjectDocument,
+      onDocumentExport,
       remarkData,
       showRemarkDrawer,
       onRemarkPageChange,
