@@ -88,8 +88,21 @@
                 <el-table-column type="index" />
                 <el-table-column prop="name" label="Name" min-width="120" />
                 <el-table-column prop="type" :formatter="columnTypeFormat" label="Type" width="140" />
-                <el-table-column prop="nullable" label="Is Nullable" width="120" />
-                <el-table-column prop="autoIncrement" label="Auto increment" width="140" />
+                <el-table-column label="Primary Key" width="120"> 
+                  <template v-slot="scope">
+                    {{ scope.row.isPrimaryKey? 'YES':''}}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="nullable" label="Is Nullable" width="120">
+                   <template v-slot="scope">
+                    {{ scope.row.nullable == 'YES' ? 'YES':''}}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="autoIncrement" label="Auto increment" width="140">
+                  <template v-slot="scope">
+                    {{ scope.row.autoIncrement == 'YES'? 'YES':''}}
+                  </template>
+                </el-table-column>
                 <el-table-column prop="defaultValue" label="default" min-width="120" />
                 <el-table-column prop="comment" label="comment"  />
                 <el-table-column prop="remark" label="remark" min-width="160" resizable fixed="right">
@@ -112,8 +125,11 @@
                 <el-table :data="tableMeta.indexes" border fit width='80%'>
                   <el-table-column type="index" />
                   <el-table-column prop="name" label="Name" min-width="120" />
-                  <el-table-column prop="isPrimary" label="IsPrimary" width="120" />
-                  <el-table-column prop="isUnique" label="Is Unique" width="120" />
+                  <el-table-column prop="isUnique" label="Is Unique" width="120">
+                    <template v-slot="scope">
+                      {{ scope.row.isUnique? 'YES':''}}
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="columnNames" label="Columns" min-width="150" />
                 </el-table>
               </el-col>
