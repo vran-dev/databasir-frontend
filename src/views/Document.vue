@@ -60,7 +60,7 @@
               <el-table-column prop="name" label="Name" min-width="160" resizable />
               <el-table-column prop="type" label="Type" width="200"  resizable />
               <el-table-column prop="comment" label="comment" min-width="160" resizable />
-              <el-table-column prop="remark" label="remark" min-width="160" resizable >
+              <el-table-column prop="remark" label="remark" min-width="120" resizable >
                 <template v-slot="scope">
                     <el-button @click="showRemarkDrawer(scope.row.name)" size="small" :icon="Edit"></el-button>
                 </template>
@@ -98,14 +98,14 @@
                     {{ scope.row.nullable == 'YES' ? 'YES':''}}
                   </template>
                 </el-table-column>
-                <el-table-column prop="autoIncrement" label="Auto increment" width="140">
+                <el-table-column prop="autoIncrement" label="Auto Increment" width="140">
                   <template v-slot="scope">
                     {{ scope.row.autoIncrement == 'YES'? 'YES':''}}
                   </template>
                 </el-table-column>
                 <el-table-column prop="defaultValue" label="default" min-width="120" />
                 <el-table-column prop="comment" label="comment"  />
-                <el-table-column prop="remark" label="remark" min-width="160" resizable fixed="right">
+                <el-table-column prop="remark" label="remark" min-width="100" resizable fixed="right">
                   <template v-slot="scope">
                       <el-button @click="showRemarkDrawer(tableMeta.name, scope.row.name)" size="small" :icon="Edit"></el-button>
                   </template>
@@ -337,12 +337,12 @@
 .document-content-wrapper {
   display: flex;
   margin: 0;
-  min-width: 50rem;
-  max-width: 60rem;
+  min-width: 1060px;
+  max-width: 1260px;
 }
 
 .document-content {
-  min-width: 50rem;
+  min-width: 1060px;
 }
 
 
