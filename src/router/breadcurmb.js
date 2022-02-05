@@ -43,10 +43,15 @@ function groupProjectDocument(route) {
     if (route.query.projectName) {
         name = route.query.projectName
     }
+    var projectId = route.params.projectId
+    var groupId = route.params.groupId
     return {
         name: name,
         to: {
-            path: '/groups/'+route.params.groupId+'/projects'
+            path: '/groups/' + groupId + '/projects/' + projectId + '/documents',
+            query: {
+                projectName: name
+            }
         } 
     }
 }
