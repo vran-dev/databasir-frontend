@@ -4,7 +4,7 @@
   :collapse="isCollapse"
   mode="vertical"
   class="left-menu">
-    <el-menu-item v-if="isCollapse" @click="expandOrFold" index="#">
+    <el-menu-item v-if="isCollapse" @click="expandMenu" index="#">
       <el-icon><expand /></el-icon>
     </el-menu-item>
     <el-menu-item index="/">
@@ -50,11 +50,13 @@
 </style>
 <script>
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { user } from '../utils/auth'
+import store from '../store/index'
+
 export default {
   setup() {
-    const isCollapse = ref(false)
+    const isCollapse = computed(() => store.state.menu.isCollapse)
     const router = useRouter()
     const routes = router.options.routes
 
@@ -71,14 +73,14 @@ export default {
       return true
     }
 
-    const expandOrFold = () => {
-      isCollapse.value = !isCollapse.value
+    const expandMenu = () => {
+      store.commit('expandMenu')
     }
 
     return {
       isCollapse,
       isShowMenu,
-      expandOrFold,
+      expandMenu,
       routes,
     }
   }

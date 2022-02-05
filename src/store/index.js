@@ -15,7 +15,10 @@ const store = createStore({
             userData.email = data.email;
         }
         return {
-            user: userData
+            user: userData,
+            menu: {
+                isCollapse: true,
+            }
         }
     },
     mutations: {
@@ -29,6 +32,12 @@ const store = createStore({
             if (param.email) {
                 state.user.email = param.email
             }
+        },
+        foldMenu(state) {
+            state.menu.isCollapse = true
+        },
+        expandMenu(state) {
+            state.menu.isCollapse = false
         }
     }
 })

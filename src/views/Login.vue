@@ -24,10 +24,12 @@
                                 <el-button  style="width: 120px; margin-top:10px" color="#000" @click="onLogin('formRef')" plain round >
                                     登录
                                 </el-button>
-
-                                <el-link href="#" target="_blank" :underline="false" type="info">
-                                忘记密码？
-                                </el-link>
+                                <el-tooltip content="请联系管理员为您重置密码">
+                                    <el-link target="_blank" :underline="false" type="info">
+                                    忘记密码？
+                                    </el-link>
+                                </el-tooltip>
+                                
                             </el-space>
                             
                         </el-form-item>
