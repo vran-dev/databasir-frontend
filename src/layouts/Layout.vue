@@ -1,7 +1,7 @@
 <template>
-    <el-container>
-        <el-aside class="databasir-nav">
-            <AppNav></AppNav>
+    <el-container class="databasir">
+        <el-aside>
+            <AppNav class="databasir-nav"></AppNav>
         </el-aside>
         <el-header class="databasir-main-header">
             <Breadcrumb></Breadcrumb>
@@ -19,12 +19,11 @@
 
 <style>
 .databasir-nav {
-    display: block;
     position: fixed;
+    transform: scale(1, 1);
     left: 0;
     bottom: 0;
     top: 0;
-    width: 200px;
 }
 
 .databasir-main-header {
@@ -32,10 +31,12 @@
     justify-content: space-between;
     align-items: center;
     position: fixed;
+    transform: scale(1, 1);
     top: 0px;
     right: 0px;
-    left: 220px;
+    left: 100px;
     padding: 30px;
+    margin-left: 33px;
     background: #FFF;
     z-index: 100;
     border-color: #EEE;
@@ -43,10 +44,19 @@
     border-style: solid;
 }
 
+.databasir {
+    display: block;
+}
+
 .databasir-main {
-    margin-left: 200px;
+    position: relative;
+    margin-left: 133px;
     margin-top: 80px;
     --el-main-padding: 0px 20px 20px 20px;
+}
+
+.databasir-main-expand {
+    margin-left: 50px;
 }
 
 .databasir-main-content {
@@ -61,6 +71,12 @@ import Breadcrumb from '../components/Breadcrumb.vue'
 import Avatar from '../components/Avatar.vue'
 export default {
     components: { AppNav, Breadcrumb, Avatar },
+    // 根据侧边导航是否展开来决定 main 和 header 的 class
+    data() {
+        return {
+            
+        }
+    }
 }
 
 </script>
