@@ -53,22 +53,6 @@ const routes = [
                 }
             },
             {
-                path: ':groupId/projects/:projectId/edit',
-                hidden: true,
-                component: () => import('@/views/ProjectEdit.vue'),
-                meta: {
-                    breadcrumb: breadcurmbMap.groupProjectEdit
-                }
-            },
-            {
-                path: ':groupId/projects/create',
-                hidden: true,
-                component: () => import('@/views/ProjectEdit.vue'),
-                meta: {
-                    breadcrumb: breadcurmbMap.groupProjectCreate
-                }
-            },
-            {
                 path: ':groupId/projects/:projectId/documents',
                 hidden: true,
                 component: () => import('@/views/Document.vue'),

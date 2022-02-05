@@ -5,7 +5,7 @@
         <el-row :gutter="12">
             <el-col :span="3" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId, 'GROUP_MEMBER?groupId='+groupId]">
                 <el-tooltip content="新建一个新项目" placement="top">
-                    <el-button type="primary" style="width:100%" icon="plus" @click="toProjectEditPage(null)">新建</el-button>
+                    <el-button type="primary" style="width:100%" icon="plus" @click="toCreateProject">新建</el-button>
                 </el-tooltip>
             </el-col>
             <el-col :span="8">
@@ -31,7 +31,7 @@
                 <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
                 <el-table-column label="项目名称" min-width="120" fixed="left" resizable>
                     <template v-slot="scope">
-                        <el-link :underline="true" :icon="Edit" @click.stop="onClickShowProjectDetail(scope.row)">{{ scope.row.name }}</el-link>
+                        <el-link :underline="true" :icon="Edit" @click.stop="toEditProject(scope.row)">{{ scope.row.name }}</el-link>
                     </template>
                 </el-table-column>
                 <el-table-column prop="databaseName" label="数据库" width="200"  resizable />
@@ -51,9 +51,9 @@
                 <el-table-column fixed="right" label="操作" min-width="180" align="center"  resizable>
                     <template v-slot="scope">
                         <el-space>
-                            <el-button type="primary" size="small" @click.stop="toProjectEditPage(scope.row)">编辑</el-button>
+                            <el-button type="primary" size="small" @click.stop="toEditProject(scope.row)">编辑</el-button>
                             <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)">查看文档</el-button>
-                            <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.id)">删除</el-button>
+                            <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.id)" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId]">删除</el-button>
                         </el-space>
                     </template>
                 </el-table-column>
@@ -73,68 +73,144 @@
             </el-col>
         </el-row>
 
-        <!-- project detail -->
-        <el-drawer
-            v-model="isShowProjectDetailDrawer"
-            title="项目详情"
-            size="50%"
-        >
-            <el-descriptions
-                title="基础信息"
-                :column="1"
-                border
-            >
-                <el-descriptions-item label="项目名称">{{ projectDetailData.name }}</el-descriptions-item>
-                <el-descriptions-item label="项目描述">{{ projectDetailData.description }}</el-descriptions-item>
-                <el-descriptions-item label="创建时间" :span="2">{{ projectDetailData.createAt }}</el-descriptions-item>
-            </el-descriptions>
-            <br/>
+        <!-- project form -->
+        <el-dialog v-model="isShowProjectEditDialog" width="60%" center destroy-on-close>
+            <el-form :model="projectForm" label-position="top" :rules="projectFormRules" ref="projectFormRulesRef">
+                <el-tabs>
+                    <el-tab-pane label="基础配置">
+                        <!-- basic -->
+                        <h2>基础信息</h2>
+                        <el-form-item label="名称" prop="name">
+                            <el-col :span="17">
+                            <el-input v-model="projectForm.name" placeholder="项目名称"></el-input>
+                            </el-col>
+                        </el-form-item>
+                        <el-form-item label="描述" prop="description">
+                            <el-col :span="17">
+                            <el-input v-model="projectForm.description" type="textarea" placeholder="项目描述"></el-input>
+                            </el-col>
+                        </el-form-item>                              
+                        <!-- connection -->
+                        <h2>连接配置</h2>
+                        <el-row :gutter="33">
+                            <el-col :span="8">
+                                <el-form-item label="用户名" prop="dataSource.username">
+                                    <el-input v-model="projectForm.dataSource.username" placeholder="root"></el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="9">
+                                <el-form-item label="密码"  prop="dataSource.password">
+                                    <el-input v-model="projectForm.dataSource.password" placeholder="**********"  :type="password" show-password></el-input>
+                                </el-form-item>                         
+                            </el-col>
+                            <el-col :span="17">
+                                <el-form-item label="地址" prop="dataSource.url">
+                                    <el-input v-model="projectForm.dataSource.url" placeholder="127.0.0.1:3306"></el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="8">
+                                <el-form-item label="数据库" prop="dataSource.databaseName">
+                                    <el-input v-model="projectForm.dataSource.databaseName" placeholder="需要同步的数据库名称"></el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="8">
+                                <el-form-item label="数据库类型" prop="dataSource.databaseType">
+                                    <el-select v-model="projectForm.dataSource.databaseType" placeholder="选择数据库类型" clearable>
+                                        <el-option
+                                        v-for="item in databaseTypes"
+                                        :key="item"
+                                        :label="item"
+                                        :value="item"
+                                        >
+                                        </el-option>
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-form-item :label="index > 0 ? '':'属性'" v-for="(item, index) in projectForm.dataSource.properties" :key="index">
+                            <el-col :span="8">
+                                <el-input v-model.trim="item.key" placeholder="Key"></el-input>
+                            </el-col>
+                            <el-col  :offset="1" :span="8">
+                                <el-input v-model.trim="item.value" placeholder="Value" />
+                            </el-col>
+                            <el-col :offset="1" :span="6">
+                                <el-button type="danger" size="small" @click="removeDataSourceProperty(index)">- 删除</el-button>
+                                <el-button type="primary" size="small" @click="addDataSourceProperty" v-if="(index+1) == projectForm.dataSource.properties.length">+ 添加</el-button>
+                            </el-col>
+                        </el-form-item>
+                        <el-form-item label="属性" v-if="projectForm.dataSource.properties.length == 0">
+                            <el-button type="text" size="small" @click="addDataSourceProperty" >+ 添加</el-button>
+                        </el-form-item>
 
-            <el-descriptions
-                title="数据源"
-                :column="1"
-                border
-            >
-                <el-descriptions-item label="地址">{{ projectDetailData.dataSource.url }}</el-descriptions-item>
-                <el-descriptions-item label="用户名">{{ projectDetailData.dataSource.username }}</el-descriptions-item>
-                <el-descriptions-item label="数据库名称">{{ projectDetailData.dataSource.databaseName }}</el-descriptions-item>
-                <el-descriptions-item label="数据库类型">{{ projectDetailData.dataSource.databaseType }}</el-descriptions-item>
-                <el-descriptions-item label="连接属性">
-                    <ul>
-                        <li v-for="(item, index) in projectDetailData.dataSource.properties" :key="index">
-                            {{ item.key +' = '+item.value}}
-                        </li>
-                    </ul>
-                </el-descriptions-item>
+                        <el-form-item>
+                            <el-col>
+                                <el-button v-if="testConnectionState.isTest" plain circle :type="testConnectionState.buttonType" size="small">
+                                    <el-icon v-if="testConnectionState.success"><check /></el-icon>
+                                    <el-icon v-else><close /></el-icon>
+                                </el-button>
+                                <el-button :type="testConnectionState.buttonType" plain size="small" @click="onTestConnection('projectFormRulesRef')" :loading="loading.testConnection">
+                                    测试连接
+                                </el-button>
+                            </el-col>
+                            <el-col v-if="testConnectionState.isTest && !testConnectionState.success">
+                                <el-link type="danger" :underline="false">{{ testConnectionState.message }}</el-link>
+                            </el-col>
+                        </el-form-item>
+                    </el-tab-pane>
 
-            </el-descriptions>
-            <br/>
-            <el-descriptions
-                title="高级配置"
-                :column="1"
-                direction="vertical"
-                border
-            >
-                <el-descriptions-item label="自动同步配置">
-                    <el-tag v-if="projectDetailData.projectSyncRule.isAutoSync">
-                        {{ projectDetailData.projectSyncRule.autoSyncCron }}
-                    </el-tag>
-                    <span v-else>
-                        无
-                    </span>
-                </el-descriptions-item>
-                <el-descriptions-item label="过滤表配置">
-                    <el-space direction="vertical">
-                        <el-tag v-for="(item, index) in projectDetailData.projectSyncRule.ignoreTableNameRegexes" :key="index">{{ item }}</el-tag>
-                    </el-space>
-                </el-descriptions-item><br>
-                <el-descriptions-item label="过滤列配置">
-                    <el-space direction="vertical">
-                        <el-tag v-for="(item, index) in projectDetailData.projectSyncRule.ignoreColumnNameRegexes" :key="index">{{ item }}  </el-tag>
-                    </el-space>
-                </el-descriptions-item>
-            </el-descriptions>
-        </el-drawer>
+                    <el-tab-pane label="高级配置">
+                        <!-- schema meta sync rule-->
+                        <h2>同步规则</h2>
+                        <el-form-item label="定时同步">
+                            <el-space wrap :size="33">
+                                <el-switch v-model="projectForm.projectSyncRule.isAutoSync"></el-switch>
+                                <el-input 
+                                    v-model="projectForm.projectSyncRule.autoSyncCron" 
+                                    v-if="projectForm.projectSyncRule.isAutoSync" 
+                                    placeholder="CRON 表达式" 
+                                    >
+                                </el-input>    
+                            </el-space>
+                        </el-form-item>
+
+                        <!-- ignore table name regex -->
+                        <el-form-item :label="index > 0 ? '': '忽略表名称（支持正则表达式）'" v-for="(item, index) in projectForm.projectSyncRule.ignoreTableNameRegexes" :key="index">
+                            <el-col :span="6">
+                                <el-input v-model="projectForm.projectSyncRule.ignoreTableNameRegexes[index]" placeholder="name regex"></el-input>
+                            </el-col>
+                            <el-col :span="6" :offset="1">
+                                <el-button type="danger" size="small" @click="removeIgnoreTableName(index)">- 删除</el-button>
+                                <el-button type="primary" size="small" @click="addIgnoreTableName" v-if="(index+1) == projectForm.projectSyncRule.ignoreTableNameRegexes.length">+ 添加</el-button>
+                            </el-col>
+                        </el-form-item>
+                        <el-form-item label="忽略表名称（支持正则表达式）" v-if="projectForm.projectSyncRule.ignoreTableNameRegexes.length == 0">
+                            <el-button type="text" size="small" @click="addIgnoreTableName" >+ 添加</el-button>
+                        </el-form-item>
+
+                        <!-- ignore column name regex -->
+                        <el-form-item :label="index > 0 ? '' : '忽略列名称（支持正则表达式）'" v-for="(item, index) in projectForm.projectSyncRule.ignoreColumnNameRegexes" :key="index">
+                            <el-col :span="6">
+                                <el-input v-model="projectForm.projectSyncRule.ignoreColumnNameRegexes[index]" placeholder="name regex"></el-input>
+                            </el-col>
+                            <el-col :span="6"  :offset="1">
+                                <el-button type="danger" size="small" @click="removeIgnoreColumnName(index)">- 删除</el-button>
+                                <el-button type="primary" size="small" @click="addIgnoreColumnName" v-if="(index+1) == projectForm.projectSyncRule.ignoreColumnNameRegexes.length">+ 添加</el-button>
+                            </el-col>
+                        </el-form-item>
+                        <el-form-item label="忽略列名称（支持正则表达式）" v-if="projectForm.projectSyncRule.ignoreColumnNameRegexes.length == 0">
+                            <el-button type="text" size="small" @click="addIgnoreColumnName" >+ 添加</el-button>
+                        </el-form-item>
+                    </el-tab-pane>
+                </el-tabs>
+                <el-form-item>
+                    <el-divider content-position="center"></el-divider>
+                    <el-button type="primary" @click="onProjectFormSave('projectFormRulesRef')" >保存</el-button>
+                    <el-button @click="onProjectFormCancel">取消</el-button>
+                </el-form-item>
+            </el-form>
+        </el-dialog>
+
     </el-tab-pane>
     
     <el-tab-pane label="分组成员">
@@ -260,7 +336,7 @@
 }
 </style>
 <script>
-import { listProjects, deleteProjectById, getProjectById } from '@/api/Project'
+import { listProjects, deleteProjectById, getProjectById, testConnection, createOrUpdateProject } from '@/api/Project'
 import { listGroupMembers, removeGroupMember, addGroupMember, updateGroupMemberRole } from '../api/Group'
 import { listUsers } from '../api/User'
 import { ElMessage } from 'element-plus'
@@ -269,12 +345,9 @@ import { databaseTypes } from '@/api/Const.js'
 export default {
     data() {
         return {
-            isShowProjectDetailDrawer: false,
+            isShowProjectEditDialog: false,
             isShowAddGroupMemberDrawer: false,
             // ====== project domain ======
-            projectDetailData: {
-
-            },
             projectPageData: {
                 data: [],
                 number: 1,
@@ -318,6 +391,47 @@ export default {
                 totalPages: 1
             },
 
+            // ======= project form ======
+            projectForm: {
+                id: null,
+                name: null,
+                description: null,
+                groupId: null,
+                dataSource: {
+                    username: null,
+                    databaseType: null,
+                    databaseName: null,
+                    password: null,
+                    url: null,
+                    properties: []
+                },
+                projectSyncRule: {
+                    isAutoSync: false,
+                    autoSyncCron: null,
+                    ignoreTableNameRegexes: [],
+                    ignoreColumnNameRegexes: []
+                }
+            },
+            projectFormRules: {
+                name: [ {required: true, message: '名称不能为空',trigger: 'blur'}, ],
+                description: [ {required: true, message: '说明不能为空',trigger: 'blur'}, ],
+                dataSource: {
+                    username: [ {required: true,message: '数据库用户名不能为空',trigger: 'blur'} ],
+                    url: [ {required: true,message: '数据库连接地址不能为空',trigger: 'blur'} ],
+                    databaseName: [ {required: true,message: '数据库名称不能为空',trigger: 'blur'} ],
+                    databaseType: [ {required: true,message: '请选择数据库类型',trigger: 'change'} ],
+                }
+            },
+            testConnectionState: {
+                buttonType: 'primary',
+                isTest: false,
+                success: false,
+                message: null,
+            },
+            loading: {
+                testConnection: false
+            },
+
             // ======= common domain ======
             databaseTypes: databaseTypes,
             groupId: null,
@@ -330,6 +444,15 @@ export default {
             this.projectFilter.groupId = this.$route.params.groupId
             this.groupId = this.$route.params.groupId
         }
+
+        this.$watch(
+            () => this.projectForm.dataSource,
+            () => {
+                this.testConnectionState.isTest = false
+                this.testConnectionState.buttonType = 'primary'
+            },
+            { deep: true }
+        )
         this.fetchGroupProjects()
         this.fetchGroupMembers()
     },
@@ -501,25 +624,36 @@ export default {
             })
         },
 
-        onClickShowProjectDetail(row) {
+        toEditProject(row) {
             getProjectById(row.id).then(resp => {
-                        this.projectDetailData =  resp.data
-                        this.isShowProjectDetailDrawer = true
+                        this.projectForm = resp.data
+                        this.isShowProjectEditDialog = true
                     })
         },
         
-        toProjectEditPage(project) {
+        toCreateProject() {
             const groupId = this.$route.params.groupId
-            if (project != null) {
-                const projectId = project.id
-                const projectName = project.name
-                this.$router.push({
-                    path: "/groups/"+ groupId +"/projects/" + projectId + "/edit",
-                    query: { projectName: projectName }
-                })
-            } else {
-                this.$router.push({path: "/groups/"+groupId+"/projects/create"})
+            this.projectForm = {
+                id: null,
+                name: null,
+                description: null,
+                groupId: groupId,
+                dataSource: {
+                    username: null,
+                    databaseType: null,
+                    databaseName: null,
+                    password: null,
+                    url: null,
+                    properties: []
+                },
+                projectSyncRule: {
+                    isAutoSync: false,
+                    autoSyncCron: null,
+                    ignoreTableNameRegexes: [],
+                    ignoreColumnNameRegexes: []
+                }
             }
+            this.isShowProjectEditDialog = true
         },
 
         toDocumentPage(project) {
@@ -529,7 +663,97 @@ export default {
                 path: "/groups/" + groupId + "/projects/" + projectId +  "/documents",
                 query: { projectName: project.name }
             })
-        }        
+        },
+        
+        // project form domain
+        onProjectFormSave(){
+            this.$refs.projectFormRulesRef.validate((valid) => {
+                if(!valid) {
+                    this.$message.error('请填写表单必填项')
+                    return false
+                } 
+
+                if (!this.projectForm.id && !this.projectForm.dataSource.password) {
+                    this.$message.error('请填写数据库连接密码')
+                    return false
+                }
+
+                createOrUpdateProject(this.projectForm).then(resp => {
+                    if (!resp.errCode) {
+                        this.$message.success('保存成功')
+                        this.fetchGroupProjects()
+                        this.isShowProjectEditDialog = false
+                    }
+                    return true;
+                })
+            })
+        },
+        onProjectFormCancel(){
+            this.isShowProjectEditDialog = false
+        },
+
+        addDataSourceProperty(){
+            this.projectForm.dataSource.properties.push({key:"", value:""})
+        },
+
+        removeDataSourceProperty(index){
+            this.projectForm.dataSource.properties.splice(index, 1)
+        },
+
+        addIgnoreTableName(){
+            this.projectForm.projectSyncRule.ignoreTableNameRegexes.push("")
+        },
+
+        removeIgnoreTableName(index) {
+            this.projectForm.projectSyncRule.ignoreTableNameRegexes.splice(index, 1)
+        },
+
+        addIgnoreColumnName(){
+            this.projectForm.projectSyncRule.ignoreColumnNameRegexes.push("")
+        },
+
+        removeIgnoreColumnName(index){
+            this.projectForm.projectSyncRule.ignoreColumnNameRegexes.splice(index, 1)
+        },
+
+        onTestConnection(){
+            this.loading.testConnection = true
+            this.$refs.projectFormRulesRef.validate((valid) => {
+                if(!valid) {
+                    this.$message.error('请填写表单必填项')
+                    this.loading.testConnection = false
+                    return false
+                } 
+
+                if (!this.projectForm.id && !this.projectForm.dataSource.password) {
+                    this.$message.error('请填写数据库连接密码')
+                    this.loading.testConnection = false
+                    return false
+                }
+                const request = {
+                    projectId: this.projectForm.id,
+                    databaseType: this.projectForm.dataSource.databaseType,
+                    databaseName: this.projectForm.dataSource.databaseName,
+                    username: this.projectForm.dataSource.username,
+                    password: this.projectForm.dataSource.password,
+                    url: this.projectForm.dataSource.url,
+                    properties: this.projectForm.dataSource.properties
+                }
+                testConnection(request).then(resp => {
+                    if (!resp.errCode) {
+                        this.testConnectionState.success = true
+                        this.testConnectionState.buttonType = 'success'
+                        this.$message.success('连接成功')
+                    } else {
+                        this.testConnectionState.success = false
+                        this.testConnectionState.buttonType = 'danger'
+                    }
+                    this.testConnectionState.isTest = true
+                    this.testConnectionState.message = resp.errMessage
+                }).finally(() => this.loading.testConnection = false)
+            })
+            
+        }
     }
 }
 </script>

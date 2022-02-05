@@ -17,7 +17,7 @@ function groupList() {
 }
 
 function groupDashboard(route) {
-    var groupName = '分組详情'
+    var groupName = '分组详情'
     if (route.query.groupName) {
         groupName = route.query.groupName
     }
@@ -34,19 +34,6 @@ function groupProjectCreate() {
         name:'项目创建',
         to: {
             path: '/projects/create'
-        } 
-    }
-}
-
-function groupProjectEdit(route) {
-    var name = '项目编辑'
-    if (route.query.projectName) {
-        name = route.query.projectName
-    }
-    return {
-        name: name,
-        to: {
-            path: '/projects/'+route.params.projectId+'/edit'
         } 
     }
 }
@@ -97,7 +84,6 @@ const breadcurmbMap = {
     groupList: () => [index(), groupList()],
     groupDashboard: (route, state) => [index(), groupList(), groupDashboard(route, state)],
     groupProjectCreate:(route, state) =>  [index(), groupList(), groupDashboard(route, state), groupProjectCreate(route)],
-    groupProjectEdit: (route, state) => [index(), groupList(), groupDashboard(route, state), groupProjectEdit(route)],
     groupProjectDocument: (route, state) => [index(), groupList(), groupDashboard(route, state),  groupProjectDocument(route)],
     userProfile: () =>  [index(), userProfile()],
     userList: () =>  [index(), userList()],
