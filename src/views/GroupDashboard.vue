@@ -74,7 +74,7 @@
         </el-row>
 
         <!-- project form -->
-        <el-dialog v-model="isShowProjectEditDialog" width="60%" center destroy-on-close>
+        <el-dialog v-model="isShowProjectEditDialog" width="42%" center destroy-on-close >
             <el-form :model="projectForm" label-position="top" :rules="projectFormRules" ref="projectFormRulesRef">
                 <el-tabs>
                     <el-tab-pane label="基础配置">
