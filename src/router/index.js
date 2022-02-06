@@ -32,7 +32,7 @@ const routes = [
         icon: 'Collection',
         component: Layout,
         meta: {
-            nav: '分组列表',
+            nav: '项目中心',
         },
         children: [
             {
