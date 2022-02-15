@@ -46,7 +46,7 @@ export const user = {
         if (!window.localStorage.getItem(userLoginDataKey)) {
             return null;
         } else {
-            const data =window.localStorage.getItem(userLoginDataKey)
+            const data = window.localStorage.getItem(userLoginDataKey)
             return JSON.parse(data)
         }
     },
