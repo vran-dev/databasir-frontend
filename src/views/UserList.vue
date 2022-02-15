@@ -30,7 +30,9 @@
                 <el-table-column prop="username" label="用户名" min-width="120" resizable />
                 <el-table-column label="邮箱" width="200"  resizable>
                     <template v-slot="scope">
-                        <el-link :underline="true" @click="onGetUserDetail(scope.row)">{{ scope.row.email }}</el-link>
+                        <el-link :underline="true" @click="onGetUserDetail(scope.row)" type="primary">
+                            {{ scope.row.email }}
+                        </el-link>
                     </template>
                 </el-table-column>
                 <el-table-column label="启用状态" resizable >
