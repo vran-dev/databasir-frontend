@@ -53,6 +53,7 @@
                         <el-space>
                             <el-button type="primary" size="small" @click.stop="toEditProject(scope.row)">编辑</el-button>
                             <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)">查看文档</el-button>
+                            <el-button type="primary" size="small" @click.stop="toProjectOperationLogDrawer(scope.row)">日志</el-button>
                             <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.id)" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId]">删除</el-button>
                         </el-space>
                     </template>
@@ -210,7 +211,46 @@
                 </el-form-item>
             </el-form>
         </el-dialog>
+        <el-drawer
+            v-model="isShowProjectOperationLogDrawer"
+            title="项目日志"
+            size="50%"
+        >
+            <el-table :data="projectOperationLogPageData.data">
+                <el-table-column prop="id" label="ID"/>
+                <el-table-column prop="operatorNickname" label="操作人" />
+                <el-table-column prop="operationName" label="操作" />
+                <el-table-column label="状态" >
+                    <template v-slot="scope">
+                        <span v-if="scope.row.isSuccess">
+                            <el-tag type="success">成功</el-tag>
+                        </span>
+                        <span v-else>
+                            <el-tag  type="danger">失败</el-tag>
+                        </span>
+                    </template>
+                </el-table-column>
 
+                <el-table-column label="错误信息" >
+                    <template v-slot="scope">
+                        <span v-if="scope.row.isSuccess">
+                        </span>
+                        <span v-else>
+                            {{ scope.row.operationResponse.errMessage }}
+                        </span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="createAt" label="记录时间" />
+            </el-table>
+            <el-pagination layout="prev, pager, next" 
+                :hide-on-single-page="false"
+                :currentPage="projectOperationLogPageData.number" 
+                :page-size="projectOperationLogPageData.size" 
+                :page-count="projectOperationLogPageData.totalPages"
+                @current-change="onProjectOperationLogCurrentPageChange">
+
+            </el-pagination>
+        </el-drawer>
     </el-tab-pane>
     
     <el-tab-pane label="分组成员">
@@ -339,6 +379,7 @@
 import { listProjects, deleteProjectById, getProjectById, testConnection, createOrUpdateProject } from '@/api/Project'
 import { listGroupMembers, removeGroupMember, addGroupMember, updateGroupMemberRole } from '../api/Group'
 import { listUsers } from '../api/User'
+import { listOperationLogs } from '../api/OperationLog'
 import { ElMessage } from 'element-plus'
 import { databaseTypes } from '@/api/Const.js'
 
@@ -347,6 +388,7 @@ export default {
         return {
             isShowProjectEditDialog: false,
             isShowAddGroupMemberDrawer: false,
+            isShowProjectOperationLogDrawer: false,
             // ====== project domain ======
             projectPageData: {
                 data: [],
@@ -431,7 +473,20 @@ export default {
             loading: {
                 testConnection: false
             },
+            projectOperationLogPageData: {
+                data: [],
+                number: 1,
+                size: 10,
+                totalElements:0,
+                totalPages: 1
+            },
 
+            projectOperationLogPageQuery: {
+                page: 0,
+                size: 10,
+                involveProjectId: null,
+                module: 'project',
+            },
             // ======= common domain ======
             databaseTypes: databaseTypes,
             groupId: null,
@@ -623,14 +678,12 @@ export default {
                 })
             })
         },
-
         toEditProject(row) {
             getProjectById(row.id).then(resp => {
                         this.projectForm = resp.data
                         this.isShowProjectEditDialog = true
                     })
         },
-        
         toCreateProject() {
             const groupId = this.$route.params.groupId
             this.projectForm = {
@@ -655,7 +708,6 @@ export default {
             }
             this.isShowProjectEditDialog = true
         },
-
         toDocumentPage(project) {
             const groupId = this.$route.params.groupId
             const projectId = project.id
@@ -663,6 +715,35 @@ export default {
                 path: "/groups/" + groupId + "/projects/" + projectId +  "/documents",
                 query: { projectName: project.name }
             })
+        },
+
+        // project operation logs
+        fetchProjectOperationLogs(currentPage) {
+            if (currentPage) {
+                this.projectOperationLogPageQuery.page = currentPage - 1
+            } else {
+                this.projectOperationLogPageQuery.page = null
+            }
+            listOperationLogs(this.projectOperationLogPageQuery).then(resp => {
+                if (!resp.errCode) {
+                    this.projectOperationLogPageData.data = resp.data.content
+                    this.projectOperationLogPageData.number = resp.data.number + 1
+                    this.projectOperationLogPageData.size = resp.data.size
+                    this.projectOperationLogPageData.totalPages = resp.data.totalPages
+                    this.projectOperationLogPageData.totalElements = resp.data.totalElements
+                }
+            })
+        },
+        onProjectOperationLogCurrentPageChange(currentPage) {
+            if (currentPage && (currentPage -1) != this.projectOperationLogPageQuery.page) {
+                this.projectOperationLogPageQuery.page = currentPage - 1
+                this.fetchProjectOperationLogs(currentPage)
+            }
+        },
+        toProjectOperationLogDrawer(project) {
+            this.projectOperationLogPageQuery.involveProjectId = project.id
+            this.fetchProjectOperationLogs()
+            this.isShowProjectOperationLogDrawer = true
         },
         
         // project form domain
