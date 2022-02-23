@@ -115,6 +115,15 @@ const routes = [
                     breadcrumb: breadcurmbMap.sysEmailEdit
                 }
             },
+            {
+                path: 'sysLog',
+                icon: 'Document',
+                component: () => import('@/views/SysLog.vue'),
+                meta: {
+                    nav: '操作日志',
+                    breadcrumb: breadcurmbMap.sysLog
+                }
+            },
             // TODO
             {
                 path: 'sysKey',

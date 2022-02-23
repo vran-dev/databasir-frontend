@@ -75,6 +75,15 @@ function sysEmailEdit() {
     }
 }
 
+function sysLog() {
+    return {
+        name:'操作日志',
+        to: {
+            path: '/settings/sysLog'
+        } 
+    }
+}
+
 const breadcurmbMap = {
     index: () => [index() ],
     groupList: () => [index(), groupList()],
@@ -82,7 +91,8 @@ const breadcurmbMap = {
     groupProjectDocument: (route, state) => [index(), groupList(), groupDashboard(route, state),  groupProjectDocument(route)],
     userProfile: () =>  [index(), userProfile()],
     userList: () =>  [index(), userList()],
-    sysEmailEdit: () => [index(), sysEmailEdit()]
+    sysEmailEdit: () => [index(), sysEmailEdit()],
+    sysLog: () => [index(), sysLog()]
 }
 
 export default breadcurmbMap
