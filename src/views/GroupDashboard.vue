@@ -31,7 +31,7 @@
                 <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
                 <el-table-column label="项目名称" min-width="120" fixed="left" resizable>
                     <template v-slot="scope">
-                        <el-link :underline="true" :icon="Edit" @click.stop="toEditProject(scope.row)">{{ scope.row.name }}</el-link>
+                        <el-link :underline="true" :icon="Edit" @click.stop="toDocumentPage(scope.row)">{{ scope.row.name }}</el-link>
                     </template>
                 </el-table-column>
                 <el-table-column prop="databaseName" label="数据库" width="200"  resizable />
@@ -80,41 +80,45 @@
                 <el-tabs>
                     <el-tab-pane label="基础配置">
                         <!-- basic -->
-                        <h2>基础信息</h2>
-                        <el-form-item label="名称" prop="name">
-                            <el-col :span="17">
-                            <el-input v-model="projectForm.name" placeholder="项目名称"></el-input>
+                        <h3>基础信息</h3>
+                        <el-row :gutter="33">
+                            <el-col :span="8">
+                                <el-form-item label="名称" prop="name">
+                                        <el-input v-model="projectForm.name" placeholder="项目名称"></el-input>
+                                </el-form-item>
                             </el-col>
-                        </el-form-item>
-                        <el-form-item label="描述" prop="description">
-                            <el-col :span="17">
-                            <el-input v-model="projectForm.description" type="textarea" placeholder="项目描述"></el-input>
+
+                            <el-col :span="12">
+                                <el-form-item label="描述" prop="description">
+                                        <el-input v-model="projectForm.description" type="textarea" placeholder="项目描述"></el-input>
+                                </el-form-item>   
                             </el-col>
-                        </el-form-item>                              
+                        </el-row>
+                                                   
                         <!-- connection -->
-                        <h2>连接配置</h2>
+                        <h3>连接配置</h3>
                         <el-row :gutter="33">
                             <el-col :span="8">
                                 <el-form-item label="用户名" prop="dataSource.username">
                                     <el-input v-model="projectForm.dataSource.username" placeholder="root"></el-input>
                                 </el-form-item>
                             </el-col>
-                            <el-col :span="9">
+                            <el-col :span="12">
                                 <el-form-item label="密码"  prop="dataSource.password">
                                     <el-input v-model="projectForm.dataSource.password" placeholder="**********"  :type="password" show-password></el-input>
                                 </el-form-item>                         
                             </el-col>
-                            <el-col :span="17">
+                            <el-col :span="8">
                                 <el-form-item label="地址" prop="dataSource.url">
                                     <el-input v-model="projectForm.dataSource.url" placeholder="127.0.0.1:3306"></el-input>
                                 </el-form-item>
                             </el-col>
-                            <el-col :span="8">
+                            <el-col :span="7">
                                 <el-form-item label="数据库" prop="dataSource.databaseName">
                                     <el-input v-model="projectForm.dataSource.databaseName" placeholder="需要同步的数据库名称"></el-input>
                                 </el-form-item>
                             </el-col>
-                            <el-col :span="8">
+                            <el-col :span="5">
                                 <el-form-item label="数据库类型" prop="dataSource.databaseType">
                                     <el-select v-model="projectForm.dataSource.databaseType" placeholder="选择数据库类型" clearable>
                                         <el-option
@@ -129,16 +133,16 @@
                             </el-col>
                         </el-row>
                         <el-form-item :label="index > 0 ? '':'属性'" v-for="(item, index) in projectForm.dataSource.properties" :key="index">
-                            <el-col :span="8">
-                                <el-input v-model.trim="item.key" placeholder="Key"></el-input>
-                            </el-col>
-                            <el-col  :offset="1" :span="8">
-                                <el-input v-model.trim="item.value" placeholder="Value" />
-                            </el-col>
-                            <el-col :offset="1" :span="6">
-                                <el-button type="danger" size="small" @click="removeDataSourceProperty(index)">- 删除</el-button>
-                                <el-button type="primary" size="small" @click="addDataSourceProperty" v-if="(index+1) == projectForm.dataSource.properties.length">+ 添加</el-button>
-                            </el-col>
+                                <el-col :span="6">
+                                    <el-input v-model.trim="item.key" placeholder="Key"></el-input>
+                                </el-col>
+                                <el-col  :span="6" style="margin-left:33px;">
+                                    <el-input v-model.trim="item.value" placeholder="Value" />
+                                </el-col>
+                                <el-col :span="8" style="margin-left:33px;">
+                                    <el-button type="danger" size="small" @click="removeDataSourceProperty(index)">- 删除</el-button>
+                                    <el-button type="primary" size="small" @click="addDataSourceProperty" v-if="(index+1) == projectForm.dataSource.properties.length">+ 添加</el-button>
+                                </el-col>
                         </el-form-item>
                         <el-form-item label="属性" v-if="projectForm.dataSource.properties.length == 0">
                             <el-button type="text" size="small" @click="addDataSourceProperty" >+ 添加</el-button>
@@ -347,8 +351,12 @@
                         <el-table-column prop="email" label="邮箱" />
                         <el-table-column label="启用状态" width="100">
                             <template v-slot="scope">
-                                <span v-if="scope.row.enabled">启用中</span>
-                                <span v-else>已禁用</span>
+                                <span v-if="scope.row.enabled">
+                                    <el-tag type="success">启用中</el-tag>
+                                </span>
+                                <span v-else>
+                                    <el-tag type="danger">已禁用</el-tag>
+                                </span>
                             </template>
                         </el-table-column>
                         <el-table-column label="操作">
@@ -358,7 +366,7 @@
                                 </span>
                                 <span v-else>
                                     <el-button type="primary" plain size="small" @click="onGroupMemberAdd(scope.row.id, 'GROUP_MEMBER')">+ 添加组员</el-button>
-                                    <el-button type="success" plain size="small" @click="onGroupMemberAdd(scope.row.id, 'GROUP_OWNER')">+ 添加组长</el-button>
+                                    <el-button type="plain" plain size="small" @click="onGroupMemberAdd(scope.row.id, 'GROUP_OWNER')">+ 添加组长</el-button>
                                 </span>
                             </template>
                         </el-table-column>
