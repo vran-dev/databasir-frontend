@@ -2,17 +2,7 @@
     <el-container>
         <el-header>
             <el-row :gutter="10">
-                <el-col :span="3">
-                    <el-select v-model="projectOperationLogPageQuery.isSuccess" placeholder="是否成功" @change="onQuery" clearable>
-                        <el-option
-                        v-for="item in [true, false]"
-                        :key="item"
-                        :label="item?'成功':'失败'"
-                        :value="item"
-                        >
-                        </el-option>
-                    </el-select>
-                </el-col>
+                
             </el-row>
         </el-header>
         <el-main>
@@ -22,6 +12,17 @@
                 <el-table-column prop="operatorNickname" label="操作人" />
                 <el-table-column prop="operationName" label="操作" />
                 <el-table-column label="状态" >
+                    <template #header>
+                        <el-select v-model="projectOperationLogPageQuery.isSuccess" placeholder="状态" @change="onQuery" clearable size="small" tag-type="success">
+                            <el-option
+                            v-for="item in [true, false]"
+                            :key="item"
+                            :label="item?'成功':'失败'"
+                            :value="item"
+                            >
+                            </el-option>
+                        </el-select>
+                    </template>
                     <template v-slot="scope">
                         <span v-if="scope.row.isSuccess">
                             <el-tag type="success">成功</el-tag>
