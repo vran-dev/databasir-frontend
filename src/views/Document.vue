@@ -55,7 +55,7 @@
         </el-row>
         <el-row>
           <el-col>
-            <el-table :data="state.databaseDocument.tables"  border width='80%'>
+            <el-table :data="state.databaseDocument.tables"  border stripe width='80%'>
               <el-table-column type="index" />
               <el-table-column prop="name" label="Name" min-width="160" resizable />
               <el-table-column prop="type" label="Type" width="200"  resizable />
@@ -84,7 +84,7 @@
           </el-row>
           <el-row>
             <el-col >
-              <el-table :data="tableMeta.columns" border fit width='80%'>
+              <el-table :data="tableMeta.columns" border stripe fit width='80%'>
                 <el-table-column type="index" />
                 <el-table-column prop="name" label="Name" min-width="120" />
                 <el-table-column prop="type" :formatter="columnTypeFormat" label="Type" width="140" />
@@ -122,7 +122,7 @@
             </el-row>
             <el-row>
               <el-col >
-                <el-table :data="tableMeta.indexes" border fit width='80%'>
+                <el-table :data="tableMeta.indexes" border stripe fit width='80%'>
                   <el-table-column type="index" />
                   <el-table-column prop="name" label="Name" min-width="120" />
                   <el-table-column prop="isUnique" label="Is Unique" width="120">
@@ -144,7 +144,7 @@
             </el-row>
             <el-row>
               <el-col >
-                <el-table :data="tableMeta.triggers" fit border width='80%'>
+                <el-table :data="tableMeta.triggers" stripe fit border width='80%'>
                   <el-table-column type="index" />
                   <el-table-column prop="name" label="Name" min-width="120" />
                   <el-table-column prop="timing" label="timing" />
