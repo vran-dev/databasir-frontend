@@ -14,10 +14,10 @@
                             </el-divider>
                         </el-form-item>
                         <el-form-item  prop="username">
-                            <input type="text" class="login-input" placeholder="用户名或邮箱" v-model="form.username">
+                            <input type="text" class="login-input" placeholder="用户名或邮箱" v-model="form.username" @keyup.enter="onLogin('formRef')">
                         </el-form-item>
                         <el-form-item prop="password">
-                            <input type="password" class="login-input" placeholder="密码" v-model="form.password">
+                            <input type="password" class="login-input" placeholder="密码" v-model="form.password" @keyup.enter="onLogin('formRef')" >
                         </el-form-item>
                         <el-form-item>
                             <el-space :size="32">
