@@ -50,12 +50,33 @@
                 <el-table-column prop="createAt" label="创建时间" min-width="120" resizable ></el-table-column>
                 <el-table-column fixed="right" label="操作" min-width="180" align="center"  resizable>
                     <template v-slot="scope">
-                        <el-space>
-                            <el-button type="primary" size="small" @click.stop="toEditProject(scope.row)">编辑</el-button>
-                            <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)">查看文档</el-button>
-                            <el-button type="primary" size="small" @click.stop="toProjectOperationLogDrawer(scope.row)">日志</el-button>
-                            <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.id)" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId]">删除</el-button>
-                        </el-space>
+                        <el-dropdown>
+                            <span>
+                                更多
+                            <el-icon >
+                                <arrow-down />
+                            </el-icon>
+                            </span>
+                            <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item>
+                                    <el-button type="primary" size="small" @click.stop="toEditProject(scope.row)" icon="Edit">编辑项目</el-button>
+                                </el-dropdown-item>
+                                <el-dropdown-item>
+                                    <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)" icon="View">查看文档</el-button>
+                                </el-dropdown-item>
+                                <el-dropdown-item>
+                                    <el-button type="primary" size="small" @click.stop="onProjectFavorite(scope.row.id)" icon="Star">收藏项目</el-button>
+                                </el-dropdown-item>
+                                <el-dropdown-item>
+                                    <el-button type="primary" size="small" @click.stop="toProjectOperationLogDrawer(scope.row)" icon="Tickets">查看日志</el-button>
+                                </el-dropdown-item>
+                                <el-dropdown-item v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId]">
+                                    <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.id)"  icon="Remove">删除项目</el-button>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
                     </template>
                 </el-table-column>
             </el-table>
@@ -390,6 +411,7 @@ import { listUsers } from '../api/User'
 import { listOperationLogs } from '../api/OperationLog'
 import { ElMessage } from 'element-plus'
 import { databaseTypes } from '@/api/Const.js'
+import { addFavorite } from '../api/UserProject'
 
 export default {
     data() {
@@ -684,6 +706,13 @@ export default {
                         this.onProjectQuery()
                     }
                 })
+            })
+        },
+        onProjectFavorite(id) {
+            addFavorite(id).then(resp => {
+                if(!resp.errCode) {
+                    this.$message.success("收藏成功")
+                }
             })
         },
         toEditProject(row) {
