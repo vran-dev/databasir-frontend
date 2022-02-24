@@ -1,59 +1,144 @@
 <template>
     <el-container>
-        <el-header>
-            <el-row :gutter="12">
-                <el-col :span="3" v-require-roles="['SYS_OWNER']">
-                    <el-tooltip content="创建一个分组" placement="top">
-                        <el-button type="primary"  icon="plus"  style="width:100%;" @click="toCreatePage()"></el-button>
-                    </el-tooltip>
-                </el-col>
-                <el-col :span="8">
-                    <el-input @change='onQuery' v-model="groupPageQuery.groupNameContains" label="组名" placeholder="组名称搜索" prefix-icon="search"/>
-                </el-col>
-            </el-row>
-        </el-header>
         <el-main>
-            <el-row v-if="groupPageData.data.length == 0">
-                <el-col>
-                    <el-empty description="请先创建分组"></el-empty>
-                </el-col>
-            </el-row>
-            <el-row v-else :gutter="20" v-for="(partition, index) in partitionArray(4, groupPageData.data)" :key="index" >
-                <el-col :span="6"  v-for="group in partition" :key="group.id">
-                    <el-card shadow="hover">
-                        <template #header>
-                            <div class="card-header">
-                                <el-link :underline="false">
-                                    <span @click="toGroupDashboard(group.id, group.name)">{{ group.name }}</span>
-                                </el-link>
-                                <el-tooltip content="编辑" placement="top"  v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]">
-                                    <el-button icon="edit" size="small" @click="toEditPage(group.id, group.name)" circle   v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]"></el-button>
-                                </el-tooltip>
-                            </div>
-                        </template>
-                        <el-descriptions :column="1"  @click="toGroupDashboard(group.id)">
-                            <el-descriptions-item label="描述" label-align="left" align="left">
-                                <span style="white-space: pre-line;"> {{ group.description }}</span>
-                            </el-descriptions-item>
-                            <el-descriptions-item label="组长" label-align="left" align="left">
-                                <el-space wrap>
-                                    <el-tag v-for="(owner, index) in group.groupOwnerNames" :key="index" effect='plain'> {{ owner }}</el-tag>
-                                </el-space>
-                            </el-descriptions-item>
-                            <el-descriptions-item label="项目" label-align="left" align="left">{{ group.projectCount }}</el-descriptions-item>
-                        </el-descriptions>
-                    </el-card>
-                </el-col>
-            </el-row>
+            <el-tabs v-model="activeTab" @tab-click="onTabClick">
+                <el-tab-pane label="项目分组" name="groupListTab">
+                    <el-container>
+                        <el-header>
+                            <el-row :gutter="12">
+                                <el-col :span="3" v-require-roles="['SYS_OWNER']">
+                                    <el-tooltip content="创建一个分组" placement="top">
+                                        <el-button type="primary"  icon="plus"  style="width:100%;" @click="toCreatePage()"></el-button>
+                                    </el-tooltip>
+                                </el-col>
+                                <el-col :span="8">
+                                    <el-input @change='onQuery' v-model="groupPageQuery.groupNameContains" label="组名" placeholder="组名称搜索" prefix-icon="search"/>
+                                </el-col>
+                            </el-row>
+                        </el-header>
+                        <el-main>
+                            <el-row v-if="groupPageData.data.length == 0">
+                                <el-col>
+                                    <el-empty description="请先创建分组"></el-empty>
+                                </el-col>
+                            </el-row>
+                            <el-row v-else :gutter="20" v-for="(partition, index) in partitionArray(4, groupPageData.data)" :key="index" >
+                                <el-col :span="6"  v-for="group in partition" :key="group.id">
+                                    <el-card shadow="hover">
+                                        <template #header>
+                                            <div class="card-header">
+                                                <el-link :underline="false">
+                                                    <span @click="toGroupDashboard(group.id, group.name)">{{ group.name }}</span>
+                                                </el-link>
+                                                <el-tooltip content="编辑" placement="top"  v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]">
+                                                    <el-button icon="edit" size="small" @click="toEditPage(group.id, group.name)" circle   v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]"></el-button>
+                                                </el-tooltip>
+                                            </div>
+                                        </template>
+                                        <el-descriptions :column="1"  @click="toGroupDashboard(group.id)">
+                                            <el-descriptions-item label="描述" label-align="left" align="left">
+                                                <span style="white-space: pre-line;"> {{ group.description }}</span>
+                                            </el-descriptions-item>
+                                            <el-descriptions-item label="组长" label-align="left" align="left">
+                                                <el-space wrap>
+                                                    <el-tag v-for="(owner, index) in group.groupOwnerNames" :key="index" effect='plain'> {{ owner }}</el-tag>
+                                                </el-space>
+                                            </el-descriptions-item>
+                                            <el-descriptions-item label="项目" label-align="left" align="left">{{ group.projectCount }}</el-descriptions-item>
+                                        </el-descriptions>
+                                    </el-card>
+                                </el-col>
+                            </el-row>
+                        </el-main>
+                        <el-footer>
+                            <el-pagination layout="prev, pager, next" 
+                                :hide-on-single-page="false"
+                                :currentPage="groupPageData.number" 
+                                :page-size="groupPageData.size" 
+                                :page-count="groupPageData.totalPages"
+                                @current-change="onPageChange">
+                            </el-pagination>
+                        </el-footer>
+                    </el-container>
+                </el-tab-pane>
+                <el-tab-pane label="关注项目" name="favoriteProjectListTab">
+                    <el-container>
+                        <el-main>
+                            <el-table :data="favoriteProjectPageData.data"  stripe>
+                                <el-table-column prop="projectId" label="项目 ID"/>
+                                <el-table-column prop="projectName" label="项目名称" >
+                                    <template v-slot="scope">
+                                        <el-link @click="toDocumentPage(scope.row)" icon="Document">
+                                            <span>{{ scope.row.projectName }}</span>
+                                        </el-link>
+                                    </template>
+                                    
+                                </el-table-column>
+                                <el-table-column prop="projectDescription" label="项目描述" />
+                                <el-table-column label="定时同步" align="center">
+                                    <template v-slot="scope">
+                                        <el-tag v-if="scope.row.isAutoSync">
+                                            {{ scope.row.autoSyncCron }}
+                                        </el-tag>
+                                        <span v-else>
+                                            无
+                                        </span>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="databaseType" label="数据库类型" />
+                                <el-table-column prop="databaseName" label="数据库名称" />
+                                <el-table-column prop="groupName" label="所属分组">
+                                    <template v-slot="scope">
+                                        <el-link @click="toGroupDashboard(scope.row.groupId, scope.row.groupName)" icon="List">
+                                            {{ scope.row.groupName }}
+                                        </el-link>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="createAt" label="收藏时间" />
+                                <el-table-column label="操作" >
+                                    <template v-slot="scope">
+                                        <el-dropdown>
+                                            <span>
+                                                更多
+                                            <el-icon >
+                                                <arrow-down />
+                                            </el-icon>
+                                            </span>
+                                            <template #dropdown>
+                                            <el-dropdown-menu>
+                                                <el-dropdown-item>
+                                                    <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)" icon="View">查看文档</el-button>
+                                                </el-dropdown-item>
+                                                <el-dropdown-item>
+                                                    <el-button type="primary" size="small" @click.stop="onRemoveFavorite(scope.row.projectId)" icon="StarFilled">取消收藏</el-button>
+                                                </el-dropdown-item>
+                                                <el-dropdown-item v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId]">
+                                                    <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.projectId)" icon="Remove">删除项目</el-button>
+                                                </el-dropdown-item>
+                                            </el-dropdown-menu>
+                                            </template>
+                                        </el-dropdown>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-main>
+                        <el-footer>
+                            <el-pagination layout="prev, pager, next" 
+                                :hide-on-single-page="false"
+                                :currentPage="favoriteProjectPageData.number" 
+                                :page-size="favoriteProjectPageData.size" 
+                                :page-count="favoriteProjectPageData.totalPages"
+                                @current-change="onFavoriteProjectPageChange">
+                            </el-pagination>
+                        </el-footer>
+                    </el-container>
+                    
+                </el-tab-pane>
+            </el-tabs>
+
         </el-main>
         <el-footer>
-            <el-pagination layout="prev, pager, next" 
-            :hide-on-single-page="false"
-            :currentPage="groupPageData.number" 
-            :page-size="groupPageData.size" 
-            :page-count="groupPageData.totalPages"
-            @current-change="onPageChange">
-            </el-pagination>
+            
         </el-footer>
 
         <el-dialog v-model="isShowEditGroupDialog" width="38%" center destroy-on-close>
@@ -130,6 +215,8 @@
 <script>
 import { listGroups, getGroup, createOrUpdateGroup, deleteGroup } from "@/api/Group"
 import { listUsers } from "@/api/User"
+import { listFavorites, removeFavorite } from "../api/UserProject"
+import { deleteProjectById } from "../api/Project"
 import { user } from '../utils/auth'
 
 export default {
@@ -159,17 +246,55 @@ export default {
             page: 0,
             size: 15,
             groupNameContains: null
+          },
+
+          favoriteProjectPageData: {
+            data: [],
+            number: 1,
+            size: 15,
+            totalElements:0,
+            totalPages: 1
+          },
+          favoriteProjectPageQuery: {
+            page: 0,
+            size: 20,
+            projectNameContains: null
           }
       }
     },
     
     created() {
         this.fetchGroupsFunction()
+        this.fetchUserFavorites()
     },
-    
+
+    computed: {
+        activeTab: {
+            get(){
+                if (this.$store.state.groupListActiveTab) {
+                    return this.$store.state.groupListActiveTab
+                } else {
+                    this.$store.commit('switchGroupListActiveTab', 'groupListTab')
+                    return "groupListTab"
+                }
+            },
+            set(newVal) {
+                this.$store.commit('switchGroupListActiveTab', newVal)
+            }
+        }
+    },
+        
     methods: {
         isPermit(role) {
             return user.hasAnyRoles([ role ])
+        },
+        async fetchUserFavorites() {
+            const jsonData = await listFavorites(this.favoriteProjectPageQuery)
+            this.favoriteProjectPageData.data = jsonData.data.content
+            this.favoriteProjectPageData.number = jsonData.data.number + 1
+            this.favoriteProjectPageData.size = jsonData.data.size
+            this.favoriteProjectPageData.totalPages = jsonData.data.totalPages
+            this.favoriteProjectPageData.totalElements = jsonData.data.totalElements
         },
         async fetchGroupsFunction() {
             const jsonData = await listGroups(this.groupPageQuery)
@@ -295,6 +420,45 @@ export default {
 
         toGroupMemberListPage() {
 
+        },
+        toDocumentPage(favoriteProject) {
+            const groupId = favoriteProject.groupId
+            const projectId = favoriteProject.projectId
+            this.$router.push({
+                path: "/groups/" + groupId + "/projects/" + projectId +  "/documents",
+                query: { projectName: favoriteProject.projectName, groupName: favoriteProject.groupName }
+            })
+        },
+        onFavoriteProjectPageChange(currentPage) {
+            if (currentPage) {
+                this.favoriteProjectPageQuery.page = currentPage - 1
+                this.fetchUserFavorites()
+            }
+        },
+        onRemoveFavorite(projectId) {
+            removeFavorite(projectId).then(resp => {
+                if (!resp.errCode) {
+                    this.$message.success('成功取消收藏')
+                    this.fetchUserFavorites()
+                }
+            })
+        },
+        onProjectDelete(id) {
+            this.$confirm('确认删除该项目？', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                deleteProjectById(this.groupId, id).then(resp => {
+                    if (!resp.errCode) {
+                        this.$message.success('删除成功');
+                        this.fetchUserFavorites()
+                    }
+                })
+            })
+        },
+        onTabClick(tab) {
+            this.$store.commit('switchGroupListActiveTab', tab.props.name)
         }
     }
 }

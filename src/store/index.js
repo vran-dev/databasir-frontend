@@ -16,6 +16,7 @@ const store = createStore({
         }
         return {
             user: userData,
+            groupListActiveTab: null,
             menu: {
                 isCollapse: true,
             }
@@ -38,6 +39,11 @@ const store = createStore({
         },
         expandMenu(state) {
             state.menu.isCollapse = false
+        },
+        switchGroupListActiveTab(state, groupListActiveTab) {
+            if (groupListActiveTab) {
+                state.groupListActiveTab = groupListActiveTab
+            }
         }
     }
 })
