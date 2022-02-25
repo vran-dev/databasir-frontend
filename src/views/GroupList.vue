@@ -23,7 +23,7 @@
                     <el-row v-else :gutter="20" v-for="(partition, index) in partitionArray(4, groupPageData.data)" :key="index" >
                         <el-col :span="6"  v-for="group in partition" :key="group.id">
                             <el-card shadow="hover" @mouseenter="mouseEnterGroupId=group.id" @mouseleave="mouseEnterGroupId=null">
-                                <el-divider content-position="center">
+                                <el-divider content-position="right">
                                         <el-link :underline="false" 
                                             v-show="group.id == mouseEnterGroupId" 
                                             v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]" 
@@ -39,11 +39,9 @@
                                         </el-link>
                                 </el-divider>
                                 <el-space direction="vertical" alignment="stretch" :size="16">
-                                
-                                        <span style="color:#909399;font-size:12px;">
+                                        <span style="color:#909399;font-size:13px;">
                                             {{ group.description }}
                                         </span>
-                                
                                         <el-space wrap>
                                             <el-tooltip content="组长">
                                                 <el-icon color="#909399"><user /></el-icon>
@@ -125,7 +123,7 @@
                                 </el-link>
                             </template>
                         </el-table-column>
-                        <el-table-column prop="createAt" label="收藏时间" />
+                        <el-table-column prop="createAt" label="关注时间" />
                         <el-table-column label="操作" >
                             <template v-slot="scope">
                                 <el-dropdown>
@@ -141,7 +139,7 @@
                                             <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)" icon="View">查看文档</el-button>
                                         </el-dropdown-item>
                                         <el-dropdown-item>
-                                            <el-button type="primary" size="small" @click.stop="onRemoveFavorite(scope.row.projectId)" icon="StarFilled">取消收藏</el-button>
+                                            <el-button type="warning" size="small" @click.stop="onRemoveFavorite(scope.row.projectId)" icon="StarFilled">取消关注</el-button>
                                         </el-dropdown-item>
                                         <el-dropdown-item v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId]">
                                             <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.projectId)" icon="Remove">删除项目</el-button>
@@ -466,7 +464,7 @@ export default {
         onRemoveFavorite(projectId) {
             removeFavorite(projectId).then(resp => {
                 if (!resp.errCode) {
-                    this.$message.success('成功取消收藏')
+                    this.$message.success('成功取消')
                     this.fetchUserFavorites()
                 }
             })
