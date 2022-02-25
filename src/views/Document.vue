@@ -1,39 +1,35 @@
 <template>
-  <div v-if="isShowNoDataPage">
+  <template v-if="isShowNoDataPage">
       <el-empty description="似乎还没有同步过文档" >
           <el-button type="primary" icon='refresh' round size='large' @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
       </el-empty>
-  </div>
-  <div v-else-if="isShowLoadingPage">
+  </template>
+  <template v-else-if="isShowLoadingPage">
     <el-skeleton v-loading="!state.init" :rows="12" />
-  </div>
-  <div v-else>
-    <el-container class="document-container">
-      <el-header>
-          <el-row :gutter="20">
-            <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-              <el-button type="success" style="width:100%" icon="Refresh" @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
-            </el-col>
-            <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-                <el-button type="primary" style="width:100%" icon="Download" @click="onDocumentExport()" :loading="state.loadings.export">导出</el-button>
-            </el-col>
-            <el-col :span="4">
-                <el-select @change="onProjectDocumentVersionChange" v-model="state.databaseDocumentFilter.version" placeholder="历史版本" v-select-more="loadMoreDocumentVersions" v-loading="state.loadings.loadingVersions" clearable>
-                  <el-option
-                  v-for="item in state.databaseDocumentVersions"
-                  :key="item.version"
-                  :label="'['+item.createAt +']->'+item.version+''"
-                  :value="item.version"
-                  >
-                  </el-option>
-              </el-select>
-            </el-col>
-          </el-row>
-      </el-header>
-      
-      <el-main class="document-content-wrapper">
-        
-        <div class="document-content">
+  </template>
+  <template  v-else>
+    <el-row :gutter="20">
+        <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
+          <el-button type="success" style="width:100%" icon="Refresh" @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
+        </el-col>
+        <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
+            <el-button type="primary" style="width:100%" icon="Download" @click="onDocumentExport()" :loading="state.loadings.export">导出</el-button>
+        </el-col>
+        <el-col :span="4">
+            <el-select @change="onProjectDocumentVersionChange" v-model="state.databaseDocumentFilter.version" placeholder="历史版本" v-select-more="loadMoreDocumentVersions" v-loading="state.loadings.loadingVersions" clearable>
+              <el-option
+              v-for="item in state.databaseDocumentVersions"
+              :key="item.version"
+              :label="'['+item.createAt +']->'+item.version+''"
+              :value="item.version"
+              >
+              </el-option>
+          </el-select>
+        </el-col>
+    </el-row>
+  
+    <el-row>
+      <el-col :span="20">
         <el-row>
           <!-- database overview -->
           <el-col>
@@ -52,8 +48,6 @@
           <el-col>
             <h2 :id="state.databaseDocument.databaseName + '.overview'">Overview</h2>
           </el-col>
-        </el-row>
-        <el-row>
           <el-col>
             <el-table :data="state.databaseDocument.tables"  border stripe width='80%'>
               <el-table-column type="index" />
@@ -72,12 +66,13 @@
         <!-- table details -->
         <template v-for="tableMeta in state.databaseDocument.tables" :key="tableMeta">
           <el-row>
-            <el-col>
-              <h2 :id="state.databaseDocument.databaseName + '.' + tableMeta.name">{{ tableMeta.name }}</h2>
-            </el-col>
+            
           </el-row>
           
           <el-row>
+            <el-col>
+              <h2 :id="state.databaseDocument.databaseName + '.' + tableMeta.name">{{ tableMeta.name }}</h2>
+            </el-col>
             <el-col v-if="tableMeta.columns.length > 0">
               <h3>Columns</h3>
             </el-col>
@@ -94,7 +89,7 @@
                   </template>
                 </el-table-column>
                 <el-table-column prop="nullable" label="Is Nullable" width="120">
-                   <template v-slot="scope">
+                  <template v-slot="scope">
                     {{ scope.row.nullable == 'YES' ? 'YES':''}}
                   </template>
                 </el-table-column>
@@ -157,7 +152,15 @@
           </div>
 
         </template>
-        </div>
+
+        <el-tooltip
+          content="回到顶部"
+          placement="top"
+        >
+          <el-backtop :bottom="100"></el-backtop>
+        </el-tooltip>
+      </el-col>
+      <el-col :span="2">
         <div class="toc-wrapper">
           <div class="toc">
             <ul>
@@ -172,97 +175,93 @@
             </ul>
           </div>
         </div>
-        <el-tooltip
-          content="回到顶部"
-          placement="top"
-        >
-          <el-backtop :bottom="100"></el-backtop>
-        </el-tooltip>
+      </el-col>
+    </el-row>
+    
+    <!-- remarks -->
+    <el-drawer
+      v-model="remarkData.isShowDrawer"
+      title="更多"
+      size="50%"
+    >
 
-        <!-- remarks -->
-        <el-drawer
-          v-model="remarkData.isShowDrawer"
-          title="更多"
-          size="50%"
-        >
-
-          <el-row v-for="(remark, index) in remarkData.pageData.content" :key="index">
-            <el-col>
-              <el-card shadow="never" class="remark-card"> 
-                <template #header>
-                <div class="remark-header">
-                  <span>
-                    <span class="remark-user">{{remark.remarkBy.nickname}}</span>  
-                    <span class="remark-time">{{remark.createAt}}</span>
-                  </span>
-                  <span v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
+      <el-row v-for="(remark, index) in remarkData.pageData.content" :key="index">
+        <el-col>
+          <el-card shadow="never" class="remark-card"> 
+            <template #header>
+            <div class="remark-header">
+              <span>
+                <span class="remark-user">{{remark.remarkBy.nickname}}</span>  
+                <span class="remark-time">{{remark.createAt}}</span>
+              </span>
+              <span v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
 <el-popconfirm
-                    confirm-button-text="确定"
-                    cancel-button-text="取消"
-                    icon="InfoFilled"
-                    icon-color="red"
-                    title="确定要删除该记录吗？"
-                    @confirm="onDeleteRemark(remark.id)"
-                    
-                    >
-                      <template #reference>
-                        <el-button type="danger" :icon="Delete" circle plain size="small"></el-button>
-                      </template>
-                    </el-popconfirm>
-                  </span>
-                    
-                  
-                </div>
-                </template>
-                  <div class="item text remark-content">
-                    {{ remark.remark }}
-                  </div>
-              </el-card>
-            </el-col>
-          </el-row>
-          <el-row v-if="remarkData.pageData.content.length == 0">
-            <el-col>
-              <el-empty></el-empty>
-            </el-col>
-          </el-row>
+                confirm-button-text="确定"
+                cancel-button-text="取消"
+                icon="InfoFilled"
+                icon-color="red"
+                title="确定要删除该记录吗？"
+                @confirm="onDeleteRemark(remark.id)"
+                
+                >
+                  <template #reference>
+                    <el-button type="danger" :icon="Delete" circle plain size="small"></el-button>
+                  </template>
+                </el-popconfirm>
+              </span>
+                
+              
+            </div>
+            </template>
+              <div class="item text remark-content">
+                {{ remark.remark }}
+              </div>
+          </el-card>
+        </el-col>
+      </el-row>
+      <el-row v-if="remarkData.pageData.content.length == 0">
+        <el-col>
+          <el-empty></el-empty>
+        </el-col>
+      </el-row>
 
-          <el-row>
-            <el-col>
-              <el-pagination layout="prev, pager, next" 
-                :hide-on-single-page="false"
-                :currentPage="remarkData.pageData.page" 
-                :page-size="remarkData.pageData.size" 
-                :page-count="remarkData.pageData.totalPages"
-                @current-change="onRemarkPageChange">
-              </el-pagination>
-            </el-col>
-          </el-row>
-          <el-divider></el-divider>
-          <el-row v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-            <el-col>
-              <el-input
-                v-model="remarkData.formData.remark"
-                :rows="5"
-                type="textarea" 
-                placeholder="请输入内容"
-              />
-            </el-col>
-          </el-row>
-          <el-divider></el-divider>
+      <el-row>
+        <el-col>
+          <el-pagination layout="prev, pager, next" 
+            :hide-on-single-page="false"
+            :currentPage="remarkData.pageData.page" 
+            :page-size="remarkData.pageData.size" 
+            :page-count="remarkData.pageData.totalPages"
+            @current-change="onRemarkPageChange">
+          </el-pagination>
+        </el-col>
+      </el-row>
+      <el-divider></el-divider>
+      <el-row v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
+        <el-col>
+          <el-input
+            v-model="remarkData.formData.remark"
+            :rows="5"
+            type="textarea" 
+            placeholder="请输入内容"
+          />
+        </el-col>
+      </el-row>
+      <el-divider></el-divider>
 
-          <el-row v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-            <el-col>
-              <el-button @click="onCreateRemark">提交</el-button>
-            </el-col>
-          </el-row>
-        </el-drawer>
-      </el-main>
-    </el-container>
-  </div>
+      <el-row v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
+        <el-col>
+          <el-button @click="onCreateRemark">提交</el-button>
+        </el-col>
+      </el-row>
+    </el-drawer>
+    </template>
 </template>
 
 <style>
-
+.el-row {
+  margin-bottom: 20px;
+}
 .remark-card {
   margin-bottom: 30px;
 }
@@ -301,16 +300,15 @@
 
 .toc-wrapper {
   right:0;
-  top: 60;
   z-index: 0;
   bottom: auto;
-  padding-left: 33px;
+  padding-left: 12px;
   margin-left: 10px;
 }
 
 .toc {
   top: 130px;
-  position: fixed;
+  /* position: fixed; */
   margin-left: 0;
   transform: scale(1, 1);
   bottom:0;
@@ -321,6 +319,7 @@
 
 .toc:hover {
   overflow-y: auto;
+  overflow-x: auto;
 }
 
 .toc-wrapper .toc ul {
@@ -333,18 +332,6 @@
 .toc-wrapper .toc a {
     display: inherit;
 }
-
-.document-content-wrapper {
-  display: flex;
-  margin: 0;
-  min-width: 1060px;
-  max-width: 1260px;
-}
-
-.document-content {
-  min-width: 1060px;
-}
-
 
 </style>
 
