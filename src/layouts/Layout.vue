@@ -69,6 +69,7 @@
 import AppNav from '../components/AppNav.vue'
 import Breadcrumb from '../components/Breadcrumb.vue'
 import Avatar from '../components/Avatar.vue'
+
 export default {
     components: { AppNav, Breadcrumb, Avatar },
     // 根据侧边导航是否展开来决定 main 和 header 的 class

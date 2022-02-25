@@ -6,11 +6,17 @@ import router from './router'
 import store from './store'
 import App from './App.vue'
 import { user } from './utils/auth'
+import DatabaseIcon from './components/DatabaseIcon.vue'
 
+
+//  element icon
 const app = createApp(App)
 Object.keys(Icons).forEach(key => {
     app.component(key, Icons[key])
 })
+app.component('database-icon', DatabaseIcon)
+
+// permission directive
 app.directive('require-roles', {
     mounted(el, binding) {
         const roles = binding.value
@@ -20,6 +26,7 @@ app.directive('require-roles', {
     },
 })
 
+// custom select directive
 app.directive("select-more", {
     updated(el, binding) {
         const child = el.querySelector('.select-trigger');
