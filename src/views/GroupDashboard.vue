@@ -31,7 +31,10 @@
                 <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
                 <el-table-column label="项目名称" min-width="120" fixed="left" resizable>
                     <template v-slot="scope">
-                        <el-link :underline="true" :icon="Edit" @click.stop="toDocumentPage(scope.row)">{{ scope.row.name }}</el-link>
+                        <el-link :underline="true" :icon="Edit" @click.stop="toDocumentPage(scope.row)">
+                            <el-icon v-if="scope.row.isFavorite" ><star-filled /></el-icon>
+                            {{ scope.row.name }}
+                        </el-link>
                     </template>
                 </el-table-column>
                 <el-table-column prop="databaseName" label="数据库" width="200"  resizable />
