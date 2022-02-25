@@ -70,7 +70,22 @@
                                     <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)" icon="View">查看文档</el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
-                                    <el-button type="primary" size="small" @click.stop="onProjectFavorite(scope.row.id)" icon="Star">收藏项目</el-button>
+                                    <el-button 
+                                        v-if="!scope.row.isFavorite"
+                                        type="primary" 
+                                        size="small" 
+                                        @click.stop="onAddProjectFavorite(scope.row)" 
+                                        icon="Star">
+                                        关注项目
+                                    </el-button>
+                                    <el-button 
+                                        v-else
+                                        type="warning" 
+                                        size="small" 
+                                        @click.stop="onRemoveProjectFavorite(scope.row)" 
+                                        icon="StarFilled">
+                                        取消关注
+                                    </el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
                                     <el-button type="primary" size="small" @click.stop="toProjectOperationLogDrawer(scope.row)" icon="Tickets">查看日志</el-button>
@@ -415,7 +430,7 @@ import { listUsers } from '../api/User'
 import { listOperationLogs } from '../api/OperationLog'
 import { ElMessage } from 'element-plus'
 import { databaseTypes } from '@/api/Const.js'
-import { addFavorite } from '../api/UserProject'
+import { addFavorite, removeFavorite } from '../api/UserProject'
 
 export default {
     data() {
@@ -712,10 +727,19 @@ export default {
                 })
             })
         },
-        onProjectFavorite(id) {
-            addFavorite(id).then(resp => {
+        onAddProjectFavorite(project) {
+            addFavorite(project.id).then(resp => {
                 if(!resp.errCode) {
-                    this.$message.success("收藏成功")
+                    this.$message.success("关注成功")
+                    project.isFavorite=true
+                }
+            })
+        },
+        onRemoveProjectFavorite(project) {
+            removeFavorite(project.id).then(resp => {
+                if(!resp.errCode) {
+                    this.$message.success("取消成功")
+                    project.isFavorite=false
                 }
             })
         },
