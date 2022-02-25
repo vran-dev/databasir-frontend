@@ -35,7 +35,11 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="databaseName" label="数据库" width="200"  resizable />
-                <el-table-column prop="databaseType" label="数据库类型" resizable ></el-table-column>
+                <el-table-column label="数据库类型">
+                            <template v-slot="scope">
+                                <database-icon :databaseType="scope.row.databaseType" />
+                            </template>
+                        </el-table-column>
                 <el-table-column prop="description" label="说明" min-width="160" resizable />
                 <el-table-column label="定时同步" align="center">
                     <template v-slot="scope">

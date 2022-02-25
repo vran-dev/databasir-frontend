@@ -22,54 +22,34 @@
                     </el-row>
                     <el-row v-else :gutter="20" v-for="(partition, index) in partitionArray(4, groupPageData.data)" :key="index" >
                         <el-col :span="6"  v-for="group in partition" :key="group.id">
-                            <el-card shadow="hover">
-                                <el-row>
-                                    <el-col>
-                                        
-                                    </el-col>
-                                </el-row>  
-                                <el-divider content-position="right">
-                                     <el-dropdown>
-                                        <span>
-                                        <el-icon >
-                                            <el-icon size="26" color="#909399"><grid /></el-icon>
-                                        </el-icon>
-                                        </span>
-                                        <template #dropdown>
-                                        <el-dropdown-menu>
-                                            <el-dropdown-item v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]" icon="Edit" @click="toEditPage(group.id, group.name)">
-                                                编辑分组
-                                            </el-dropdown-item>
-                                        </el-dropdown-menu>
-                                        </template>
-                                    </el-dropdown>
-                                </el-divider>
-                                
-                                <el-row>
-                                    <el-col>
+                            <el-card shadow="hover" @mouseenter="mouseEnterGroupId=group.id" @mouseleave="mouseEnterGroupId=null">
+                                <el-divider content-position="center">
+                                        <el-link :underline="false" 
+                                            v-show="group.id == mouseEnterGroupId" 
+                                            v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]" 
+                                            @click="toEditPage(group.id, group.name)"
+                                            icon="Edit" >
+                                        </el-link>
                                         <el-link :underline="false">
                                             <span @click="toGroupDashboard(group.id, group.name)">
-                                                <h3>
+                                                <h4>
                                                     {{ group.name }}
-                                                </h3>    
+                                                </h4>    
                                             </span>
                                         </el-link>
-                                    </el-col>
-                                    <el-col>
-                                        <span style="color:#909399">
+                                </el-divider>
+                                <el-space direction="vertical" alignment="stretch" :size="16">
+                                
+                                        <span style="color:#909399;font-size:12px;">
                                             {{ group.description }}
                                         </span>
-                                    </el-col>
-                                </el-row>
                                 
-                                <el-row>
-                                    <el-col>
                                         <el-space wrap>
                                             <el-tooltip content="组长">
-                                                <el-icon color="#909399"><user-filled /></el-icon>
+                                                <el-icon color="#909399"><user /></el-icon>
                                             </el-tooltip>
-                                            <el-tag v-for="(owner, index) in group.groupOwnerNames.slice(0, 3)" :key="index"  type="info"> {{ owner }}</el-tag>
-                                            <template v-if="group.groupOwnerNames.length > 3">
+                                            <el-tag v-for="(owner, index) in group.groupOwnerNames.slice(0, 2)" :key="index"  type="info"> {{ owner }}</el-tag>
+                                            <template v-if="group.groupOwnerNames.length > 2">
                                                 <el-dropdown>
                                                     <el-icon class="el-icon--right">
                                                         <arrow-down />
@@ -83,11 +63,16 @@
                                                     </template>
                                                 </el-dropdown>
                                             </template>
-                                            
                                         </el-space>
-                                    </el-col>
-                                    
-                                </el-row>
+                                        <el-space wrap>
+                                            <el-tooltip content="项目数">
+                                                <el-icon color="#909399"><folder /></el-icon>
+                                            </el-tooltip>
+                                            <span style="color:#909399">
+                                                {{ group.projectCount }}
+                                            </span>
+                                        </el-space>
+                                </el-space>
                             </el-card>
                         </el-col>
                     </el-row>
@@ -127,7 +112,11 @@
                                 </span>
                             </template>
                         </el-table-column>
-                        <el-table-column prop="databaseType" label="数据库类型" />
+                        <el-table-column label="数据库类型">
+                            <template v-slot="scope">
+                                <database-icon :databaseType="scope.row.databaseType" />
+                            </template>
+                        </el-table-column>
                         <el-table-column prop="databaseName" label="数据库名称" />
                         <el-table-column prop="groupName" label="所属分组">
                             <template v-slot="scope">
@@ -261,6 +250,7 @@ export default {
     data() {
       return {
           isShowEditGroupDialog: false,
+          mouseEnterGroupId: null,
           groupData: {
               groupOwners: []
           },
