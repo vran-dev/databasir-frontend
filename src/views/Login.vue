@@ -29,9 +29,16 @@
                                     忘记密码？
                                     </el-link>
                                 </el-tooltip>
-                                
                             </el-space>
-                            
+                        </el-form-item>
+                        <el-form-item>
+                            <el-space>
+                                <el-link v-for="(item, index) in oauthApps" :key="index" :underline="false" @click="onAuthLogin(item.registrationId)">
+                                    <el-tooltip :content="item.appName">
+                                        <el-avatar shape="circle" :size="26" :src="item.appIcon" icon="User"></el-avatar>
+                                    </el-tooltip>
+                                </el-link>
+                            </el-space>
                         </el-form-item>
                     </el-form>
                 </div>
@@ -77,6 +84,7 @@
 <script>
 import { login } from "../api/Login"
 import { user } from "../utils/auth"
+import { listAll, authorizationUrl } from "../api/OAuthApp"
 
 export default {
     data() {
@@ -89,13 +97,34 @@ export default {
             formRule: {
                 username: [{required: true,message: '请输入用户名或邮箱',trigger: 'blur'}],
                 password: [{required: true,message: '请输入密码',trigger: 'blur'}],
-            }
+            },
+
+            oauthApps: []
         }
     },
 
+    created() {
+        this.fetchAllOAuthApps()
+    },
+
     methods: {
+        fetchAllOAuthApps() {
+            listAll().then(resp => {
+                if(!resp.errCode) {
+                    this.oauthApps = resp.data
+                }
+            })
+        },
         toIndexPage() {
             this.$router.push({path: '/groups'})
+        },
+
+        onAuthLogin(id) {
+            authorizationUrl(id).then(resp => {
+                if (!resp.errCode) {
+                    window.location.href = resp.data
+                }
+            })
         },
 
         onLogin() {

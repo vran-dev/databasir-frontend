@@ -72,12 +72,6 @@ import Avatar from '../components/Avatar.vue'
 
 export default {
     components: { AppNav, Breadcrumb, Avatar },
-    // 根据侧边导航是否展开来决定 main 和 header 的 class
-    data() {
-        return {
-            
-        }
-    }
 }
 
 </script>

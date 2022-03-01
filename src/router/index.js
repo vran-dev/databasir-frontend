@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import Layout from "../layouts/Layout.vue"
 import breadcurmbMap from './breadcurmb'
 import { token } from '../utils/auth';
@@ -8,6 +8,15 @@ const routes = [
         path: '/login',
         component: () => import('@/views/Login.vue'),
         hidden: true,
+        meta: {
+            requireAuth: false
+        }
+    },
+    {
+        path: '/login/oauth2/:id',
+        component: () => import('@/views/OAuth2Login.vue'),
+        hidden: true,
+        props: true,
         meta: {
             requireAuth: false
         }
@@ -140,7 +149,7 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHashHistory(),
+    history: createWebHistory(),
     routes
 });
 

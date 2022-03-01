@@ -136,11 +136,12 @@ export default {
         }
     },
     mounted() {
-        const data = user.loadUserLoginData()
-        this.userId = data.id
-        this.userFormData.nickname = this.$store.state.user.nickname
-        this.userFormData.username = data.username
-        this.userFormData.email = data.email
+        user.loadUserLoginData() .then(data => {
+            this.userId = data.id
+            this.userFormData.nickname = data.nickname
+            this.userFormData.username = data.username
+            this.userFormData.email = data.email
+        })
     },
 
     methods: {

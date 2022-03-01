@@ -1,21 +1,14 @@
 import { createStore } from 'vuex'
-import { user } from '../utils/auth'
 
 const store = createStore({
     state() {
-        const data = user.loadUserLoginData()
-        const userData = {
-            nickname: null,
-            usernmae: null,
-            email: null,
-        }
-        if (data != null) {
-            userData.nickname = data.nickname
-            userData.usernmae = data.usernmae
-            userData.email = data.email;
-        }
         return {
-            user: userData,
+            user: {
+                nickname: null,
+                usernmae: null,
+                email: null,
+                avatar: null,
+            },
             groupListActiveTab: null,
             menu: {
                 isCollapse: true,
@@ -32,6 +25,9 @@ const store = createStore({
             }
             if (param.email) {
                 state.user.email = param.email
+            }
+            if (param.avatar) {
+                state.user.avatar = param.avatar
             }
         },
         foldMenu(state) {
