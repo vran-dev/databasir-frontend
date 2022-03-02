@@ -84,6 +84,15 @@ function sysLog() {
     }
 }
 
+function sysOauth2() {
+    return {
+        name:'登录设置',
+        to: {
+            path: '/settings/sysOauth2'
+        } 
+    }
+}
+
 const breadcurmbMap = {
     index: () => [index() ],
     groupList: () => [index(), groupList()],
@@ -92,7 +101,9 @@ const breadcurmbMap = {
     userProfile: () =>  [index(), userProfile()],
     userList: () =>  [index(), userList()],
     sysEmailEdit: () => [index(), sysEmailEdit()],
-    sysLog: () => [index(), sysLog()]
+    sysLog: () => [index(), sysLog()],
+    sysOauth2: () => [index(), sysOauth2()],
+
 }
 
 export default breadcurmbMap

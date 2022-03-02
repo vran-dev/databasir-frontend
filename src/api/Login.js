@@ -7,8 +7,18 @@ export const login = (form) => {
     return axios.post('/login', data)
 }
 
+export const oauth2Login = (registrationId, parameters) => {
+    return axios.get('/oauth2/login/'+registrationId, {
+        params: parameters
+    })
+}
+
 export const logout = () => {
     return axios.get('/logout')
+}
+
+export const loginInfo = () => {
+    return axios.get('/login_info')
 }
 
 export const refreshAccessToken = (refreshToken) => {

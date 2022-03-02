@@ -3,6 +3,7 @@ const accessTokenExpireAtKey = 'accessTokenExpireAt'
 const userLoginDataKey = 'userLoginData'
 
 export const token = {
+
     hasAccessToken() {
         const accessToken = this.loadAccessToken()
         return accessToken
@@ -24,7 +25,11 @@ export const token = {
     },
 
     loadAccessToken() {
-        return window.localStorage.getItem(accessTokenKey)
+        let token = window.localStorage.getItem(accessTokenKey)
+        if (token) {
+            return token
+        }
+        return null
     }
 }
 
@@ -45,10 +50,9 @@ export const user = {
     loadUserLoginData() {
         if (!window.localStorage.getItem(userLoginDataKey)) {
             return null;
-        } else {
-            const data = window.localStorage.getItem(userLoginDataKey)
-            return JSON.parse(data)
-        }
+        } 
+        const data = window.localStorage.getItem(userLoginDataKey)
+        return JSON.parse(data)
     },
 
     hasAnyRoles(roles) {

@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import Layout from "../layouts/Layout.vue"
 import breadcurmbMap from './breadcurmb'
 import { token } from '../utils/auth';
@@ -8,6 +8,15 @@ const routes = [
         path: '/login',
         component: () => import('@/views/Login.vue'),
         hidden: true,
+        meta: {
+            requireAuth: false
+        }
+    },
+    {
+        path: '/login/oauth2/:id',
+        component: () => import('@/views/OAuth2Login.vue'),
+        hidden: true,
+        props: true,
         meta: {
             requireAuth: false
         }
@@ -124,6 +133,15 @@ const routes = [
                     breadcrumb: breadcurmbMap.sysLog
                 }
             },
+            {
+                path: 'sysOauth2',
+                icon: 'Connection',
+                component: () => import('@/views/SysOauth2.vue'),
+                meta: {
+                    nav: '登陆设置',
+                    breadcrumb: breadcurmbMap.sysOauth2
+                }
+            },
             // TODO
             {
                 path: 'sysKey',
@@ -140,7 +158,7 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHashHistory(),
+    history: createWebHistory(),
     routes
 });
 

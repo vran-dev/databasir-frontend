@@ -136,9 +136,9 @@ export default {
         }
     },
     mounted() {
-        const data = user.loadUserLoginData()
+        const data = user.loadUserLoginData() 
         this.userId = data.id
-        this.userFormData.nickname = this.$store.state.user.nickname
+        this.userFormData.nickname = data.nickname
         this.userFormData.username = data.username
         this.userFormData.email = data.email
     },

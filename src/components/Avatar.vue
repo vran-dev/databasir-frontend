@@ -16,14 +16,12 @@
 import { user } from '../utils/auth'
 
 export default {
-    data(){
-        return {
-            avatarUrl: null
-        }
-    },
     computed: {
         userNickname() {
             return this.$store.state.user.nickname 
+        },
+        avatarUrl() {
+            return this.$store.state.user.avatar 
         }
     },
     methods: {
