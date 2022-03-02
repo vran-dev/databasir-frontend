@@ -35,9 +35,7 @@
                             <el-divider content-position="right" v-if="oauthApps.length > 0">
                                 <el-space :size="26">
                                     <el-link v-for="(item, index) in oauthApps" :key="index" :underline="false" @click="onAuthLogin(item.registrationId)">
-                                        <el-tooltip :content="item.appName">
-                                            <el-avatar shape="circle" :size="26" :src="resolveAppIcon(item)" icon="User" class="app-icon"></el-avatar>
-                                        </el-tooltip>
+                                        <oauth2-app-type :app-type="item.appType" :app-icon="item.appIcon" :app-name="item.appName"/>
                                     </el-link>
                                 </el-space>
                             </el-divider>
@@ -92,8 +90,10 @@
 import { login } from "../api/Login"
 import { user } from "../utils/auth"
 import { listAll, authorizationUrl } from "../api/OAuthApp"
+import Oauth2AppType from '../components/Oauth2AppType.vue'
 
 export default {
+    components: { Oauth2AppType },
     data() {
         return {
             form: {
@@ -139,7 +139,12 @@ export default {
         },
 
         onAuthLogin(id) {
-            authorizationUrl(id).then(resp => {
+            const protocol = window.location.protocol
+            const redirectUri = protocol + "//" + window.location.host + "/login/oauth2/" + id
+            const params = {
+                redirect_uri: redirectUri
+            }
+            authorizationUrl(id, params).then(resp => {
                 if (!resp.errCode) {
                     window.location.href = resp.data
                 }

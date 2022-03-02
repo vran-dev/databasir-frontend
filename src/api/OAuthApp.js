@@ -6,8 +6,10 @@ export const listAll = () => {
     return axios.get(base + "/apps")
 }
 
-export const authorizationUrl = (id) => {
-    return axios.get(base + "/authorization/"+id)
+export const authorizationUrl = (id, params) => {
+    return axios.get(base + "/authorization/"+id, {
+        params: params
+    })
 }
 
 const apiBase = "/api/v1.0/oauth2_apps"

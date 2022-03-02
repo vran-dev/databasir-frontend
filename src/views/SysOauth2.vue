@@ -29,7 +29,7 @@
                 <el-table-column prop="registrationId" label="应用 ID" />
                 <el-table-column prop="appType" label="应用类型">
                     <template v-slot="scope">
-                        <oauth2-app-type :app-type="scope.row.appType"/>
+                         <oauth2-app-type :app-type="scope.row.appType" :app-name="scope.row.appName"/>
                     </template>
                 </el-table-column>
                 <el-table-column prop="appName" label="名称" />
