@@ -133,6 +133,15 @@ const routes = [
                     breadcrumb: breadcurmbMap.sysLog
                 }
             },
+            {
+                path: 'sysOauth2',
+                icon: 'Connection',
+                component: () => import('@/views/SysOauth2.vue'),
+                meta: {
+                    nav: '登陆设置',
+                    breadcrumb: breadcurmbMap.sysOauth2
+                }
+            },
             // TODO
             {
                 path: 'sysKey',

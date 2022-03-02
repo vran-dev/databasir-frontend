@@ -9,3 +9,27 @@ export const listAll = () => {
 export const authorizationUrl = (id) => {
     return axios.get(base + "/authorization/"+id)
 }
+
+const apiBase = "/api/v1.0/oauth2_apps"
+
+export const pageList = (pageQuery) => {
+    return axios.get(apiBase , {
+        params: pageQuery
+    })
+}
+
+export const deleteById = (id) => {
+    return axios.delete(apiBase+'/'+id)
+}
+
+export const getById = (id) => {
+    return axios.get(apiBase+'/'+id)
+}
+
+export const createApp = (body) => {
+    return axios.post(apiBase, body)
+}
+
+export const updateApp = (body) => {
+    return axios.patch(apiBase, body)
+}
