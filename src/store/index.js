@@ -1,8 +1,9 @@
 import { createStore } from 'vuex'
+import { user } from '../utils/auth'
 
 const store = createStore({
     state() {
-        return {
+        const data =  {
             user: {
                 nickname: null,
                 usernmae: null,
@@ -14,6 +15,14 @@ const store = createStore({
                 isCollapse: true,
             }
         }
+        const loginData = user.loadUserLoginData()
+        if (loginData) {
+            data.user.nickname = loginData.nickname
+            data.user.usernmae = loginData.usernmae
+            data.user.email = loginData.email
+            data.user.avatar = loginData.avatar
+        }
+        return data;
     },
     mutations: {
         userUpdate(state, param) {

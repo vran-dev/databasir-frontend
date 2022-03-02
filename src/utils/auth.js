@@ -47,7 +47,7 @@ export const user = {
         window.localStorage.removeItem(accessTokenExpireAtKey)
     },
 
-    async loadUserLoginData() {
+    loadUserLoginData() {
         if (!window.localStorage.getItem(userLoginDataKey)) {
             return null;
         } 

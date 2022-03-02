@@ -21,7 +21,7 @@ axios.interceptors.request.use(async function (config) {
   if (token.hasValidAccessToken()) {
     config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
     return config;
-  } else if (config.url == '/access_tokens') {
+  } else if (config.url == '/access_tokens' || config.url.startsWith('/oauth2')) {
     return config
   } else  {
     await refreshAndSaveAccessToken()
