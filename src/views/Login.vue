@@ -32,13 +32,16 @@
                             </el-space>
                         </el-form-item>
                         <el-form-item>
-                            <el-space>
-                                <el-link v-for="(item, index) in oauthApps" :key="index" :underline="false" @click="onAuthLogin(item.registrationId)">
-                                    <el-tooltip :content="item.appName">
-                                        <el-avatar shape="circle" :size="26" :src="item.appIcon" icon="User"></el-avatar>
-                                    </el-tooltip>
-                                </el-link>
-                            </el-space>
+                            <el-divider content-position="right" v-if="oauthApps.length > 0">
+                                <el-space :size="26">
+                                    <el-link v-for="(item, index) in oauthApps" :key="index" :underline="false" @click="onAuthLogin(item.registrationId)">
+                                        <el-tooltip :content="item.appName">
+                                            <el-avatar shape="circle" :size="26" :src="resolveAppIcon(item)" icon="User" class="app-icon"></el-avatar>
+                                        </el-tooltip>
+                                    </el-link>
+                                </el-space>
+                            </el-divider>
+                            
                         </el-form-item>
                     </el-form>
                 </div>
@@ -80,6 +83,10 @@
     /* border-style: solid; */
 }
 
+.app-icon {
+    --el-avatar-bg-color: transparent;
+}
+
 </style>
 <script>
 import { login } from "../api/Login"
@@ -108,6 +115,18 @@ export default {
     },
 
     methods: {
+        resolveAppIcon(item) {
+            if (item.appIcon && item.appIcon != '') {
+                return item.appIcon
+            }
+            if ('github' == item.appType) {
+                return require('@/assets/app/github.svg')
+            } else if ('gitlab' == item.appType) {
+                return require('@/assets/app/gitlab.svg')
+            } else {
+                return ''
+            }
+        },
         fetchAllOAuthApps() {
             listAll().then(resp => {
                 if(!resp.errCode) {
