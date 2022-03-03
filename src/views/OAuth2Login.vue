@@ -45,7 +45,10 @@ export default {
 
     methods: {
          login() {
-            oauth2Login(this.registrationId, this.$route.query).then(resp => {
+            const redirectUri = window.location.href
+            const params = this.$route.query
+            params.redirect_uri = redirectUri
+            oauth2Login(this.registrationId, params).then(resp => {
                 if (!resp.errCode) {
                     user.saveUserLoginData(resp.data)
                     this.$store.commit('userUpdate', {

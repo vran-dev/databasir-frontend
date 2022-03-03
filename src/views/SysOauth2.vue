@@ -29,15 +29,10 @@
                 <el-table-column prop="registrationId" label="应用 ID" />
                 <el-table-column prop="appType" label="应用类型">
                     <template v-slot="scope">
-                        <oauth2-app-type :app-type="scope.row.appType"/>
+                         <oauth2-app-type :app-type="scope.row.appType" :app-name="scope.row.appName"/> {{ scope.row.appType }}
                     </template>
                 </el-table-column>
                 <el-table-column prop="appName" label="名称" />
-                <el-table-column prop="appIcon" label="图标">
-                    <template v-slot="scope">
-                        <img :src="scope.row.appIcon" style="max-width: 33px; max-height: 33px;"/>
-                    </template>
-                </el-table-column>
                 <el-table-column label="授权地址">
                     <template v-slot="scope">
                         <el-link type="info"> {{ scope.row.authUrl }}</el-link>
@@ -66,20 +61,17 @@
                 </el-table-column>
             </el-table>
             <el-dialog v-model="isShowEditAppDialog" width="38%" center destroy-on-close>
-                <el-form :model="appFormData" label-position="top">
+                <el-form :model="appFormData" :rules="appFormDataRule" ref="appFormDataRef" label-position="top">
                     <el-row :gutter="28">
-                        <el-col :span="8">
+                        <el-col :span="10">
                             <el-form-item label="应用 ID"  prop="registrationId">
-                                <el-input v-model="appFormData.registrationId"></el-input>
+                                <el-input v-model="appFormData.registrationId" placeholder="建议输入全英文字符"></el-input>
                             </el-form-item>
                         </el-col>
-                        <el-col :span="8">    
+                        <el-col :span="10">    
                             <el-form-item label="应用名称" prop="appName">
-                                <el-input v-model="appFormData.appName" ></el-input>
+                                <el-input v-model="appFormData.appName" placeholder="用户可理解的登陆应用名"></el-input>
                             </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            
                         </el-col>
                     </el-row>
                     <el-form-item label="应用类型" prop="appName">
@@ -94,27 +86,36 @@
                                 </el-select>
                     </el-form-item>
                     <el-row :gutter="28">
-                        <el-col :span="8">
+                        <el-col :span="10">
                             <el-form-item label="Client Id" prop="clientId">
-                                <el-input v-model="appFormData.clientId" ></el-input>
+                                <el-input v-model="appFormData.clientId" placeholder="Oauth2 平台下发的 clientId"></el-input>
                             </el-form-item>
                         </el-col>
-                        <el-col :span="8">
+                        <el-col :span="10">
                             <el-form-item label="Client Secret" prop="clientSecret">
-                                <el-input v-model="appFormData.clientSecret" ></el-input>
+                                <el-input v-model="appFormData.clientSecret" placeholder="Oauth2 平台下发的秘钥"></el-input>
                             </el-form-item>
                         </el-col>
                     </el-row>
                     <el-row :gutter="28">
-                        <el-col :span="8">
+                        <el-col :span="10">
                             <el-form-item label="授权地址" prop="authUrl">
-                                <el-input v-model="appFormData.authUrl" ></el-input>
+                                <el-input v-model="appFormData.authUrl" placeholder="用于获取 access token 的服务地址"></el-input>
                             </el-form-item>
                         </el-col>
-                        <el-col :span="8">
+                        <el-col :span="10">
                             <el-form-item label="资源地址" prop="resourceUrl">
-                                <el-input v-model="appFormData.resourceUrl" ></el-input>
+                                <el-input v-model="appFormData.resourceUrl" placeholder="用于获取用户信息的服务地址"></el-input>
                             </el-form-item>
+                        </el-col>
+                    </el-row>
+                    <el-row style="margin-bottom: 33px">
+                        <el-col>
+                            <el-divider>
+                                <el-icon color="#000"><info-filled /></el-icon>
+                                请在 {{ appFormData.appType }} 中配置回调地址
+                            </el-divider>
+                            <el-link type="primary">{{ redirectUri }}{{ appFormData.registrationId }}</el-link>
                         </el-col>
                     </el-row>
                    
@@ -154,7 +155,6 @@ export default {
                 totalElements:0,
                 totalPages: 1
             },
-
             appPageQuery: {
                 page: 0,
                 size: 10,
@@ -163,16 +163,41 @@ export default {
             },
 
             isShowEditAppDialog: false,
+            redirectUri: '',
             appFormData: {
                 id: null,
             },
+            appFormDataRule: {
+                registrationId: [                    
+                    { required: true,message: '请为应用配置唯一 ID', trigger: 'blur'},
+                ],
+                appName: [                    
+                    { required: true,message: '请输入应用名称', trigger: 'blur'},
+                ],
+                appType: [
+                    { required: true,message: '请选择应用类型', trigger: 'blur'},
+                ],
+                authUrl: [
+                    { required: true,message: '请配置请求授权地址', trigger: 'blur'},
+                ],
+                resourceUrl: [
+                    { required: true,message: '请配置资源 API 地址', trigger: 'blur'},
+                ],
+                clientId: [
+                    { required: true,message: '请配置申请的 clientId', trigger: 'blur'},
+                ],
+                clientSecret: [
+                    { required: true,message: '请配置申请的 clientSecret', trigger: 'blur'},
+                ]
+            },
             appTypes: [
-                'github', 'gitlab'
+                'GITLAB', 'GITHUB'
             ]
         }
     },
 
     created() {
+        this.redirectUri = window.location.protocol + "//" +window.location.host+"/login/oauth2/"
         this.fetchApps()
     },
 
@@ -233,23 +258,30 @@ export default {
             })
         },
         onAppSave() {
-            if(this.appFormData.id) {
-                updateApp(this.appFormData).then(resp => {
-                    if (!resp.errCode) {
-                        this.$message.success('更新成功')
-                        this.isShowEditAppDialog = false
-                        this.fetchApps()
+            this.$refs.appFormDataRef.validate(valid => {
+                if (valid) {
+                    if(this.appFormData.id) {
+                        updateApp(this.appFormData).then(resp => {
+                            if (!resp.errCode) {
+                                this.$message.success('更新成功')
+                                this.isShowEditAppDialog = false
+                                this.fetchApps()
+                            }
+                        })
+                    } else {
+                        createApp(this.appFormData).then(resp => {
+                            if (!resp.errCode) {
+                                this.$message.success('创建成功')
+                                this.isShowEditAppDialog = false
+                                this.fetchApps()
+                            }
+                        })
                     }
-                })
-            } else {
-                createApp(this.appFormData).then(resp => {
-                    if (!resp.errCode) {
-                        this.$message.success('创建成功')
-                        this.isShowEditAppDialog = false
-                        this.fetchApps()
-                    }
-                })
-            }
+                } else {
+                    this.$message.error('请填写表单必填项')
+                }
+            })
+            
         },
     }
 }
