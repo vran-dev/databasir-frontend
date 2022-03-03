@@ -8,6 +8,7 @@
     <el-skeleton v-loading="!state.init" :rows="12" />
   </template>
   <template  v-else>
+          
     <el-row :gutter="20">
         <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
           <el-button type="success" style="width:100%" icon="Refresh" @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
@@ -27,157 +28,172 @@
           </el-select>
         </el-col>
     </el-row>
-  
     <el-row>
-      <el-col :span="20">
-        <el-row>
-          <!-- database overview -->
-          <el-col>
-            <el-descriptions :column="1" size="large" border>
-              <el-descriptions-item label="Database Name" label-align="left" width='200px'>{{ state.databaseDocument.databaseName }}</el-descriptions-item>
-              <el-descriptions-item label="Product Name" label-align="left">{{ state.databaseDocument.productName }}</el-descriptions-item>
-              <el-descriptions-item label="Product Version" label-align="left">{{ state.databaseDocument.productVersion }}</el-descriptions-item>
-              <el-descriptions-item label="Document Version" label-align="left">{{ state.databaseDocument.documentVersion }}</el-descriptions-item>
-              <el-descriptions-item label="Create At" label-align="left">{{ state.databaseDocument.createAt }}</el-descriptions-item>
-            </el-descriptions>
-          </el-col>
-        </el-row>
+      <el-col>
+        <el-tabs model-value="documentPanel">
+          <el-tab-pane label="文档" name="documentPanel">
+            <el-row>
+              <el-col :span="20">
+                <el-row>
+                  <!-- database overview -->
+                  <el-col>
+                    <el-descriptions :column="1" size="large" border>
+                      <el-descriptions-item label="Database Name" label-align="left" width='200px'>{{ state.databaseDocument.databaseName }}</el-descriptions-item>
+                      <el-descriptions-item label="Product Name" label-align="left">{{ state.databaseDocument.productName }}</el-descriptions-item>
+                      <el-descriptions-item label="Product Version" label-align="left">{{ state.databaseDocument.productVersion }}</el-descriptions-item>
+                      <el-descriptions-item label="Document Version" label-align="left">{{ state.databaseDocument.documentVersion }}</el-descriptions-item>
+                      <el-descriptions-item label="Create At" label-align="left">{{ state.databaseDocument.createAt }}</el-descriptions-item>
+                    </el-descriptions>
+                  </el-col>
+                </el-row>
 
-        <!-- table overview -->
-        <el-row>
-          <el-col>
-            <h2 :id="state.databaseDocument.databaseName + '.overview'">Overview</h2>
-          </el-col>
-          <el-col>
-            <el-table :data="state.databaseDocument.tables"  border stripe width='80%'>
-              <el-table-column type="index" />
-              <el-table-column prop="name" label="Name" min-width="160" resizable />
-              <el-table-column prop="type" label="Type" width="200"  resizable />
-              <el-table-column prop="comment" label="comment" min-width="160" resizable />
-              <el-table-column prop="remark" label="remark" min-width="120" resizable >
-                <template v-slot="scope">
-                    <el-button @click="showRemarkDrawer(scope.row.name)" size="small" :icon="Edit"></el-button>
+                <!-- table overview -->
+                <el-row>
+                  <el-col>
+                    <h2 :id="state.databaseDocument.databaseName + '.overview'">Overview</h2>
+                  </el-col>
+                  <el-col>
+                    <el-table :data="state.databaseDocument.tables"  border stripe width='80%'>
+                      <el-table-column type="index" />
+                      <el-table-column prop="name" label="Name" min-width="160" resizable />
+                      <el-table-column prop="type" label="Type" width="200"  resizable />
+                      <el-table-column prop="comment" label="comment" min-width="160" resizable />
+                      <el-table-column prop="remark" label="remark" min-width="120" resizable >
+                        <template v-slot="scope">
+                            <el-button @click="showRemarkDrawer(scope.row.name)" size="small" :icon="Edit"></el-button>
+                        </template>
+                      </el-table-column>
+                    </el-table>
+                  </el-col>
+                </el-row>
+
+                <!-- table details -->
+                <template v-for="tableMeta in state.databaseDocument.tables" :key="tableMeta">
+                  <el-row>
+                    
+                  </el-row>
+                  
+                  <el-row>
+                    <el-col>
+                      <h2 :id="state.databaseDocument.databaseName + '.' + tableMeta.name">{{ tableMeta.name }}</h2>
+                    </el-col>
+                    <el-col v-if="tableMeta.columns.length > 0">
+                      <h3>Columns</h3>
+                    </el-col>
+                  </el-row>
+                  <el-row>
+                    <el-col >
+                      <el-table :data="tableMeta.columns" border stripe fit width='80%'>
+                        <el-table-column type="index" />
+                        <el-table-column prop="name" label="Name" min-width="120" />
+                        <el-table-column prop="type" :formatter="columnTypeFormat" label="Type" width="140" />
+                        <el-table-column label="Primary Key" width="120"> 
+                          <template v-slot="scope">
+                            {{ scope.row.isPrimaryKey? 'YES':''}}
+                          </template>
+                        </el-table-column>
+                        <el-table-column prop="nullable" label="Is Nullable" width="120">
+                          <template v-slot="scope">
+                            {{ scope.row.nullable == 'YES' ? 'YES':''}}
+                          </template>
+                        </el-table-column>
+                        <el-table-column prop="autoIncrement" label="Auto Increment" width="140">
+                          <template v-slot="scope">
+                            {{ scope.row.autoIncrement == 'YES'? 'YES':''}}
+                          </template>
+                        </el-table-column>
+                        <el-table-column prop="defaultValue" label="default" min-width="120" />
+                        <el-table-column prop="comment" label="comment"  />
+                        <el-table-column prop="remark" label="remark" min-width="100" resizable fixed="right">
+                          <template v-slot="scope">
+                              <el-button @click="showRemarkDrawer(tableMeta.name, scope.row.name)" size="small" :icon="Edit"></el-button>
+                          </template>
+                        </el-table-column>
+                      </el-table>
+                    </el-col>
+                  </el-row>
+                
+                  <div v-if="tableMeta.indexes.length > 0">
+                    <el-row>
+                      <el-col>
+                        <h3>Indexes</h3>            
+                      </el-col>
+                    </el-row>
+                    <el-row>
+                      <el-col >
+                        <el-table :data="tableMeta.indexes" border stripe fit width='80%'>
+                          <el-table-column type="index" />
+                          <el-table-column prop="name" label="Name" min-width="120" />
+                          <el-table-column prop="isUnique" label="Is Unique" width="120">
+                            <template v-slot="scope">
+                              {{ scope.row.isUnique? 'YES':''}}
+                            </template>
+                          </el-table-column>
+                          <el-table-column prop="columnNames" label="Columns" min-width="150" />
+                        </el-table>
+                      </el-col>
+                    </el-row>
+                  </div>
+                  
+                  <div  v-if="tableMeta.triggers.length > 0">
+                    <el-row>
+                      <el-col>
+                        <h3>Triggers</h3>
+                      </el-col>
+                    </el-row>
+                    <el-row>
+                      <el-col >
+                        <el-table :data="tableMeta.triggers" stripe fit border width='80%'>
+                          <el-table-column type="index" />
+                          <el-table-column prop="name" label="Name" min-width="120" />
+                          <el-table-column prop="timing" label="timing" />
+                          <el-table-column prop="manipulation" label="manipulation" width="120" />
+                          <el-table-column prop="statement" label="statement" />
+                          <el-table-column prop="creatAt" label="creatAt" width="150" />
+                        </el-table>
+                      </el-col>
+                    </el-row>
+                  </div>
+
                 </template>
-              </el-table-column>
-            </el-table>
-          </el-col>
-        </el-row>
 
-        <!-- table details -->
-        <template v-for="tableMeta in state.databaseDocument.tables" :key="tableMeta">
-          <el-row>
-            
-          </el-row>
-          
-          <el-row>
-            <el-col>
-              <h2 :id="state.databaseDocument.databaseName + '.' + tableMeta.name">{{ tableMeta.name }}</h2>
-            </el-col>
-            <el-col v-if="tableMeta.columns.length > 0">
-              <h3>Columns</h3>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col >
-              <el-table :data="tableMeta.columns" border stripe fit width='80%'>
-                <el-table-column type="index" />
-                <el-table-column prop="name" label="Name" min-width="120" />
-                <el-table-column prop="type" :formatter="columnTypeFormat" label="Type" width="140" />
-                <el-table-column label="Primary Key" width="120"> 
-                  <template v-slot="scope">
-                    {{ scope.row.isPrimaryKey? 'YES':''}}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="nullable" label="Is Nullable" width="120">
-                  <template v-slot="scope">
-                    {{ scope.row.nullable == 'YES' ? 'YES':''}}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="autoIncrement" label="Auto Increment" width="140">
-                  <template v-slot="scope">
-                    {{ scope.row.autoIncrement == 'YES'? 'YES':''}}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="defaultValue" label="default" min-width="120" />
-                <el-table-column prop="comment" label="comment"  />
-                <el-table-column prop="remark" label="remark" min-width="100" resizable fixed="right">
-                  <template v-slot="scope">
-                      <el-button @click="showRemarkDrawer(tableMeta.name, scope.row.name)" size="small" :icon="Edit"></el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-            </el-col>
-          </el-row>
-        
-          <div v-if="tableMeta.indexes.length > 0">
-            <el-row>
-              <el-col>
-                <h3>Indexes</h3>            
+                <el-tooltip
+                  content="回到顶部"
+                  placement="top"
+                >
+                  <el-backtop :bottom="100"></el-backtop>
+                </el-tooltip>
+              </el-col>
+              <el-col :span="2">
+                <div class="toc-wrapper">
+                  <div class="toc">
+                    <ul>
+                      <li v-for="(item, index) in state.toc" :key="index">
+                        <el-link :underline="false" @click="onClickToc(state.databaseDocument.databaseName +'.'+ item.name)">
+                          {{ item.name }}
+                        </el-link>
+                        <ul>
+                          <li v-for="(childItem, childIndex) in item.child" :key="index+'-'+childIndex"><el-link :underline="false">{{ childItem.name }}</el-link></li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </el-col>
             </el-row>
-            <el-row>
-              <el-col >
-                <el-table :data="tableMeta.indexes" border stripe fit width='80%'>
-                  <el-table-column type="index" />
-                  <el-table-column prop="name" label="Name" min-width="120" />
-                  <el-table-column prop="isUnique" label="Is Unique" width="120">
-                    <template v-slot="scope">
-                      {{ scope.row.isUnique? 'YES':''}}
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="columnNames" label="Columns" min-width="150" />
-                </el-table>
-              </el-col>
-            </el-row>
-          </div>
-          
-          <div  v-if="tableMeta.triggers.length > 0">
-            <el-row>
-              <el-col>
-                <h3>Triggers</h3>
-              </el-col>
-            </el-row>
-            <el-row>
-              <el-col >
-                <el-table :data="tableMeta.triggers" stripe fit border width='80%'>
-                  <el-table-column type="index" />
-                  <el-table-column prop="name" label="Name" min-width="120" />
-                  <el-table-column prop="timing" label="timing" />
-                  <el-table-column prop="manipulation" label="manipulation" width="120" />
-                  <el-table-column prop="statement" label="statement" />
-                  <el-table-column prop="creatAt" label="creatAt" width="150" />
-                </el-table>
-              </el-col>
-            </el-row>
-          </div>
+          </el-tab-pane>
 
-        </template>
-
-        <el-tooltip
-          content="回到顶部"
-          placement="top"
-        >
-          <el-backtop :bottom="100"></el-backtop>
-        </el-tooltip>
-      </el-col>
-      <el-col :span="2">
-        <div class="toc-wrapper">
-          <div class="toc">
-            <ul>
-              <li v-for="(item, index) in state.toc" :key="index">
-                <el-link :underline="false" @click="onClickToc(state.databaseDocument.databaseName +'.'+ item.name)">
-                  {{ item.name }}
-                </el-link>
-                <ul>
-                  <li v-for="(childItem, childIndex) in item.child" :key="index+'-'+childIndex"><el-link :underline="false">{{ childItem.name }}</el-link></li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-        </div>
+          <el-tab-pane label="UML" name="umlPanel" style="width: 100%;" lazy="true">
+            <el-row>
+              <el-col :span="5">
+                <el-switch v-model="state.uml.showComment" active-text="显示注释" inactive-text="隐藏注释"/>
+              </el-col>
+            </el-row>
+            <diagram :model-data="state.databaseDocument.tables" :show-comment="state.uml.showComment"></diagram>
+          </el-tab-pane>
+        </el-tabs>
       </el-col>
     </el-row>
-    
     <!-- remarks -->
     <el-drawer
       v-model="remarkData.isShowDrawer"
@@ -255,7 +271,7 @@
         </el-col>
       </el-row>
     </el-drawer>
-    </template>
+  </template>
 </template>
 
 <style>
@@ -307,7 +323,7 @@
 }
 
 .toc {
-  top: 130px;
+  top: 180px;
   /* position: fixed; */
   margin-left: 0;
   transform: scale(1, 1);
@@ -342,8 +358,12 @@ import { getOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocume
 import { ElMessage } from 'element-plus'
 import { Delete, More, Edit } from '@element-plus/icons'
 import { listRemarks, createRemark, deleteRemark } from '@/api/DocumentRemark'
+import Diagram from '../components/Diagram.vue'
 
 export default {
+  components: {
+    Diagram
+  },
   setup() {
     const route = useRoute()
     const state = reactive({
@@ -365,7 +385,10 @@ export default {
         export: false,
       },
       projectId: null,
-      groupId: null
+      groupId: null,
+      uml: {
+        showComment: true
+      }
     })
 
     state.projectId = route.params.projectId
