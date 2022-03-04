@@ -1,10 +1,5 @@
 <template>
     <el-container>
-        <el-header>
-            <el-row :gutter="10">
-                
-            </el-row>
-        </el-header>
         <el-main>
             <el-table :data="projectOperationLogPageData.data">
                 <el-table-column prop="id" label=""/>

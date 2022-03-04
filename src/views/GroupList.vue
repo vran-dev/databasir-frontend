@@ -2,7 +2,7 @@
     <el-tabs v-model="activeTab" @tab-click="onTabClick">
         <el-tab-pane label="项目分组" name="groupListTab">
             <el-container>
-                <el-header>
+                <el-main>
                     <el-row :gutter="12">
                         <el-col :span="3" v-require-roles="['SYS_OWNER']">
                             <el-tooltip content="创建一个分组" placement="top">
@@ -13,8 +13,6 @@
                             <el-input @change='onQuery' v-model="groupPageQuery.groupNameContains" label="组名" placeholder="组名称搜索" prefix-icon="search"/>
                         </el-col>
                     </el-row>
-                </el-header>
-                <el-main>
                     <el-row v-if="groupPageData.data.length == 0">
                         <el-col>
                             <el-empty description="请先创建分组"></el-empty>

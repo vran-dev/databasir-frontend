@@ -8,7 +8,6 @@
     <el-skeleton v-loading="!state.init" :rows="12" />
   </template>
   <template  v-else>
-          
     <el-row :gutter="20">
         <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
           <el-button type="success" style="width:100%" icon="Refresh" @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
@@ -29,14 +28,12 @@
         </el-col>
     </el-row>
     <el-row>
-      <el-col>
+      <el-col :span="24">
         <el-tabs model-value="documentPanel">
           <el-tab-pane label="文档" name="documentPanel">
             <el-row>
               <el-col :span="20">
-                <el-row>
                   <!-- database overview -->
-                  <el-col>
                     <el-descriptions :column="1" size="large" border>
                       <el-descriptions-item label="Database Name" label-align="left" width='200px'>{{ state.databaseDocument.databaseName }}</el-descriptions-item>
                       <el-descriptions-item label="Product Name" label-align="left">{{ state.databaseDocument.productName }}</el-descriptions-item>
@@ -44,15 +41,9 @@
                       <el-descriptions-item label="Document Version" label-align="left">{{ state.databaseDocument.documentVersion }}</el-descriptions-item>
                       <el-descriptions-item label="Create At" label-align="left">{{ state.databaseDocument.createAt }}</el-descriptions-item>
                     </el-descriptions>
-                  </el-col>
-                </el-row>
 
                 <!-- table overview -->
-                <el-row>
-                  <el-col>
                     <h2 :id="state.databaseDocument.databaseName + '.overview'">Overview</h2>
-                  </el-col>
-                  <el-col>
                     <el-table :data="state.databaseDocument.tables"  border stripe width='80%'>
                       <el-table-column type="index" />
                       <el-table-column prop="name" label="Name" min-width="160" resizable />
@@ -64,25 +55,11 @@
                         </template>
                       </el-table-column>
                     </el-table>
-                  </el-col>
-                </el-row>
 
                 <!-- table details -->
                 <template v-for="tableMeta in state.databaseDocument.tables" :key="tableMeta">
-                  <el-row>
-                    
-                  </el-row>
-                  
-                  <el-row>
-                    <el-col>
                       <h2 :id="state.databaseDocument.databaseName + '.' + tableMeta.name">{{ tableMeta.name }}</h2>
-                    </el-col>
-                    <el-col v-if="tableMeta.columns.length > 0">
-                      <h3>Columns</h3>
-                    </el-col>
-                  </el-row>
-                  <el-row>
-                    <el-col >
+                      <h3 v-if="tableMeta.columns.length > 0">Columns</h3>
                       <el-table :data="tableMeta.columns" border stripe fit width='80%'>
                         <el-table-column type="index" />
                         <el-table-column prop="name" label="Name" min-width="120" />
@@ -104,23 +81,15 @@
                         </el-table-column>
                         <el-table-column prop="defaultValue" label="default" min-width="120" />
                         <el-table-column prop="comment" label="comment"  />
-                        <el-table-column prop="remark" label="remark" min-width="100" resizable fixed="right">
+                        <el-table-column prop="remark" label="remark" min-width="60" resizable>
                           <template v-slot="scope">
                               <el-button @click="showRemarkDrawer(tableMeta.name, scope.row.name)" size="small" :icon="Edit"></el-button>
                           </template>
                         </el-table-column>
                       </el-table>
-                    </el-col>
-                  </el-row>
                 
                   <div v-if="tableMeta.indexes.length > 0">
-                    <el-row>
-                      <el-col>
                         <h3>Indexes</h3>            
-                      </el-col>
-                    </el-row>
-                    <el-row>
-                      <el-col >
                         <el-table :data="tableMeta.indexes" border stripe fit width='80%'>
                           <el-table-column type="index" />
                           <el-table-column prop="name" label="Name" min-width="120" />
@@ -131,18 +100,10 @@
                           </el-table-column>
                           <el-table-column prop="columnNames" label="Columns" min-width="150" />
                         </el-table>
-                      </el-col>
-                    </el-row>
                   </div>
                   
                   <div  v-if="tableMeta.triggers.length > 0">
-                    <el-row>
-                      <el-col>
                         <h3>Triggers</h3>
-                      </el-col>
-                    </el-row>
-                    <el-row>
-                      <el-col >
                         <el-table :data="tableMeta.triggers" stripe fit border width='80%'>
                           <el-table-column type="index" />
                           <el-table-column prop="name" label="Name" min-width="120" />
@@ -151,8 +112,6 @@
                           <el-table-column prop="statement" label="statement" />
                           <el-table-column prop="creatAt" label="creatAt" width="150" />
                         </el-table>
-                      </el-col>
-                    </el-row>
                   </div>
 
                 </template>
@@ -194,6 +153,7 @@
         </el-tabs>
       </el-col>
     </el-row>
+    
     <!-- remarks -->
     <el-drawer
       v-model="remarkData.isShowDrawer"
