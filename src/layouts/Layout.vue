@@ -34,7 +34,7 @@
     transform: scale(1, 1);
     top: 0px;
     right: 0px;
-    left: 100px;
+    left: 50px;
     padding: 30px;
     margin-left: 33px;
     background: #FFF;
@@ -50,7 +50,7 @@
 
 .databasir-main {
     position: relative;
-    margin-left: 133px;
+    margin-left: 60px;
     margin-top: 80px;
     --el-main-padding: 0px 20px 20px 20px;
 }

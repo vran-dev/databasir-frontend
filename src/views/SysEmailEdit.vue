@@ -1,10 +1,13 @@
 <template>
     <el-container>
         <el-main>
-            <el-card>
+            <el-card shadow="hover" style="max-width: 600px">
+                <el-divider>
+                    <el-icon><box /></el-icon> 系统邮箱设置
+                </el-divider>
                 <el-form :model="form" label-position="top" :rules="formRule" ref="formRef" style="max-width: 900px">
                     <el-form-item label="邮箱账号"  prop="username">
-                        <el-input v-model="form.username"></el-input>
+                        <el-input v-model="form.username" placeholder="请输入邮箱账号"></el-input>
                     </el-form-item>
 
                     <el-form-item label="邮箱密码" prop="password">
@@ -30,6 +33,7 @@
 
                     <el-form-item style="margin-top:38px">
                         <el-button type="primary" @click="onSubmit('formRef')">保存</el-button>
+                        <el-button type="danger" @click="onReset()">重置</el-button>
                     </el-form-item>
                 </el-form>
             </el-card>
@@ -38,7 +42,7 @@
 </template>
 
 <script>
-import { getEmailSetting, updateEmailSetting } from "../api/System"
+import { getEmailSetting, updateEmailSetting, deleteEmailSetting } from "../api/System"
 
 export default {
     data() {
@@ -92,6 +96,20 @@ export default {
                 }
             })
             
+        },
+        onReset() {
+            this.$confirm('确认重置系统邮件吗？删除后数据将无法恢复', '警告', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                deleteEmailSetting().then(resp => {
+                    if (!resp.errCode) {
+                        this.form = {}
+                        this.$message.success('重置成功')
+                    }
+                })
+            })
         }
     }
 }

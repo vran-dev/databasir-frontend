@@ -4,9 +4,6 @@
   :collapse="isCollapse"
   mode="vertical"
   class="left-menu">
-    <el-menu-item v-if="isCollapse" @click="expandMenu" index="#">
-      <el-icon><expand /></el-icon>
-    </el-menu-item>
     <el-menu-item index="/">
       <el-icon><home-filled /></el-icon>
       <template #title>
