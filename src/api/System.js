@@ -9,3 +9,7 @@ export const getEmailSetting = () => {
 export const updateEmailSetting = (request) => {
     return axios.post(base+"/sys_email", request);
 }
+
+export const deleteEmailSetting = () => {
+    return axios.delete(base+"/sys_email");
+}
