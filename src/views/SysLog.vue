@@ -37,9 +37,31 @@
                         </span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="involvedGroupId" label="涉及分组" />
-                <el-table-column prop="involvedProjectId" label="涉及项目" />
-                <el-table-column prop="involvedUserId" label="涉及用户" />
+                <el-table-column label="涉及分组">
+                    <template v-slot="scope">
+                        <el-link v-if="scope.row.involvedGroup">{{ scope.row.involvedGroup.name }}</el-link>
+                        <span v-else>
+                            -
+                        </span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="涉及项目">
+                    <template v-slot="scope">
+                        <el-link v-if="scope.row.involvedProject">{{ scope.row.involvedProject.name }}</el-link>
+                        <span v-else>
+                            -
+                        </span>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="涉及用户">
+                    <template v-slot="scope">
+                        <el-link v-if="scope.row.involvedUser">{{ scope.row.involvedUser.nickname }}</el-link>
+                        <span v-else>
+                            -
+                        </span>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="createAt" label="记录时间" />
             </el-table>
         </el-main>
