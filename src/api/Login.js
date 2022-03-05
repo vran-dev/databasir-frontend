@@ -18,7 +18,7 @@ export const logout = () => {
 }
 
 export const loginInfo = () => {
-    return axios.get('/login_info')
+    return axios.get('/api/v1.0/login_info')
 }
 
 export const refreshAccessToken = (refreshToken) => {

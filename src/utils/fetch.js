@@ -59,6 +59,7 @@ axios.interceptors.response.use(
 );
 
 function redirectLogin () {
+  user.removeUserLoginData()
   router.replace('/login')
 }
 
