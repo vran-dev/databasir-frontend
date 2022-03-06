@@ -4,7 +4,7 @@ import router from '../router';
 import { token, user } from './auth';
 import { refreshAccessToken } from '../api/Login';
 
-const BASE_API='http://localhost:8080'
+const BASE_API = process.env.VUE_APP_API_URL
 
 axios.defaults.baseURL = BASE_API,
 // 如果请求话费了超过 `timeout` 的时间，请求将被中断
