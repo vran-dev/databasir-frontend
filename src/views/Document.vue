@@ -1,361 +1,306 @@
 <template>
   <template v-if="isShowNoDataPage">
       <el-empty description="似乎还没有同步过文档" >
-          <el-button type="primary" icon='refresh' round size='large' @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
+          <el-button type="primary" icon='refresh' round size='large' @click="onSyncProjectDocument" :loading="loadings.handleSync">同步</el-button>
       </el-empty>
   </template>
   <template v-else-if="isShowLoadingPage">
-    <el-skeleton v-loading="!state.init" :rows="12" />
+    <el-skeleton v-loading="!loadings.init" :rows="12" />
   </template>
   <template  v-else>
-    <el-row :gutter="20">
-        <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-          <el-button type="success" style="width:100%" icon="Refresh" @click="onSyncProjectDocument" :loading="state.loadings.handleSync">同步</el-button>
-        </el-col>
-        <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-            <el-button type="primary" style="width:100%" icon="Download" @click="onDocumentExport()" :loading="state.loadings.export">导出</el-button>
-        </el-col>
-        <el-col :span="4">
-            <el-select @change="onProjectDocumentVersionChange" v-model="state.databaseDocumentFilter.version" placeholder="历史版本" v-select-more="loadMoreDocumentVersions" v-loading="state.loadings.loadingVersions" clearable>
-              <el-option
-              v-for="item in state.databaseDocumentVersions"
-              :key="item.version"
-              :label="'['+item.createAt +']->'+item.version+''"
-              :value="item.version"
+    <el-container >
+      <el-aside>
+          <el-space direction="vertical" :size="26" alignment="left" class="doc-toc-aside">
+            <el-switch 
+            v-model="tocData.isMultiSelectionMode" 
+            active-text="多选模式" 
+            inactive-text="单选模式" 
+            @change="onMultiSelectionModeChange"
+            :loading="loadings.multiSelectionModeChanging"/>
+            
+              <el-tree 
+                ref="treeRef"
+                :data="tocData.value" 
+                :default-checked-keys="tocData.checkedNodes"
+                :show-checkbox="tocData.isMultiSelectionMode"
+                node-key="id" 
+                highlight-current
+                :props="tocData.treeProps"
+                @node-click="onTocNodeClick" 
+                @check-change="onTocNodeCheckChange" 
               >
-              </el-option>
-          </el-select>
-        </el-col>
-    </el-row>
-    <el-row>
-      <el-col :span="24">
-        <el-tabs model-value="documentPanel">
-          <el-tab-pane label="文档" name="documentPanel">
-            <el-row>
-              <el-col :span="20">
-                  <!-- database overview -->
-                    <el-descriptions :column="1" size="large" border>
-                      <el-descriptions-item label="Database Name" label-align="left" width='200px'>{{ state.databaseDocument.databaseName }}</el-descriptions-item>
-                      <el-descriptions-item label="Product Name" label-align="left">{{ state.databaseDocument.productName }}</el-descriptions-item>
-                      <el-descriptions-item label="Product Version" label-align="left">{{ state.databaseDocument.productVersion }}</el-descriptions-item>
-                      <el-descriptions-item label="Document Version" label-align="left">{{ state.databaseDocument.documentVersion }}</el-descriptions-item>
-                      <el-descriptions-item label="Create At" label-align="left">{{ state.databaseDocument.createAt }}</el-descriptions-item>
-                    </el-descriptions>
-
-                <!-- table overview -->
-                    <h2 :id="state.databaseDocument.databaseName + '.overview'">Overview</h2>
-                    <el-table :data="state.databaseDocument.tables"  border stripe width='80%'>
-                      <el-table-column type="index" />
-                      <el-table-column prop="name" label="Name" min-width="160" resizable />
-                      <el-table-column prop="type" label="Type" width="200"  resizable />
-                      <el-table-column prop="comment" label="comment" min-width="160" resizable />
-                      <el-table-column prop="remark" label="remark" min-width="120" resizable >
-                        <template v-slot="scope">
-                            <el-button @click="showRemarkDrawer(scope.row.name)" size="small" :icon="Edit"></el-button>
-                        </template>
-                      </el-table-column>
-                    </el-table>
-
-                <!-- table details -->
-                <template v-for="tableMeta in state.databaseDocument.tables" :key="tableMeta">
-                      <h2 :id="state.databaseDocument.databaseName + '.' + tableMeta.name">{{ tableMeta.name }}</h2>
-                      <h3 v-if="tableMeta.columns.length > 0">Columns</h3>
-                      <el-table :data="tableMeta.columns" border stripe fit width='80%'>
-                        <el-table-column type="index" />
-                        <el-table-column prop="name" label="Name" min-width="120" />
-                        <el-table-column prop="type" :formatter="columnTypeFormat" label="Type" width="140" />
-                        <el-table-column label="Primary Key" width="120"> 
-                          <template v-slot="scope">
-                            {{ scope.row.isPrimaryKey? 'YES':''}}
-                          </template>
-                        </el-table-column>
-                        <el-table-column prop="nullable" label="Is Nullable" width="120">
-                          <template v-slot="scope">
-                            {{ scope.row.nullable == 'YES' ? 'YES':''}}
-                          </template>
-                        </el-table-column>
-                        <el-table-column prop="autoIncrement" label="Auto Increment" width="140">
-                          <template v-slot="scope">
-                            {{ scope.row.autoIncrement == 'YES'? 'YES':''}}
-                          </template>
-                        </el-table-column>
-                        <el-table-column prop="defaultValue" label="default" min-width="120" />
-                        <el-table-column prop="comment" label="comment"  />
-                        <el-table-column prop="remark" label="remark" min-width="60" resizable>
-                          <template v-slot="scope">
-                              <el-button @click="showRemarkDrawer(tableMeta.name, scope.row.name)" size="small" :icon="Edit"></el-button>
-                          </template>
-                        </el-table-column>
-                      </el-table>
-                
-                  <div v-if="tableMeta.indexes.length > 0">
-                        <h3>Indexes</h3>            
-                        <el-table :data="tableMeta.indexes" border stripe fit width='80%'>
-                          <el-table-column type="index" />
-                          <el-table-column prop="name" label="Name" min-width="120" />
-                          <el-table-column prop="isUnique" label="Is Unique" width="120">
-                            <template v-slot="scope">
-                              {{ scope.row.isUnique? 'YES':''}}
-                            </template>
-                          </el-table-column>
-                          <el-table-column prop="columnNames" label="Columns" min-width="150" />
-                        </el-table>
-                  </div>
-                  
-                  <div  v-if="tableMeta.triggers.length > 0">
-                        <h3>Triggers</h3>
-                        <el-table :data="tableMeta.triggers" stripe fit border width='80%'>
-                          <el-table-column type="index" />
-                          <el-table-column prop="name" label="Name" min-width="120" />
-                          <el-table-column prop="timing" label="timing" />
-                          <el-table-column prop="manipulation" label="manipulation" width="120" />
-                          <el-table-column prop="statement" label="statement" />
-                          <el-table-column prop="creatAt" label="creatAt" width="150" />
-                        </el-table>
-                  </div>
-
+                <template #default="{ node }">
+                  <span class="span-ellipsis" >
+                    <el-tooltip :content='node.comment ? node.label + "("+node.comment+")":node.label' effect="light">
+                      <span>{{ node.label }}</span>
+                    </el-tooltip>
+                  </span>
                 </template>
+              </el-tree>
 
-                <el-tooltip
-                  content="回到顶部"
-                  placement="top"
+          </el-space>
+      </el-aside>
+      <el-container>
+        <el-header>
+          <div>
+            <el-space :size="28" style="margin-bottom: 33px;">
+              <el-button 
+                v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]"
+                type="success" 
+                style="width:100%" 
+                icon="Refresh" 
+                @click="onSyncProjectDocument" 
+                :loading="loadings.handleSync">
+                同步
+              </el-button>
+              <el-button 
+                v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]"
+                type="primary" 
+                style="width:100%" 
+                icon="Download"
+                @click="onDocumentExport()" 
+                :loading="loadings.export">
+                导出
+              </el-button>
+              <el-select @change="onProjectDocumentVersionChange" v-model="projectData.documentFilter.version" placeholder="历史版本" v-select-more="loadMoreDocumentVersions" v-loading="loadings.loadingVersions" clearable>
+                <el-option
+                v-for="item in versionData.versions"
+                :key="item.version"
+                :label="'['+item.createAt +']->'+item.version+''"
+                :value="item.version"
                 >
-                  <el-backtop :bottom="100"></el-backtop>
-                </el-tooltip>
-              </el-col>
-              <el-col :span="2">
-                <div class="toc-wrapper">
-                  <div class="toc">
-                    <ul>
-                      <li v-for="(item, index) in state.toc" :key="index">
-                        <el-link :underline="false" @click="onClickToc(state.databaseDocument.databaseName +'.'+ item.name)">
-                          {{ item.name }}
-                        </el-link>
-                        <ul>
-                          <li v-for="(childItem, childIndex) in item.child" :key="index+'-'+childIndex"><el-link :underline="false">{{ childItem.name }}</el-link></li>
-                        </ul>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </el-col>
-            </el-row>
-          </el-tab-pane>
+                </el-option>
+              </el-select>
+            </el-space>
+          </div>
+        </el-header>
+        <el-main>
+          <el-tabs model-value="tableDocument">
+            <!-- multi list documentation -->
+            <el-tab-pane label="列表" name="tableDocument">
+              <DocumentList 
+                :tablesData="documentData.tables"
+                :overviewData="documentData.overview"
+                @onRemark="showRemarkDrawer"/>
+            </el-tab-pane>
 
-          <el-tab-pane label="UML" name="umlPanel" style="width: 100%;" lazy="true">
-            <el-row>
-              <el-col :span="5">
-                <el-switch v-model="state.uml.showComment" active-text="显示注释" inactive-text="隐藏注释"/>
-              </el-col>
-            </el-row>
-            <diagram :model-data="state.databaseDocument.tables" :show-comment="state.uml.showComment"></diagram>
-          </el-tab-pane>
-        </el-tabs>
-      </el-col>
-    </el-row>
-    
-    <!-- remarks -->
-    <el-drawer
-      v-model="remarkData.isShowDrawer"
-      title="更多"
-      size="50%"
-    >
+            <!-- model UML -->
+            <el-tab-pane label="UML" name="umlPanel" style="width: 100%;" :lazy="true">
+              <el-row>
+                <el-col :span="5">
+                  <el-switch v-model="umlData.showComment" active-text="显示注释" inactive-text="隐藏注释"/>
+                </el-col>
+              </el-row>
+              <diagram :model-data="umlData.tables" :show-comment="umlData.showComment"></diagram>
+            </el-tab-pane>
+          </el-tabs>
 
-      <el-row v-for="(remark, index) in remarkData.pageData.content" :key="index">
-        <el-col>
-          <el-card shadow="never" class="remark-card"> 
-            <template #header>
-            <div class="remark-header">
-              <span>
-                <span class="remark-user">{{remark.remarkBy.nickname}}</span>  
-                <span class="remark-time">{{remark.createAt}}</span>
-              </span>
-              <span v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-<el-popconfirm
-                confirm-button-text="确定"
-                cancel-button-text="取消"
-                icon="InfoFilled"
-                icon-color="red"
-                title="确定要删除该记录吗？"
-                @confirm="onDeleteRemark(remark.id)"
-                
-                >
-                  <template #reference>
-                    <el-button type="danger" :icon="Delete" circle plain size="small"></el-button>
-                  </template>
-                </el-popconfirm>
-              </span>
-                
-              
-            </div>
-            </template>
-              <div class="item text remark-content">
-                {{ remark.remark }}
-              </div>
-          </el-card>
-        </el-col>
-      </el-row>
-      <el-row v-if="remarkData.pageData.content.length == 0">
-        <el-col>
-          <el-empty></el-empty>
-        </el-col>
-      </el-row>
-
-      <el-row>
-        <el-col>
-          <el-pagination layout="prev, pager, next" 
-            :hide-on-single-page="false"
-            :currentPage="remarkData.pageData.page" 
-            :page-size="remarkData.pageData.size" 
-            :page-count="remarkData.pageData.totalPages"
-            @current-change="onRemarkPageChange">
-          </el-pagination>
-        </el-col>
-      </el-row>
-      <el-divider></el-divider>
-      <el-row v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-        <el-col>
-          <el-input
-            v-model="remarkData.formData.remark"
-            :rows="5"
-            type="textarea" 
-            placeholder="请输入内容"
+          <!-- table / column remark -->
+          <document-remark 
+            :groupId="documentRemarkData.groupId" 
+            :projectId="documentRemarkData.projectId" 
+            :tableName="documentRemarkData.tableName" 
+            :columnName="documentRemarkData.columnName" 
+            :isShowDrawer="documentRemarkData.isShowDrawer"
+            @onClose="documentRemarkData.isShowDrawer = false"
           />
-        </el-col>
-      </el-row>
-      <el-divider></el-divider>
-
-      <el-row v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+state.groupId, 'GROUP_MEMBER?groupId='+state.groupId]">
-        <el-col>
-          <el-button @click="onCreateRemark">提交</el-button>
-        </el-col>
-      </el-row>
-    </el-drawer>
+        </el-main>
+      </el-container>
+    </el-container>
   </template>
 </template>
 
 <style>
-.el-row {
-  margin-bottom: 20px;
-}
-.remark-card {
-  margin-bottom: 30px;
-}
 
-.remark-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.remark-header .remark-user {
-  color: rgb(109, 109, 109);
-}
-
-.remark-header .remark-time {
-  color: rgb(109, 109, 109);
-  font-size: 0.8rem;
-  margin-left: 10px;
-}
-
-
-.remark-content {
-  white-space: pre-wrap;
-  text-align: left;
-}
-
-.text {
+.span-ellipsis {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: 14px;
-  line-height: 1.3rem;
+  flex: 1;
+  display: flex;
+  align-items: left;
+  justify-content: space-between;
+  font-size: 14px;
+} 
+
+.doc-toc-aside {
+  overflow-wrap: break-word;
+  text-overflow: ellipsis;
+  bottom: 0px;
+  top: 100px;
+  position: fixed;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  max-width: var(--el-aside-width);
+  width: var(--el-aside-width);
+  border-width: 0px 1px 0px 0px;
+  border-color: #ddd;
+  border-style: solid;
 }
 
-.item {
-  margin-top: 10px;
-  margin-right: 40px;
-}
-
-.toc-wrapper {
-  right:0;
-  z-index: 0;
-  bottom: auto;
-  padding-left: 12px;
-  margin-left: 10px;
-}
-
-.toc {
-  top: 180px;
-  /* position: fixed; */
-  margin-left: 0;
-  transform: scale(1, 1);
-  bottom:0;
-  position:fixed;
-  overflow-y:hidden;
-  overflow-x:hidden;
-}
-
-.toc:hover {
+.doc-toc-aside:hover {
   overflow-y: auto;
-  overflow-x: auto;
+  scrollbar-width: thin;
 }
-
-.toc-wrapper .toc ul {
-    list-style: none;
-    line-height: 1.7;
-    inline-size: 200px;
-    overflow-wrap: break-word;
-}
-
-.toc-wrapper .toc a {
-    display: inherit;
-}
-
 </style>
 
 <script>
-import { reactive, computed } from 'vue'
+import { reactive, computed, ref } from 'vue'
 import {  useRoute } from 'vue-router'
-import { getOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument } from '@/api/Document'
+import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables } from '@/api/Document'
 import { ElMessage } from 'element-plus'
-import { Delete, More, Edit } from '@element-plus/icons'
-import { listRemarks, createRemark, deleteRemark } from '@/api/DocumentRemark'
-import Diagram from '../components/Diagram.vue'
+import Diagram from '../components/document/Diagram.vue'
+import DocumentRemark from '../components/document/DocumentRemark.vue'
+import DocumentList from '../components/document/DocumentList.vue'
 
 export default {
   components: {
-    Diagram
+    Diagram,
+    DocumentRemark,
+    DocumentList
   },
   setup() {
     const route = useRoute()
-    const state = reactive({
-      databaseDocumentVersionFilter: {
-        page: 0,
-        size: 10,
-      },
-      databaseDocumentVersions: [],
-      databaseDocumentVersionTotalPages: 0,
-      databaseDocumentFilter: {
+
+    // loading state
+    const loadings = reactive({
+      handleSync: false,
+      loadingVersions: false,
+      export: false,
+      init: false,
+      multiSelectionModeChanging: false,
+    })
+    // project data
+    const projectData = reactive ({
+      simpleDocumentData: null,
+      documentFilter: {
         version: null
       },
-      databaseDocument: null,
-      toc: [],
-      init: false,
-      loadings: {
-        handleSync: false,
-        loadingVersions: false,
-        export: false,
-      },
-      projectId: null,
-      groupId: null,
-      uml: {
-        showComment: true
-      }
+      projectId: route.params.projectId,
+      groupId: route.params.groupId,
     })
+    // version data
+    const versionData = reactive({
+      pageFilter: {
+        page: 0,
+        size: 10
+      },
+      totalPage: 0,
+      versions: []
+    })
+    // toc
+    const tocData = reactive({
+      value: [{id: -1, name: '概览'}],
+      treeProps: {
+        children: 'children',
+        label: 'name',
+      },
+      checkedNodes: [],
+      isMultiSelectionMode: false
+    })
+    // document component
+    const documentData = reactive({
+      tables: [],
+      overview: {}
+    })
+    // uml component
+    const umlData = reactive({
+      showComment: false,
+      tables: []
+    })
+    const treeRef = ref()
 
-    state.projectId = route.params.projectId
-    state.groupId = route.params.groupId
-    const isShowNoDataPage = computed(() => !state.databaseDocument && state.init)
-    const isShowLoadingPage = computed(() => !state.databaseDocument && !state.init)
+    const fetchDocumentTables = (tableIds, callback) => {
+      let documentId = projectData.simpleDocumentData.id
+      getTables(route.params.projectId, documentId, tableIds).then(resp => {
+        if (!resp.errCode) {
+          callback(resp.data)
+        } else {
+          messageNotify('warn', '加载数据异常，请稍后再试')
+        }
+      })
+    }
 
+    const onTocNodeClick = (node) => {
+      if(tocData.isMultiSelectionMode) {
+        console.log('ignore click action when in multi selection mode')
+        return
+      }
+
+      if (node.id == -1) {
+        documentData.overview = projectData.simpleDocumentData
+        documentData.tables = []
+        umlData.tables = []
+
+      } else {
+        fetchDocumentTables([node.id], data => {
+          documentData.overview = null
+          documentData.tables = data
+          umlData.tables = data
+        })
+      }
+    }
+
+    const onTocNodeCheckChange = () => {
+      fetchDocumentTables(treeRef.value.getCheckedKeys(), data => {
+        if (treeRef.value.getCheckedKeys().some(n => n== -1)) {
+          documentData.overview = projectData.simpleDocumentData
+        } else {
+          documentData.overview = null
+        }
+        documentData.tables = data
+        umlData.tables = data
+      })
+    }
+
+    const onMultiSelectionModeChange = (val) => {
+      loadings.multiSelectionModeChanging = true
+      if (val) {
+        onTocNodeCheckChange()
+      } else {
+        const curr = treeRef.value.getCurrentNode()
+        if (curr == null) {
+          onTocNodeClick({id: -1})
+        } else {
+          onTocNodeClick(curr)
+        }
+      }
+      loadings.multiSelectionModeChanging = false
+    }
+
+    const initPageData = async () => {
+      // init version data
+      const versionResp = await getVersionByProjectId(route.params.projectId)
+      versionData.versions = versionResp.data.content
+      versionData.totalPage = versionResp.data.totalPages
+
+      // get simple document
+      const documentResp = await getSimpleOneByProjectId(route.params.projectId, projectData.documentFilter)
+      if (documentResp.errCode) {
+        messageNotify('error', '同步失败：'+documentResp.errMessage)
+      } else if (documentResp.data) {
+        // init project data
+        projectData.simpleDocumentData = documentResp.data
+        projectData.groupId = route.params.groupId
+        projectData.projectId = route.params.projectId
+        // init toc data
+        tocData.value = documentResp.data.tables
+        tocData.value.unshift({ id: -1, name: '概览'})
+        tocData.checkedNodes = tocData.value.map(d => d.id)
+        // init document data
+        documentData.overview = documentResp.data
+        documentData.tables = []
+      } else {
+        messageNotify('warn', '无可用数据')
+      }
+      loadings.init = true
+    }
+    initPageData()
+
+    const isShowNoDataPage = computed(() => !projectData.simpleDocumentData && loadings.init)
+    const isShowLoadingPage = computed(() => !projectData.simpleDocumentData && !loadings.init)
     const messageNotify = (type, msg) => {
       ElMessage({
             showClose: true,
@@ -365,109 +310,47 @@ export default {
         });
     }
 
-    const fetchDatabaseMetaData = async () => {
-      // fetch version
-      const versionResp = await getVersionByProjectId(route.params.projectId)
-      state.databaseDocumentVersions = versionResp.data.content
-      state.databaseDocumentVersionTotalPages = versionResp.data.totalPages
-
-      // fetch meta
-      const resp = await getOneByProjectId(route.params.projectId)
-      if (resp.errCode) {
-        messageNotify('error', '同步失败：'+resp.errMessage)
-      } else if (resp.data) {
-        state.databaseDocument = resp.data
-        initTocByDocumentData(resp.data)
-      } else {
-        messageNotify('warn', '无可用数据')
-      }
-      state.init = true
-    }
-
-    const initTocByDocumentData = (data) => {
-      const toc = []
-      toc.push({ name: 'overview', child: [] })
-      data.tables.forEach(item => {
-        const child = []
-        toc.push({ name: item.name, child: child })
-      })
-      state.toc = toc
-    }
-
-    const onClickToc = (id) => {
-      const ele = document.getElementById(id)
-      if (ele) {
-        var headerOffset = -100;
-        var actualTop = ele.offsetTop;
-        var current = ele.offsetParent;
-          while (current !== null){
-          actualTop += current.offsetTop;
-          current = current.offsetParent;
-        }
-        window.scrollTo({
-          top: actualTop + headerOffset,
-          behavior: "smooth"
-        })
-      }
-    }
-
-    const columnTypeFormat = (column) => {
-      if (column.decimalDigits == null) {
-        return column.type + '('+column.size+')' 
-      } else {
-        return column.type + '('+column.size+', '+column.decimalDigits+')'
-      }
-    }
-
     const onProjectDocumentVersionChange = async () => {
-      state.loadings.loadingVersions = true
-      const resp =  await getOneByProjectId(route.params.projectId, state.databaseDocumentFilter)
-      if (resp.data) {
-        state.databaseDocument = resp.data
-        initTocByDocumentData(resp.data)
-        messageNotify('success', '切换成功')
-      } else {
-        messageNotify('warn', '无可用数据')
-      }
-      state.loadings.loadingVersions = false
+      loadings.loadingVersions = true
+      initPageData()
+      messageNotify('success', '切换成功')
+      loadings.loadingVersions = false
     }
 
     const onSyncProjectDocument = () => {
       const projectId = route.params.projectId
-      state.loadings.handleSync = true
+      loadings.handleSync = true
       syncByProjectId(projectId)
       .then(resp => {
         if (!resp.errCode) {
-          fetchDatabaseMetaData()
+          initPageData()
           messageNotify('success', '同步成功')
         }
-        state.loadings.handleSync = false
+        loadings.handleSync = false
       })
-      .catch(() => state.loadings.handleSync = false)
+      .catch(() => loadings.handleSync = false)
     }
 
     const onDocumentExport = () => {
       const projectId = route.params.projectId
-      state.loadings.export = true
+      loadings.export = true
       exportDocument(projectId, {
-        version: state.databaseDocumentFilter.version
-      }, state.databaseDocument.databaseName, () => state.loadings.export = false)
+        version: projectData.documentFilter.version
+      }, projectData.simpleDocumentData.databaseName, () => loadings.export = false)
     }
 
     const loadMoreDocumentVersions = debounce(async () => {
-        state.loadings.loadingVersions = true
-        if (state.databaseDocumentVersionFilter.page + 1  < state.databaseDocumentVersionTotalPages) {
-          state.databaseDocumentVersionFilter.page++
-          const versionResp = await  getVersionByProjectId(route.params.projectId, state.databaseDocumentVersionFilter)
-          state.databaseDocumentVersionTotalPages = versionResp.data.totalPages
+        loadings.loadingVersions = true
+        if (versionData.pageFilter.page + 1  < versionData.totalPage) {
+          versionData.pageFilter.page++
+          const versionResp = await  getVersionByProjectId(route.params.projectId, versionData.pageFilter)
+          versionData.totalPage = versionResp.data.totalPages
           if (versionResp.data.content.length > 0){
-            versionResp.data.content.forEach(element => state.databaseDocumentVersions.push(element))
+            versionResp.data.content.forEach(element => versionData.versions.push(element))
           }
         }
-        state.loadings.loadingVersions = false
+        loadings.loadingVersions = false
     }, 800)
-
-    fetchDatabaseMetaData()
 
     // 节流
     function debounce(fn, delay) {
@@ -484,105 +367,44 @@ export default {
       }
     }
 
-    // remarks
-    const remarkData = reactive({
-      isShowDrawer: false,
-      formData: {
-        remark: null,
-      },
-      pageFilter: {
-        page: 0,
-        size: 5,
-        tableName: null,
-        columnName: null
-      },
-      pageData: {
-        content: [],
-        page: 0,
-        size: 10,
-        totalPages: 0
-      },
+    // Document Remark
+    const documentRemarkData = ref({
+      tableName: null,
+      columnName: null,
+      groupId: null,
+      projectId: null,
+      isShowDrawer: false
     })
+
     const showRemarkDrawer = (tableName, columnName) => {
-      remarkData.isShowDrawer = true
-      if (tableName) {
-        remarkData.pageFilter.tableName = tableName
-      } else {
-        remarkData.pageFilter.tableName = null
+      documentRemarkData.value = {
+        tableName: tableName,
+        columnName: columnName,
+        isShowDrawer: true,
+        groupId: projectData.groupId,
+        projectId: projectData.projectId
       }
-      if(columnName) {
-        remarkData.pageFilter.columnName = columnName
-      } else {
-        remarkData.pageFilter.columnName = null
-      }
-      const projectId = route.params.projectId
-      const groupId = route.params.groupId
-      listRemarks(groupId, projectId, remarkData.pageFilter).then(resp => {
-        remarkData.pageData = resp.data
-        remarkData.pageData.page = resp.data.number + 1
-      })
-    }
-
-    const onRemarkPageChange = (currentPage) => {
-      remarkData.pageFilter.page = currentPage - 1
-      const projectId = route.params.projectId
-      const groupId = route.params.groupId
-      listRemarks(groupId, projectId, remarkData.pageFilter).then(resp => {
-        remarkData.pageData = resp.data
-        remarkData.pageData.page = resp.data.number + 1
-      })
-    }
-
-    const onCreateRemark = () => {
-      if(!remarkData.formData.remark || remarkData.formData.remark == '') {
-        messageNotify('warning', '内容不能为空')
-        return
-      }
-      const projectId = route.params.projectId
-      const groupId = route.params.groupId
-      const body  = {
-        tableName: remarkData.pageFilter.tableName,
-        columnName: remarkData.pageFilter.columnName,
-        remark: remarkData.formData.remark
-      }
-      createRemark(groupId, projectId, body).then(resp => {
-        if(!resp.errCode) {
-          remarkData.formData.remark = null
-          messageNotify('success', '提交成功')
-          onRemarkPageChange(1)
-        }
-      })
-    }
-
-    const onDeleteRemark = (remarkId) => {
-      const projectId = route.params.projectId
-      const groupId = route.params.groupId
-      deleteRemark(groupId, projectId, remarkId).then(resp => {
-        if(!resp.errCode) {
-          messageNotify('success', '删除成功')
-          onRemarkPageChange(1)
-        }
-      })
     }
 
     return {
-      Delete,
-      More,
-      Edit,
-      state,
+      tocData,
+      documentData,
+      projectData,
+      versionData,
+      umlData,
+      loadings,
       isShowNoDataPage,
       isShowLoadingPage,
-      onClickToc,
-      columnTypeFormat,
+      treeRef,
+      onTocNodeClick,
+      onTocNodeCheckChange,
+      onMultiSelectionModeChange,
       loadMoreDocumentVersions,
       onProjectDocumentVersionChange,
       onSyncProjectDocument,
       onDocumentExport,
-      remarkData,
+      documentRemarkData,
       showRemarkDrawer,
-      onRemarkPageChange,
-      onCreateRemark,
-      onDeleteRemark
     }
   }
 }

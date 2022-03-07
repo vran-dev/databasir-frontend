@@ -8,6 +8,16 @@ export const getOneByProjectId = (projectId, parameters) => {
     })
 }
 
+export const getTables = (projectId,documentId, tableIds) => {
+    return axios.post(base  + '/projects/'+projectId+'/documents/'+documentId+'/table_documents', tableIds)
+}
+
+export const getSimpleOneByProjectId = (projectId, parameters) => {
+    return axios.get(base + '/projects/'+projectId+'/documents/simple', {
+        params: parameters
+    })
+}
+
 export const syncByProjectId = (projectId) => {
     return axios.post(base + "/projects/"+projectId+"/documents")
 }
