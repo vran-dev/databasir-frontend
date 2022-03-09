@@ -5,7 +5,7 @@
 
 <script>
 import { Graph, DataUri } from '@antv/x6'
-import { formatter as databaseFieldFormatter } from '../utils/DatabaseFieldFormatter'
+import { formatter as databaseFieldFormatter } from '@/utils/DatabaseFieldFormatter'
 
 String.prototype.byteLength = function() {
     var length = 0;
@@ -47,6 +47,12 @@ export default {
                 this.graph.clearCells()
                 this.redendarUml(this.graph)
             }
+        },
+        'modelData': {
+            handler() {
+                this.graph.clearCells()
+                this.redendarUml(this.graph)
+            }
         }
     },
     mounted() {
@@ -75,67 +81,67 @@ export default {
                     }
                 })
 
-                let x = 20, y = 20, selectMaxRowHeight = 20
-                nodeData.forEach((data, index) => {
-                    // 每张表的最长行长度
-                    let selectMaxRowWidth = data.tableName.pxWidth()
-                    let currentRowHeight = 30 * data.columns.length + 40
-                    selectMaxRowHeight = selectMaxRowHeight > currentRowHeight ? selectMaxRowHeight : currentRowHeight
-                    data.columns.forEach(column => {
-                        const columnType = databaseFieldFormatter.formatColumnType(column)
-                        const columnName = databaseFieldFormatter.formatColumnName(column, this.showComment)
-                        let distance = 80
-                        let width = distance + columnName.pxWidth() + columnType.pxWidth()
-                        if (width > selectMaxRowWidth) {
-                            selectMaxRowWidth = width
-                        }
-                    })
-                    
-                    const ports = data.columns.map(column => {
-                        const columnType = databaseFieldFormatter.formatColumnType(column)
-                        const columnName = databaseFieldFormatter.formatColumnName(column, this.showComment)
-
-                        let columnNameWeight = column.nullable == 'YES' ? 'normal' : 'bold'
-                        return {
-                            id: data.id + "-" + column.id,
-                            group: "columnGroup",
-                            attrs: {
-                                portBody: {
-                                    width: selectMaxRowWidth,
-                                    height: 30,
-                                    refY: 11
-                                },
-                                portNameLabel: {
-                                    height: 30,
-                                    text: columnName,
-                                    fontWeight: columnNameWeight,
-                                    refY: 11
-                                },
-                                portTypeLabel: {
-                                    text: columnType,
-                                    height: 30,
-                                    refY: 11,
-                                    refX: selectMaxRowWidth - columnType.pxWidth() - 22,
-                                }
-                            }
-                        }
-                    })
-                    graph.addNode({
-                        id: data.id,
-                        x: x,
-                        y: y,
-                        shape: 'er-rect',
-                        width: selectMaxRowWidth,
-                        height: 40,
-                        label: data.tableName,
-                        ports: ports
-                    })
-                    x += selectMaxRowWidth + 60
-                    if ((index + 1) % 5 == 0) {
-                        y += selectMaxRowHeight + 60
-                        x = 20
+            let x = 20, y = 20, selectMaxRowHeight = 20
+            nodeData.forEach((data, index) => {
+                // 每张表的最长行长度
+                let selectMaxRowWidth = data.tableName.pxWidth()
+                let currentRowHeight = 30 * data.columns.length + 40
+                selectMaxRowHeight = selectMaxRowHeight > currentRowHeight ? selectMaxRowHeight : currentRowHeight
+                data.columns.forEach(column => {
+                    const columnType = databaseFieldFormatter.formatColumnType(column)
+                    const columnName = databaseFieldFormatter.formatColumnName(column, this.showComment)
+                    let distance = 80
+                    let width = distance + columnName.pxWidth() + columnType.pxWidth()
+                    if (width > selectMaxRowWidth) {
+                        selectMaxRowWidth = width
                     }
                 })
+                
+                const ports = data.columns.map(column => {
+                    const columnType = databaseFieldFormatter.formatColumnType(column)
+                    const columnName = databaseFieldFormatter.formatColumnName(column, this.showComment)
+
+                    let columnNameWeight = column.nullable == 'YES' ? 'normal' : 'bold'
+                    return {
+                        id: data.id + "-" + column.id,
+                        group: "columnGroup",
+                        attrs: {
+                            portBody: {
+                                width: selectMaxRowWidth,
+                                height: 30,
+                                refY: 11
+                            },
+                            portNameLabel: {
+                                height: 30,
+                                text: columnName,
+                                fontWeight: columnNameWeight,
+                                refY: 11
+                            },
+                            portTypeLabel: {
+                                text: columnType,
+                                height: 30,
+                                refY: 11,
+                                refX: selectMaxRowWidth - columnType.pxWidth() - 22,
+                            }
+                        }
+                    }
+                })
+                graph.addNode({
+                    id: data.id,
+                    x: x,
+                    y: y,
+                    shape: 'er-rect',
+                    width: selectMaxRowWidth,
+                    height: 40,
+                    label: data.tableName,
+                    ports: ports
+                })
+                x += selectMaxRowWidth + 60
+                if ((index + 1) % 5 == 0) {
+                    y += selectMaxRowHeight + 60
+                    x = 20
+                }
+            })
         },
 
         createGraphInstance() {
