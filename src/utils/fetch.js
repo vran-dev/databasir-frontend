@@ -5,16 +5,37 @@ import { token, user } from './auth';
 import { refreshAccessToken } from '../api/Login';
 
 const BASE_API = process.env.VUE_APP_API_URL
-
+// default config
 axios.defaults.baseURL = BASE_API,
-// 如果请求话费了超过 `timeout` 的时间，请求将被中断
 axios.defaults.timeout = 20 * 1000;
-// 表示跨域请求时是否需要使用凭证
 axios.defaults.withCredentials = false;
-// axios.defaults.headers.common['token'] =  AUTH_TOKEN
 axios.defaults.headers.post['Content-Type'] = 'application/json';
-// 允许跨域
 axios.defaults.headers.post["Access-Control-Allow-Origin-Type"] = "*";
+
+// token request config
+// eslint-disable-next-line
+let tokenRefreshLock = false
+
+function lock() {
+  tokenRefreshLock = true
+}
+
+function unlock() {
+  tokenRefreshLock = false
+}
+
+let blockRequests = []
+
+function blockRequest(request) {
+  blockRequests.push(request)
+}
+
+function relaseRequests() {
+  blockRequests.forEach(request => {
+    request()
+  })
+  blockRequests = []
+}
 
 // 请求拦截器
 axios.interceptors.request.use(async function (config) {
@@ -24,14 +45,27 @@ axios.interceptors.request.use(async function (config) {
   } else if (config.url == '/access_tokens' || config.url.startsWith('/oauth2')) {
     return config
   } else  {
-    await refreshAndSaveAccessToken()
-    config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
-    return config;
+    if(!tokenRefreshLock) {
+      lock()
+      await refreshAndSaveAccessToken()
+      config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
+      unlock()
+      relaseRequests()
+      return config;
+    } else {
+      const promise = new Promise((resolve) => {
+        blockRequest(() => {
+          config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
+          resolve(config)
+        })
+      })
+      return promise
+    }
   }
 }, function (error) {
+  unlock()
   return Promise.reject(error);
 });
-
 
 // response拦截器
 axios.interceptors.response.use(

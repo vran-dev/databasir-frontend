@@ -16,7 +16,8 @@ export const token = {
             console.log('warn: not found accessToken and expireAt key')
             return false
         }
-        return expireAt > new Date().getTime()
+        // 10s gap
+        return expireAt > new Date().getTime() -(1000 * 10)
     },
 
     saveAccessToken(token, tokenExpireAt) {
