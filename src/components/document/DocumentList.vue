@@ -10,7 +10,7 @@
                 <el-descriptions-item label="Document Version" label-align="left">{{ overviewData.documentVersion }}</el-descriptions-item>
                 <el-descriptions-item label="Create At" label-align="left">{{ overviewData.createAt }}</el-descriptions-item>
             </el-descriptions>
-            <h2>Tables</h2>
+            <h3>Tables</h3>
             <el-table :data="tableList"  border stripe width='80%'>
                 <el-table-column type="index" />
                 <el-table-column prop="name" label="Name" min-width="160" resizable />
@@ -24,9 +24,9 @@
             </el-table>
         </el-col>
     </el-row>
-    <el-row v-for="tableMeta in tablesData" :key="tableMeta.id">
+    <el-row v-for="tableMeta in tablesData" :key="tableMeta.id" style="margin-top:0px !important;">
         <el-col :span="24">
-            <h2 :id="tableMeta.databaseName + '.' + tableMeta.name">{{ tableMeta.name }}</h2>
+            <h2 :id="tableMeta.name+'['+tableMeta.id+']'">{{ tableMeta.name }}</h2>
             <h3 v-if="tableMeta.columns.length > 0">Columns</h3>
             <el-table :data="tableMeta.columns" border stripe fit width='80%'>
                 <el-table-column type="index" />
