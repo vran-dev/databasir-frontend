@@ -26,7 +26,8 @@
                                             v-show="group.id == mouseEnterGroupId" 
                                             v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]" 
                                             @click="toEditPage(group.id, group.name)"
-                                            icon="Edit" >
+                                            icon="Edit"
+                                            style="margin-right: 8px;" >
                                         </el-link>
                                         <el-link :underline="false">
                                             <span @click="toGroupDashboard(group.id, group.name)">
@@ -91,7 +92,7 @@
                         <el-table-column prop="projectId" label="项目 ID"/>
                         <el-table-column prop="projectName" label="项目名称" >
                             <template v-slot="scope">
-                                <el-link @click="toDocumentPage(scope.row)" icon="Document">
+                                <el-link @click="toDocumentPage(scope.row)">
                                     <span>{{ scope.row.projectName }}</span>
                                 </el-link>
                             </template>
@@ -233,6 +234,7 @@
 .el-row:last-child {
   margin-bottom: 0;
 }
+
 </style>
 
 <script>
