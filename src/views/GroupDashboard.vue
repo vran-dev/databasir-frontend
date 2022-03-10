@@ -31,7 +31,7 @@
                 <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
                 <el-table-column label="项目名称" min-width="120" fixed="left" resizable>
                     <template v-slot="scope">
-                        <el-link :underline="true" icon="Edit" @click.stop="toDocumentPage(scope.row)">
+                        <el-link :underline="true" @click.stop="toDocumentPage(scope.row)">
                             <el-icon v-if="scope.row.isFavorite" ><star-filled /></el-icon>
                             {{ scope.row.name }}
                         </el-link>

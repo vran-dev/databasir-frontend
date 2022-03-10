@@ -225,7 +225,11 @@ export default {
 
     const onTocNodeClick = (node) => {
       if(tocData.isMultiSelectionMode) {
-        console.log('ignore click action when in multi selection mode')
+        if (node.id == -1) {
+          scrollToElement('overview[-1]')
+        } else {
+          scrollToElement(node.name+'['+node.id+']')
+        }
         return
       }
 
@@ -233,13 +237,29 @@ export default {
         documentData.overview = projectData.simpleDocumentData
         documentData.tables = []
         umlData.tables = []
-
       } else {
         fetchDocumentTables([node.id], data => {
           documentData.overview = null
           documentData.tables = data
           umlData.tables = data
         })
+      }
+    }
+
+    const scrollToElement = (id) => {
+      const ele = document.getElementById(id)
+      if (ele) {
+          var headerOffset = -100;
+          var actualTop = ele.offsetTop;
+          var current = ele.offsetParent;
+              while (current !== null){
+              actualTop += current.offsetTop;
+              current = current.offsetParent;
+          }
+          window.scrollTo({
+              top: actualTop + headerOffset,
+              behavior: "smooth"
+          })
       }
     }
 

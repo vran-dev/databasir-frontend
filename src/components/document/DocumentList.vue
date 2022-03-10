@@ -1,8 +1,8 @@
 <template>
-    <el-row  v-if="overviewData">
+    <el-row  v-if="overviewData" style="margin-top:0px !important;">
         <el-col :span="24">
             <!-- database overview -->
-            <h2>Overview</h2>
+            <h2 id="overview[-1]">Overview</h2>
             <el-descriptions :column="1" size="large" border>
                 <el-descriptions-item label="Database Name" label-align="left" width='200px'>{{ overviewData.databaseName }}</el-descriptions-item>
                 <el-descriptions-item label="Product Name" label-align="left">{{ overviewData.productName }}</el-descriptions-item>
@@ -16,9 +16,9 @@
                 <el-table-column prop="name" label="Name" min-width="160" resizable />
                 <el-table-column prop="type" label="Type" width="200"  resizable />
                 <el-table-column prop="comment" label="comment" min-width="160" resizable />
-                <el-table-column prop="remark" label="remark" min-width="120" resizable >
+                <el-table-column prop="remark" label="discussion" min-width="120" resizable >
                 <template v-slot="scope">
-                    <el-button @click="onRemark(scope.row.name)" size="small" icon="Edit"></el-button>
+                    <el-button @click="onRemark(scope.row.name)" size="small" icon="chat-line-round"></el-button>
                 </template>
                 </el-table-column>
             </el-table>
@@ -34,24 +34,40 @@
                 <el-table-column prop="type" :formatter="columnTypeFormat" label="Type" width="140" />
                 <el-table-column label="Primary Key" width="120"> 
                     <template v-slot="scope">
-                    {{ scope.row.isPrimaryKey? 'YES':''}}
+                        <el-tooltip content="YES" v-if="scope.row.isPrimaryKey">
+                            <el-tag>
+                                PK
+                            </el-tag>
+                        </el-tooltip>
                     </template>
                 </el-table-column>
                 <el-table-column prop="nullable" label="Is Nullable" width="120">
                     <template v-slot="scope">
-                    {{ scope.row.nullable == 'YES' ? 'YES':''}}
+                    <!-- {{ scope.row.nullable == 'YES' ? 'YES':''}} -->
+                        <el-tooltip content="NO" v-if="scope.row.nullable != 'YES'">
+                            <el-tag type="info">
+                                <del><em>null</em></del>
+                            </el-tag>
+                        </el-tooltip>
+                        <el-tooltip content="YES" v-else>
+                            <el-tag type="danger">
+                                <em>null</em>
+                            </el-tag>
+                        </el-tooltip>
                     </template>
                 </el-table-column>
                 <el-table-column prop="autoIncrement" label="Auto Increment" width="140">
                     <template v-slot="scope">
-                    {{ scope.row.autoIncrement == 'YES'? 'YES':''}}
+                        <el-tag v-if="scope.row.autoIncrement == 'YES'">
+                            YES
+                        </el-tag>
                     </template>
                 </el-table-column>
                 <el-table-column prop="defaultValue" label="default" min-width="120" />
                 <el-table-column prop="comment" label="comment"  />
-                <el-table-column prop="remark" label="remark" min-width="60" resizable>
+                <el-table-column prop="remark" label="discussion" min-width="60" resizable>
                     <template v-slot="scope">
-                        <el-button @click="onRemark(tableMeta.name, scope.row.name)" size="small" icon="Edit"></el-button>
+                        <el-button @click="onRemark(tableMeta.name, scope.row.name)" size="small" icon="chat-line-round"></el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -63,10 +79,22 @@
                     <el-table-column prop="name" label="Name" min-width="120" />
                     <el-table-column prop="isUnique" label="Is Unique" width="120">
                     <template v-slot="scope">
-                        {{ scope.row.isUnique? 'YES':''}}
+                        <el-tooltip content="YES" v-if="scope.row.isUnique">
+                            <el-tag>
+                                UK
+                            </el-tag>
+                        </el-tooltip>
                     </template>
                     </el-table-column>
-                    <el-table-column prop="columnNames" label="Columns" min-width="150" />
+                    <el-table-column label="Columns" min-width="150">
+                        <template v-slot="scope">
+                            <el-space>
+                                <el-tag v-for="(item, index) in scope.row.columnNames" :key="index" type="info">
+                                    {{ item }}
+                                </el-tag>
+                            </el-space>
+                        </template>
+                    </el-table-column>
                 </el-table>
             </div>
             
@@ -100,6 +128,14 @@ export default {
 
         onRemark(tableName, columnName) {
              this.$emit('onRemark', tableName, columnName)
+        },
+
+        columnNameArray(columnNames) {
+            if (columnNames) {
+                return columnNames.split(',')
+            } else {
+                return []
+            }
         },
 
         columnTypeFormat(column){
