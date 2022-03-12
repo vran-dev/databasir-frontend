@@ -5,6 +5,7 @@
             <h2 id="overview[-1]">Overview</h2>
             <el-descriptions :column="1" size="large" border>
                 <el-descriptions-item label="Database Name" label-align="left" width='200px'>{{ overviewData.databaseName }}</el-descriptions-item>
+                <el-descriptions-item label="Schema Name" label-align="left" width='200px'>{{ overviewData.schemaName }}</el-descriptions-item>
                 <el-descriptions-item label="Product Name" label-align="left">{{ overviewData.productName }}</el-descriptions-item>
                 <el-descriptions-item label="Product Version" label-align="left">{{ overviewData.productVersion }}</el-descriptions-item>
                 <el-descriptions-item label="Document Version" label-align="left">{{ overviewData.documentVersion }}</el-descriptions-item>
