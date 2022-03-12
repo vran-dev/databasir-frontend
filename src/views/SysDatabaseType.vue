@@ -226,10 +226,12 @@ export default{
         urlSample() {
             const url = '127.0.0.1:3306'
             const dbName = 'databasir'
+            const schemaNmae = 'public'
             const jdbcProtocol = this.databaseTypeForm.jdbcProtocol ? this.databaseTypeForm.jdbcProtocol : 'jdbc:mysql'
             return this.databaseTypeForm.urlPattern
             .replace('{{jdbc.protocol}}', jdbcProtocol)
             .replace('{{db.name}}', dbName)
+            .replace('{{db.schema}}', schemaNmae)
             .replace('{{db.url}}', url)
         }
     },

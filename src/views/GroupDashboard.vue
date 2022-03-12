@@ -20,10 +20,10 @@
             <el-col :span="4">
                 <el-select @change="onProjectQuery" @clear="onProjectDatabaseTypeClear()" v-model="projectFilter.databaseType" placeholder="选择数据库类型" clearable>
                     <el-option
-                    v-for="item in databaseTypes"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                    v-for="(item, index) in databaseTypes"
+                    :key="index"
+                    :label="item.databaseType"
+                    :value="item.databaseType"
                     >
                     </el-option>
                 </el-select>
@@ -165,10 +165,10 @@
                                 <el-form-item label="数据库类型" prop="dataSource.databaseType">
                                     <el-select v-model="projectForm.dataSource.databaseType" placeholder="选择数据库类型" clearable>
                                         <el-option
-                                        v-for="item in databaseTypes"
-                                        :key="item"
-                                        :label="item"
-                                        :value="item"
+                                        v-for="(item, index) in databaseTypes"
+                                        :key="index"
+                                        :label="item.databaseType"
+                                        :value="item.databaseType"
                                         >
                                         </el-option>
                                     </el-select>
@@ -201,6 +201,15 @@
                         <el-form-item label="属性" v-if="projectForm.dataSource.properties.length == 0">
                             <el-button type="text" size="small" @click="addDataSourceProperty" >+ 添加</el-button>
                         </el-form-item>
+                        <el-descriptions :column="2" border style="margin-bottom: 20px">
+                                    <el-descriptions-item label="连接地址验证">
+                                        <el-tooltip content="地址不包含属性配置，若地址不对请联系管理员修改对应数据库类型配置">
+                                            <el-link :underline="false" type="warning">
+                                                {{sampleUrl()}}
+                                            </el-link>
+                                        </el-tooltip>
+                                    </el-descriptions-item>
+                        </el-descriptions>
 
                         <el-form-item>
                             <el-col>
@@ -881,6 +890,18 @@ export default {
 
         removeIgnoreColumnName(index){
             this.projectForm.projectSyncRule.ignoreColumnNameRegexes.splice(index, 1)
+        },
+
+        sampleUrl() {
+            const result = this.databaseTypes.find(type => type.databaseType == this.projectForm.dataSource.databaseType)
+            if (!result || result.length == 0) {
+                return "";
+            }
+            return result.urlPattern
+            .replace('{{jdbc.protocol}}', result.jdbcProtocol)
+            .replace('{{db.name}}', this.projectForm.dataSource.databaseName)
+            .replace('{{db.schema}}', this.projectForm.dataSource.schemaName)
+            .replace('{{db.url}}', this.projectForm.dataSource.url)
         },
 
         onTestConnection(){
