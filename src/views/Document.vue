@@ -53,15 +53,23 @@
                 :loading="loadings.handleSync">
                 同步
               </el-button>
-              <el-button 
-                v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]"
-                type="primary" 
-                style="width:100%" 
-                icon="Download"
-                @click="onDocumentExport()" 
-                :loading="loadings.export">
-                导出
-              </el-button>
+              <el-dropdown v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]">
+                <el-button 
+                  type="primary" 
+                  style="width:100%" 
+                  icon="Download"
+                  :loading="loadings.export">
+                  导出<el-icon style="margin-left:8px"><arrow-down /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="onMarkdownExport()">Markdown</el-dropdown-item>
+                    <el-dropdown-item @click="onUmlExport()">UML PNG</el-dropdown-item>
+                    <!-- <el-dropdown-item>Excel</el-dropdown-item> -->
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+              
               <el-select @change="onProjectDocumentVersionChange" v-model="projectData.documentFilter.version" placeholder="历史版本" v-select-more="loadMoreDocumentVersions" v-loading="loadings.loadingVersions" clearable>
                 <el-option
                 v-for="item in versionData.versions"
@@ -91,7 +99,7 @@
                   <el-switch v-model="umlData.showComment" active-text="显示注释" inactive-text="隐藏注释"/>
                 </el-col>
               </el-row>
-              <diagram :model-data="umlData.tables" :show-comment="umlData.showComment"></diagram>
+              <diagram :model-data="umlData.tables" :show-comment="umlData.showComment" ref="umlDiagramComponentRef"></diagram>
             </el-tab-pane>
           </el-tabs>
 
@@ -351,12 +359,17 @@ export default {
       .catch(() => loadings.handleSync = false)
     }
 
-    const onDocumentExport = () => {
+    const onMarkdownExport = () => {
       const projectId = route.params.projectId
       loadings.export = true
       exportDocument(projectId, {
         version: projectData.documentFilter.version
       }, projectData.simpleDocumentData.databaseName, () => loadings.export = false)
+    }
+
+    const umlDiagramComponentRef = ref(null)
+    const onUmlExport = () => {
+      umlDiagramComponentRef.value.exportUml()
     }
 
     const loadMoreDocumentVersions = debounce(async () => {
@@ -416,13 +429,15 @@ export default {
       isShowNoDataPage,
       isShowLoadingPage,
       treeRef,
+      umlDiagramComponentRef,
       onTocNodeClick,
       onTocNodeCheckChange,
       onMultiSelectionModeChange,
       loadMoreDocumentVersions,
       onProjectDocumentVersionChange,
       onSyncProjectDocument,
-      onDocumentExport,
+      onMarkdownExport,
+      onUmlExport,
       documentRemarkData,
       showRemarkDrawer,
     }

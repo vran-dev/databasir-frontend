@@ -66,10 +66,20 @@ export default {
         },
 
         exportUml() {
-            this.graph.toPNG((dataUri) => {
-                // 下载
-                DataUri.downloadDataUri(dataUri, 'uml.png')
-            })
+            this.graph.toPNG(
+                (dataUri) => {
+                    // 下载
+                    DataUri.downloadDataUri(dataUri, 'uml.png')
+                }, 
+                {
+                    padding: {
+                        top: 20,
+                        right: 30,
+                        bottom: 40,
+                        left: 50,
+                    },
+                }
+            )
         },
 
         redendarUml(graph) {
