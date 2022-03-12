@@ -205,11 +205,15 @@ export default{
                     },
                     {
                         name: '{{db.name}}',
-                        description: '数据库名称，如 user'
+                        description: '数据库名称，如 public'
                     },
                     {
                         name: '{{db.url}}',
                         description: '数据库地址，如 127.0.0.1:3306'
+                    },
+                    {
+                        name: '{{db.schema}}',
+                        description: 'schema 名称，如 user'
                     }
                 ]
             }
@@ -222,10 +226,12 @@ export default{
         urlSample() {
             const url = '127.0.0.1:3306'
             const dbName = 'databasir'
+            const schemaNmae = 'public'
             const jdbcProtocol = this.databaseTypeForm.jdbcProtocol ? this.databaseTypeForm.jdbcProtocol : 'jdbc:mysql'
             return this.databaseTypeForm.urlPattern
             .replace('{{jdbc.protocol}}', jdbcProtocol)
             .replace('{{db.name}}', dbName)
+            .replace('{{db.schema}}', schemaNmae)
             .replace('{{db.url}}', url)
         }
     },

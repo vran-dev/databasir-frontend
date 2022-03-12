@@ -3,24 +3,27 @@
     <!-- project list -->
     <el-tab-pane label="项目列表">
         <el-row :gutter="12">
-            <el-col :span="3" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId, 'GROUP_MEMBER?groupId='+groupId]">
+            <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId, 'GROUP_MEMBER?groupId='+groupId]">
                 <el-tooltip content="新建一个新项目" placement="top">
                     <el-button type="primary" style="width:100%" icon="plus" @click="toCreateProject">新建</el-button>
                 </el-tooltip>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
                 <el-input @change='onProjectQuery' v-model="projectFilter.nameContains" label="项目名" placeholder="项目名称搜索" prefix-icon="search"/>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
                 <el-input @change="onProjectQuery" v-model="projectFilter.databaseNameContains" label="数据库名" placeholder="数据库名称搜索" prefix-icon="search"/>
             </el-col>
-            <el-col :span="5">
+            <el-col :span="6">
+                <el-input @change="onProjectQuery" v-model="projectFilter.schemaNameContains" label="Schema" placeholder="Schema 名称搜索" prefix-icon="search"/>
+            </el-col>
+            <el-col :span="4">
                 <el-select @change="onProjectQuery" @clear="onProjectDatabaseTypeClear()" v-model="projectFilter.databaseType" placeholder="选择数据库类型" clearable>
                     <el-option
-                    v-for="item in databaseTypes"
-                    :key="item"
-                    :label="item"
-                    :value="item"
+                    v-for="(item, index) in databaseTypes"
+                    :key="index"
+                    :label="item.databaseType"
+                    :value="item.databaseType"
                     >
                     </el-option>
                 </el-select>
@@ -38,6 +41,7 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="databaseName" label="数据库" width="200"  resizable />
+                <el-table-column prop="schemaName" label="Schema" width="200"  resizable />
                 <el-table-column label="数据库类型">
                             <template v-slot="scope">
                                 <database-icon :databaseType="scope.row.databaseType" />
@@ -151,27 +155,34 @@
                                     <el-input v-model="projectForm.dataSource.password" placeholder="**********"  :type="password" show-password></el-input>
                                 </el-form-item>                         
                             </el-col>
+
                             <el-col :span="8">
                                 <el-form-item label="地址" prop="dataSource.url">
                                     <el-input v-model="projectForm.dataSource.url" placeholder="127.0.0.1:3306"></el-input>
                                 </el-form-item>
                             </el-col>
-                            <el-col :span="7">
-                                <el-form-item label="数据库" prop="dataSource.databaseName">
-                                    <el-input v-model="projectForm.dataSource.databaseName" placeholder="需要同步的数据库名称"></el-input>
-                                </el-form-item>
-                            </el-col>
-                            <el-col :span="5">
+                            <el-col :span="12">
                                 <el-form-item label="数据库类型" prop="dataSource.databaseType">
                                     <el-select v-model="projectForm.dataSource.databaseType" placeholder="选择数据库类型" clearable>
                                         <el-option
-                                        v-for="item in databaseTypes"
-                                        :key="item"
-                                        :label="item"
-                                        :value="item"
+                                        v-for="(item, index) in databaseTypes"
+                                        :key="index"
+                                        :label="item.databaseType"
+                                        :value="item.databaseType"
                                         >
                                         </el-option>
                                     </el-select>
+                                </el-form-item>
+                            </el-col>
+
+                            <el-col :span="8">
+                                <el-form-item label="数据库名称" prop="dataSource.databaseName">
+                                    <el-input v-model="projectForm.dataSource.databaseName" placeholder="需要同步的数据库名称"></el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="Schema 名称" prop="dataSource.schemaName">
+                                    <el-input v-model="projectForm.dataSource.schemaName" placeholder="需要同步的 Schema 名称"></el-input>
                                 </el-form-item>
                             </el-col>
                         </el-row>
@@ -190,6 +201,15 @@
                         <el-form-item label="属性" v-if="projectForm.dataSource.properties.length == 0">
                             <el-button type="text" size="small" @click="addDataSourceProperty" >+ 添加</el-button>
                         </el-form-item>
+                        <el-descriptions :column="2" border style="margin-bottom: 20px">
+                                    <el-descriptions-item label="连接地址验证">
+                                        <el-tooltip content="地址不包含属性配置，若地址不对请联系管理员修改对应数据库类型配置">
+                                            <el-link :underline="false" type="warning">
+                                                {{sampleUrl()}}
+                                            </el-link>
+                                        </el-tooltip>
+                                    </el-descriptions-item>
+                        </el-descriptions>
 
                         <el-form-item>
                             <el-col>
@@ -513,6 +533,7 @@ export default {
                     username: [ {required: true,message: '数据库用户名不能为空',trigger: 'blur'} ],
                     url: [ {required: true,message: '数据库连接地址不能为空',trigger: 'blur'} ],
                     databaseName: [ {required: true,message: '数据库名称不能为空',trigger: 'blur'} ],
+                    schemaName: [ {required: true,message: 'schema 名称不能为空',trigger: 'blur'} ],
                     databaseType: [ {required: true,message: '请选择数据库类型',trigger: 'change'} ],
                 }
             },
@@ -871,6 +892,18 @@ export default {
             this.projectForm.projectSyncRule.ignoreColumnNameRegexes.splice(index, 1)
         },
 
+        sampleUrl() {
+            const result = this.databaseTypes.find(type => type.databaseType == this.projectForm.dataSource.databaseType)
+            if (!result || result.length == 0) {
+                return "";
+            }
+            return result.urlPattern
+            .replace('{{jdbc.protocol}}', result.jdbcProtocol)
+            .replace('{{db.name}}', this.projectForm.dataSource.databaseName)
+            .replace('{{db.schema}}', this.projectForm.dataSource.schemaName)
+            .replace('{{db.url}}', this.projectForm.dataSource.url)
+        },
+
         onTestConnection(){
             this.loading.testConnection = true
             this.$refs.projectFormRulesRef.validate((valid) => {
@@ -889,10 +922,11 @@ export default {
                     projectId: this.projectForm.id,
                     databaseType: this.projectForm.dataSource.databaseType,
                     databaseName: this.projectForm.dataSource.databaseName,
+                    schemaName: this.projectForm.dataSource.schemaName,
                     username: this.projectForm.dataSource.username,
                     password: this.projectForm.dataSource.password,
                     url: this.projectForm.dataSource.url,
-                    properties: this.projectForm.dataSource.properties
+                    properties: this.projectForm.dataSource.properties,
                 }
                 testConnection(request).then(resp => {
                     if (!resp.errCode) {

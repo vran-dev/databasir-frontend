@@ -42,7 +42,7 @@ axios.interceptors.request.use(async function (config) {
   if (token.hasValidAccessToken()) {
     config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
     return config;
-  } else if (config.url == '/access_tokens' || config.url.startsWith('/oauth2')) {
+  } else if (config.url == '/access_tokens' || config.url.startsWith('/oauth2') || config.url == '/login') {
     return config
   } else  {
     if(!tokenRefreshLock) {
