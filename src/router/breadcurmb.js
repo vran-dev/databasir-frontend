@@ -93,6 +93,16 @@ function sysOauth2() {
     }
 }
 
+function sysDatabaseType() {
+    return {
+        name:'数据库类型',
+        to: {
+            path: '/settings/sysDatabaseType'
+        } 
+    }
+}
+
+
 const breadcurmbMap = {
     index: () => [index() ],
     groupList: () => [index(), groupList()],
@@ -103,6 +113,7 @@ const breadcurmbMap = {
     sysEmailEdit: () => [index(), sysEmailEdit()],
     sysLog: () => [index(), sysLog()],
     sysOauth2: () => [index(), sysOauth2()],
+    sysDatabaseType: () => [index(), sysDatabaseType()],
 
 }
 
