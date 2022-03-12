@@ -432,7 +432,7 @@ import { listGroupMembers, removeGroupMember, addGroupMember, updateGroupMemberR
 import { listUsers } from '../api/User'
 import { listOperationLogs } from '../api/OperationLog'
 import { ElMessage } from 'element-plus'
-import { databaseTypes } from '@/api/Const.js'
+import { listSimples } from '../api/DatabaseType'
 import { addFavorite, removeFavorite } from '../api/UserProject'
 
 export default {
@@ -540,10 +540,16 @@ export default {
                 module: 'project',
             },
             // ======= common domain ======
-            databaseTypes: databaseTypes,
             groupId: null,
+            databaseTypes: [],
             roleTypes: ['GROUP_OWNER', 'GROUP_MEMBER']
         }
+    },
+
+    mounted(){
+        listSimples().then(resp => {
+            this.databaseTypes = resp.data
+        })
     },
     
     created() {
@@ -899,7 +905,15 @@ export default {
                     }
                     this.testConnectionState.isTest = true
                     this.testConnectionState.message = resp.errMessage
-                }).finally(() => this.loading.testConnection = false)
+                })
+                .catch(err => {
+                    console.log(err)
+                    this.$message.error('连接超时请稍后再试')
+                    this.testConnectionState.message = '连接超时请稍后再试'
+                    this.testConnectionState.buttonType = 'danger'
+                    this.testConnectionState.success = false
+                })
+                .finally(() => this.loading.testConnection = false)
             })
             
         }

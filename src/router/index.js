@@ -142,6 +142,15 @@ const routes = [
                     breadcrumb: breadcurmbMap.sysOauth2
                 }
             },
+            {
+                path: 'sysDatabaseType',
+                icon: 'office-building',
+                component: () => import('@/views/SysDatabaseType.vue'),
+                meta: {
+                    nav: '数据库类型',
+                    breadcrumb: breadcurmbMap.sysDatabaseType
+                }
+            },
             // TODO
             {
                 path: 'sysKey',
