@@ -12,9 +12,6 @@
 <script>
 
 export default{
-    data() {
-
-    },
     computed: {
         breadcrumbs: function() {
             if (typeof this.$route.meta.breadcrumb === 'function') {
