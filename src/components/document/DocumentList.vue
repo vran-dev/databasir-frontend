@@ -18,9 +18,12 @@
                 <el-table-column prop="type" label="Type" width="200"  resizable />
                 <el-table-column prop="comment" label="comment" min-width="160" resizable />
                 <el-table-column prop="remark" label="discussion" min-width="120" resizable >
-                <template v-slot="scope">
-                    <el-button @click="onRemark(scope.row.name)" size="small" icon="chat-line-round"></el-button>
-                </template>
+                    <template v-slot="scope">
+                        <el-badge :value="scope.row.discussionCount" :max="99" class="item" v-if="scope.row.discussionCount" type="info">
+                            <el-button @click="onRemark(scope.row.name)" size="small" icon="chat-line-round"></el-button>
+                        </el-badge>
+                        <el-button v-else @click="onRemark(scope.row.name)" size="small" icon="chat-line-round"></el-button>
+                    </template>
                 </el-table-column>
             </el-table>
         </el-col>
@@ -68,7 +71,10 @@
                 <el-table-column prop="comment" label="comment"  />
                 <el-table-column prop="remark" label="discussion" min-width="60" resizable>
                     <template v-slot="scope">
-                        <el-button @click="onRemark(tableMeta.name, scope.row.name)" size="small" icon="chat-line-round"></el-button>
+                        <el-badge :value="scope.row.discussionCount" :max="99" class="item" v-if="scope.row.discussionCount" type="info">
+                            <el-button @click="onRemark(tableMeta.name, scope.row.name)" size="small" icon="chat-line-round"></el-button>
+                        </el-badge>
+                        <el-button v-else @click="onRemark(tableMeta.name, scope.row.name)" size="small" icon="chat-line-round"></el-button>
                     </template>
                 </el-table-column>
             </el-table>

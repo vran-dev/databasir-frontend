@@ -89,7 +89,7 @@
               <DocumentList 
                 :tablesData="documentData.tables"
                 :overviewData="documentData.overview"
-                @onRemark="showRemarkDrawer"/>
+                @onRemark="showDiscussionDrawer"/>
             </el-tab-pane>
 
             <!-- model UML -->
@@ -103,14 +103,14 @@
             </el-tab-pane>
           </el-tabs>
 
-          <!-- table / column remark -->
-          <document-remark 
-            :groupId="documentRemarkData.groupId" 
-            :projectId="documentRemarkData.projectId" 
-            :tableName="documentRemarkData.tableName" 
-            :columnName="documentRemarkData.columnName" 
-            :isShowDrawer="documentRemarkData.isShowDrawer"
-            @onClose="documentRemarkData.isShowDrawer = false"
+          <!-- table / column discussion -->
+          <document-discussion
+            :groupId="documentDiscussionData.groupId" 
+            :projectId="documentDiscussionData.projectId" 
+            :tableName="documentDiscussionData.tableName" 
+            :columnName="documentDiscussionData.columnName" 
+            :isShowDrawer="documentDiscussionData.isShowDrawer"
+            @onClose="documentDiscussionData.isShowDrawer = false"
           />
         </el-main>
       </el-container>
@@ -160,13 +160,13 @@ import {  useRoute } from 'vue-router'
 import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables } from '@/api/Document'
 import { ElMessage } from 'element-plus'
 import Diagram from '../components/document/Diagram.vue'
-import DocumentRemark from '../components/document/DocumentRemark.vue'
+import DocumentDiscussion from '../components/document/DocumentDiscussion.vue'
 import DocumentList from '../components/document/DocumentList.vue'
 
 export default {
   components: {
     Diagram,
-    DocumentRemark,
+    DocumentDiscussion,
     DocumentList
   },
   setup() {
@@ -401,7 +401,7 @@ export default {
     }
 
     // Document Remark
-    const documentRemarkData = ref({
+    const documentDiscussionData = ref({
       tableName: null,
       columnName: null,
       groupId: null,
@@ -409,8 +409,8 @@ export default {
       isShowDrawer: false
     })
 
-    const showRemarkDrawer = (tableName, columnName) => {
-      documentRemarkData.value = {
+    const showDiscussionDrawer = (tableName, columnName) => {
+      documentDiscussionData.value = {
         tableName: tableName,
         columnName: columnName,
         isShowDrawer: true,
@@ -438,8 +438,8 @@ export default {
       onSyncProjectDocument,
       onMarkdownExport,
       onUmlExport,
-      documentRemarkData,
-      showRemarkDrawer,
+      documentDiscussionData,
+      showDiscussionDrawer,
     }
   }
 }
