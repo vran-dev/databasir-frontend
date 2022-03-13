@@ -12,11 +12,22 @@
                 <el-descriptions-item label="Create At" label-align="left">{{ overviewData.createAt }}</el-descriptions-item>
             </el-descriptions>
             <h3>Tables</h3>
-            <el-table :data="tableList"  border stripe width='80%'>
+            <el-table :data="tableList"  border stripe width='80%' @cell-dblclick="onCellClick">
                 <el-table-column type="index" />
                 <el-table-column prop="name" label="Name" min-width="160" resizable />
                 <el-table-column prop="type" label="Type" width="200"  resizable />
                 <el-table-column prop="comment" label="comment" min-width="160" resizable />
+                <el-table-column label="description" min-width="160" resizable>
+                    <template v-slot="scope">
+                        <span v-if="!scope.row.toEditDescription">
+                            {{scope.row.description}}
+                        </span> 
+                        <el-space v-else direction="vertical"  alignment="left" style="width: 100%;">
+                            <el-input v-model="scope.row.description" type="textarea" style="width: 100%;" autosize/>
+                            <el-button size="small" @click="onUpdateDescription(scope.row.name, null, scope.row)">提交</el-button>
+                        </el-space>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="remark" label="discussion" min-width="120" resizable >
                     <template v-slot="scope">
                         <el-badge :value="scope.row.discussionCount" :max="99" class="item" v-if="scope.row.discussionCount" type="info">
@@ -32,7 +43,7 @@
         <el-col :span="24">
             <h2 :id="tableMeta.name+'['+tableMeta.id+']'">{{ tableMeta.name }}</h2>
             <h3 v-if="tableMeta.columns.length > 0">Columns</h3>
-            <el-table :data="tableMeta.columns" border stripe fit width='80%'>
+            <el-table :data="tableMeta.columns" border stripe fit width='80%' @cell-dblclick="onCellClick">
                 <el-table-column type="index" />
                 <el-table-column prop="name" label="Name" min-width="120" />
                 <el-table-column prop="type" :formatter="columnTypeFormat" label="Type" width="140" />
@@ -69,6 +80,17 @@
                 </el-table-column>
                 <el-table-column prop="defaultValue" label="default" min-width="120" />
                 <el-table-column prop="comment" label="comment"  />
+                <el-table-column label="description" min-width="160" resizable show-overflow-tooltip>
+                    <template v-slot="scope">
+                        <span v-if="!scope.row.toEditDescription">
+                            <pre>{{scope.row.description}}</pre>
+                        </span> 
+                        <el-space v-else direction="vertical"  alignment="left" style="width: 100%;">
+                            <el-input v-model="scope.row.description" type="textarea" style="width: 100%;" autosize/>
+                            <el-button size="small" @click="onUpdateDescription(tableMeta.name, scope.row.name, scope.row)">提交</el-button>
+                        </el-space>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="remark" label="discussion" min-width="60" resizable>
                     <template v-slot="scope">
                         <el-badge :value="scope.row.discussionCount" :max="99" class="item" v-if="scope.row.discussionCount" type="info">
@@ -121,7 +143,7 @@
 </template>
 
 <script>
-
+import { saveDescription } from '@/api/DocumentDescription'
 export default {
     props: ['overviewData', 'tablesData'],
     emits: ['onRemark'],
@@ -152,6 +174,31 @@ export default {
                 return column.type + '('+column.size+', '+column.decimalDigits+')'
             }
         },
+
+        onCellClick(row) {
+            row.toEditDescription = true
+        },
+
+        onUpdateDescription(tableName, columnName, row) {
+            if (!row.description) {
+                this.$message.error("内容不能为空")
+                return;
+            }
+            const projectId = this.$route.params.projectId
+            const groupId = this.$route.params.groupId
+
+            const body = {
+                tableName: tableName,
+                columnName: columnName,
+                content: row.description,
+            }
+            saveDescription(groupId, projectId, body).then(resp => {
+                if(!resp.errCode) {
+                    this.$message.success('修改成功')
+                    row.toEditDescription = false
+                }
+            })
+        }
     }
 }
 
