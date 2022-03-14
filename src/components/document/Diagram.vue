@@ -3,6 +3,13 @@
     </div>
 </template>
 
+<style>
+@keyframes running-line {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+</style>
 <script>
 import { Graph, DataUri } from '@antv/x6'
 import { formatter as databaseFieldFormatter } from '@/utils/DatabaseFieldFormatter'
@@ -60,7 +67,7 @@ export default {
     },
     methods: {
         init() {
-            this.registerNewNode()
+            this.registerUmlNode()
             const graph = this.createGraphInstance()
             this.redendarUml(graph)
         },
@@ -68,7 +75,6 @@ export default {
         exportUml() {
             this.graph.toPNG(
                 (dataUri) => {
-                    // 下载
                     DataUri.downloadDataUri(dataUri, 'uml.png')
                 }, 
                 {
@@ -91,33 +97,27 @@ export default {
                     }
                 })
 
-            let x = 20, y = 20, selectMaxRowHeight = 20
+            let x = 20, y = 20; // 初始坐标
+            const nodeHorizontalSpacing = 60, nodeVerticalSpacing = 60; // 水平、垂直间距
+            const rowNodeCount = 5; // 每行展示多少个 UML 图
+            let maxHeightInNodeRow = 20;
             nodeData.forEach((data, index) => {
-                // 每张表的最长行长度
-                let selectMaxRowWidth = data.tableName.pxWidth()
-                let currentRowHeight = 30 * data.columns.length + 40
-                selectMaxRowHeight = selectMaxRowHeight > currentRowHeight ? selectMaxRowHeight : currentRowHeight
-                data.columns.forEach(column => {
-                    const columnType = databaseFieldFormatter.formatColumnType(column)
-                    const columnName = databaseFieldFormatter.formatColumnName(column, this.showComment)
-                    let distance = 80
-                    let width = distance + columnName.pxWidth() + columnType.pxWidth()
-                    if (width > selectMaxRowWidth) {
-                        selectMaxRowWidth = width
-                    }
-                })
+                // 每一行中 height 最大的节点
+                const currentNodeMaxHeight = this.calculateMaxHeightInGraphRow(20, data)
+                maxHeightInNodeRow = currentNodeMaxHeight > maxHeightInNodeRow ? currentNodeMaxHeight : maxHeightInNodeRow 
+                // 当前节点中的最大 width
+                let maxWidthInCurrentNode = this.calculateMaxWidthInNode(data) 
                 
                 const ports = data.columns.map(column => {
                     const columnType = databaseFieldFormatter.formatColumnType(column)
                     const columnName = databaseFieldFormatter.formatColumnName(column, this.showComment)
-
                     let columnNameWeight = column.nullable == 'YES' ? 'normal' : 'bold'
                     return {
-                        id: data.id + "-" + column.id,
+                        id: data.tableName + "." + column.name,
                         group: "columnGroup",
                         attrs: {
                             portBody: {
-                                width: selectMaxRowWidth,
+                                width: maxWidthInCurrentNode,
                                 height: 30,
                                 refY: 11
                             },
@@ -131,7 +131,7 @@ export default {
                                 text: columnType,
                                 height: 30,
                                 refY: 11,
-                                refX: selectMaxRowWidth - columnType.pxWidth() - 22,
+                                refX: maxWidthInCurrentNode - columnType.pxWidth() - 22,
                             }
                         }
                     }
@@ -141,17 +141,40 @@ export default {
                     x: x,
                     y: y,
                     shape: 'er-rect',
-                    width: selectMaxRowWidth,
+                    width: maxWidthInCurrentNode,
                     height: 40,
                     label: data.tableName,
                     ports: ports
                 })
-                x += selectMaxRowWidth + 60
-                if ((index + 1) % 5 == 0) {
-                    y += selectMaxRowHeight + 60
+
+                
+
+                // next position(x, y)
+                x += maxWidthInCurrentNode + nodeHorizontalSpacing
+                if ((index + 1) % rowNodeCount == 0) {
+                    y += maxHeightInNodeRow + nodeVerticalSpacing
                     x = 20
                 }
             })
+        },
+
+        calculateMaxHeightInGraphRow(initHeight, data) {
+            let currentRowHeight = 30 * data.columns.length + 40
+            return initHeight > currentRowHeight ? initHeight : currentRowHeight
+        },
+
+        calculateMaxWidthInNode(data) {
+            let maxWidth = data.tableName.pxWidth()
+            data.columns.forEach(column => {
+                const columnType = databaseFieldFormatter.formatColumnType(column)
+                const columnName = databaseFieldFormatter.formatColumnName(column, this.showComment)
+                let distance = 80
+                let width = distance + columnName.pxWidth() + columnType.pxWidth()
+                if (width > maxWidth) {
+                    maxWidth = width
+                }
+            })
+            return maxWidth
         },
 
         createGraphInstance() {
@@ -159,20 +182,38 @@ export default {
                 container: document.getElementById('diagram-container'),
                 grid: true,
                 panning: true,
+                snapline: true,
                 keyboard: true,
                 mousewheel: {
                     enabled: true,
                     modifiers: ['ctrl', 'meta'],
                 },
-                 connecting: {
-                    router: {
-                        name: 'er',
-                        args: {
-                            padding: 1,
-                            offset: 25,
-                            direction: 'H',
-                        },
+                selecting: {
+                    enabled: true,
+                    showNodeSelectionBox: true,
+                },
+                connecting: {
+                    snap: true,
+                    allowBlank: false,
+                    allowEdge: false,
+                    highlight: true,
+                    interacting() {
+                        return { edgeMovable: true }
                     },
+                    createEdge() {
+                        return graph.createEdge({
+                            shape: 'er-edge',
+                            strokeDasharray: 5,
+                            zIndex: 1,
+                            attrs: {
+                                line: {
+                                    style: {
+                                        animation: 'ant-line 30s infinite linear',
+                                    },
+                                }
+                            }
+                        })
+                    }
                 },
             })
             graph.bindKey(['meta+z', 'ctrl+z'], () => {
@@ -187,12 +228,30 @@ export default {
                 }
                 return false
             })
-            graph.bindKey('backspace', () => {
+            // 删除连接线(边)
+            graph.bindKey(['Backspace', 'Delete'], () => {
                 const cells = graph.getSelectedCells()
                 if (cells.length) {
                     graph.removeCells(cells)
                 }
             })
+
+            graph.on('edge:click', ({ edge }) => {
+                const isRunning = edge.data && edge.data.running
+                console.log(edge.data)
+                if (isRunning) {
+                    edge.attr('line/style/animation', null)
+                    edge.attr('line/strokeDasharray', 0)
+                    edge.data = { running: false}
+                } else {
+                    edge.attr('line/strokeDasharray', 5)
+                    edge.attr('line/style/animation', 'running-line 30s infinite linear')
+                    edge.data = { running: true}
+                }
+                
+                console.log('------------------>')
+            })
+
             if (graph.isHistoryEnabled()) {
                 graph.disableHistory()
             } else {
@@ -202,7 +261,9 @@ export default {
             return graph;
         },
 
-        registerNewNode() {
+        
+
+        registerUmlNode() {
             const LINE_HEIGHT = 30
             Graph.registerPortLayout(
                 'erPortPosition',
@@ -219,6 +280,33 @@ export default {
                 },
                 true,
             )
+
+            Graph.registerEdge(
+                'er-edge',
+                {
+                    inherit: 'edge',
+                    strokeDasharray: 5,
+                    connector: {
+                        name: 'rounded'
+                    },
+                    router: {
+                        name: 'manhattan',
+                    },
+                    attrs: {
+                        line: {
+                            targetMarker: {
+                                name: 'classic',
+                                args: {
+                                    size: 7,
+                                    offset: -2
+                                },
+                            },
+                        }
+                    }
+                },
+                true,
+            )
+
             Graph.registerNode(
                 'er-rect',
                 {

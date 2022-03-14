@@ -363,7 +363,8 @@ export default {
       const projectId = route.params.projectId
       loadings.export = true
       exportDocument(projectId, {
-        version: projectData.documentFilter.version
+        version: projectData.documentFilter.version,
+        fileType: 'MARKDOWN',
       }, projectData.simpleDocumentData.databaseName, () => loadings.export = false)
     }
 
