@@ -71,7 +71,6 @@ export default {
             const graph = this.createGraphInstance()
             this.redendarUml(graph)
         },
-
         exportUml() {
             this.graph.toPNG(
                 (dataUri) => {
@@ -87,13 +86,13 @@ export default {
                 }
             )
         },
-
         redendarUml(graph) {
-            const nodeData = this.modelData.map(data => {
+            const tableList = this.modelData.map(table => {
                     return {
-                        id: data.id,
-                        tableName: data.name,
-                        columns: data.columns
+                        id: table.id,
+                        tableName: table.name,
+                        columns: table.columns,
+                        foreignKeys: table.foreignKeys
                     }
                 })
 
@@ -101,19 +100,19 @@ export default {
             const nodeHorizontalSpacing = 60, nodeVerticalSpacing = 60; // 水平、垂直间距
             const rowNodeCount = 5; // 每行展示多少个 UML 图
             let maxHeightInNodeRow = 20;
-            nodeData.forEach((data, index) => {
+            tableList.forEach((table, index) => {
                 // 每一行中 height 最大的节点
-                const currentNodeMaxHeight = this.calculateMaxHeightInGraphRow(20, data)
+                const currentNodeMaxHeight = this.calculateMaxHeightInGraphRow(20, table)
                 maxHeightInNodeRow = currentNodeMaxHeight > maxHeightInNodeRow ? currentNodeMaxHeight : maxHeightInNodeRow 
                 // 当前节点中的最大 width
-                let maxWidthInCurrentNode = this.calculateMaxWidthInNode(data) 
+                let maxWidthInCurrentNode = this.calculateMaxWidthInNode(table) 
                 
-                const ports = data.columns.map(column => {
+                const ports = table.columns.map(column => {
                     const columnType = databaseFieldFormatter.formatColumnType(column)
                     const columnName = databaseFieldFormatter.formatColumnName(column, this.showComment)
                     let columnNameWeight = column.nullable == 'YES' ? 'normal' : 'bold'
                     return {
-                        id: data.tableName + "." + column.name,
+                        id: table.tableName + "." + column.name,
                         group: "columnGroup",
                         attrs: {
                             portBody: {
@@ -137,17 +136,15 @@ export default {
                     }
                 })
                 graph.addNode({
-                    id: data.id,
+                    id: table.tableName,
                     x: x,
                     y: y,
                     shape: 'er-rect',
                     width: maxWidthInCurrentNode,
                     height: 40,
-                    label: data.tableName,
+                    label: table.tableName,
                     ports: ports
                 })
-
-                
 
                 // next position(x, y)
                 x += maxWidthInCurrentNode + nodeHorizontalSpacing
@@ -156,6 +153,27 @@ export default {
                     x = 20
                 }
             })
+
+            const tableNameArr = tableList.map(d => d.tableName)
+            tableList
+                .filter(table => table.foreignKeys && table.foreignKeys.length > 0)
+                .flatMap(table => {
+                    return table.foreignKeys
+                        .filter(fk => tableNameArr.indexOf(fk.pkTableName) != -1)
+                        .map(fk => {
+                            return  {
+                                shape: 'er-edge',
+                                source: {
+                                    cell: table.tableName,
+                                    port: table.tableName + '.' + fk.fkColumnName
+                                },
+                                target: {
+                                    cell: fk.pkTableName,
+                                    port: fk.pkTableName + '.' + fk.pkColumnName
+                                }
+                            }
+                        })
+                }).forEach(edge => graph.addEdge(edge))
         },
 
         calculateMaxHeightInGraphRow(initHeight, data) {
@@ -183,6 +201,7 @@ export default {
                 grid: true,
                 panning: true,
                 snapline: true,
+                resizing: false,
                 keyboard: true,
                 mousewheel: {
                     enabled: true,
@@ -204,7 +223,6 @@ export default {
                         return graph.createEdge({
                             shape: 'er-edge',
                             strokeDasharray: 5,
-                            zIndex: 1,
                             attrs: {
                                 line: {
                                     style: {
@@ -236,20 +254,23 @@ export default {
                 }
             })
 
-            graph.on('edge:click', ({ edge }) => {
-                const isRunning = edge.data && edge.data.running
-                console.log(edge.data)
-                if (isRunning) {
-                    edge.attr('line/style/animation', null)
-                    edge.attr('line/strokeDasharray', 0)
-                    edge.data = { running: false}
-                } else {
-                    edge.attr('line/strokeDasharray', 5)
-                    edge.attr('line/style/animation', 'running-line 30s infinite linear')
-                    edge.data = { running: true}
-                }
-                
-                console.log('------------------>')
+            graph.on('edge:mouseenter', ({ edge }) => {
+                edge.attr('line/style/animation', 'running-line 30s infinite linear')
+                edge.attr('line/strokeDasharray', 5)
+                this.changeUmlElementStyle(graph, edge)
+            })
+            graph.on('edge:mouseleave', ({ edge }) => {
+                edge.attr('line/strokeDasharray', 0)
+                edge.attr('line/style/animation', null)
+                this.resetUmlElementStyle(graph, edge)
+            })
+            graph.on('edge:dblclick', ({ cell, e }) => {
+                cell.addTools({
+                    name: 'edge-editor',
+                    args: {
+                        event: e,
+                    },
+                })
             })
 
             if (graph.isHistoryEnabled()) {
@@ -261,7 +282,33 @@ export default {
             return graph;
         },
 
+        changeUmlElementStyle(graph, edge) {
+            const source = graph.getCellById(edge.source.cell)
+            source.setPortProp(edge.source.port, 'attrs/portNameLabel', { fill: '#409EFF' })
+            source.setPortProp(edge.source.port, 'attrs/portTypeLabel', { fill: '#409EFF' })
+            
+            const target = graph.getCellById(edge.target.cell)
+            if (target) {
+                target.setPortProp(edge.target.port, 'attrs/portNameLabel', { fill: '#409EFF' })
+                target.setPortProp(edge.target.port, 'attrs/portTypeLabel', { fill: '#409EFF' })
+            }
+            
+        },
         
+        resetUmlElementStyle(graph, edge) {
+            const source = graph.getCellById(edge.source.cell)
+            source.setPortProp(edge.source.port, 'attrs/portBody', { fill: '#FFF' })
+            source.setPortProp(edge.source.port, 'attrs/portNameLabel', { fill: '#303133' })
+            source.setPortProp(edge.source.port, 'attrs/portTypeLabel', { fill: '#303133' })
+
+            const target = graph.getCellById(edge.target.cell)
+            if (target) {
+                target.setPortProp(edge.target.port, 'attrs/portBody', { fill: '#FFF' })
+                target.setPortProp(edge.target.port, 'attrs/portNameLabel', { fill: '#303133' })
+                target.setPortProp(edge.target.port, 'attrs/portTypeLabel', { fill: '#303133' })
+            }
+            
+        },
 
         registerUmlNode() {
             const LINE_HEIGHT = 30
@@ -291,6 +338,10 @@ export default {
                     },
                     router: {
                         name: 'manhattan',
+                        args: {
+                            step: 10,
+                            maxDirectionChange: 90
+                        }
                     },
                     attrs: {
                         line: {
@@ -302,7 +353,18 @@ export default {
                                 },
                             },
                         }
-                    }
+                    },
+                    tools: {
+                        name: 'segments',
+                        args: {
+                            stopPropagation: false,
+                            precision: 500,
+                            threshold: 20,
+                            attrs: {
+                                fill: '#444',
+                            },
+                        },
+                    },
                 },
                 true,
             )
