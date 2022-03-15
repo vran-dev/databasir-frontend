@@ -126,6 +126,35 @@
                     </el-table-column>
                 </el-table>
             </div>
+
+            <div v-if="tableMeta.foreignKeys.length > 0">
+                <h3>Foreign Keys</h3>            
+                <el-table :data="tableMeta.foreignKeys" border stripe fit width='80%'>
+                    <el-table-column type="index" />
+                    <el-table-column prop="fkName" label="FK Name" min-width="120" />
+                    <el-table-column prop="fkColumnName" label="FK Column" min-width="120">
+                        <template v-slot="scope">
+                            <el-tag type="info">{{scope.row.fkColumnName}}</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="pkName" label="PK Name" min-width="120" />
+                    <el-table-column prop="pkTableName" label="PK Table">
+                        <template v-slot="scope">
+                            <el-link>
+                                {{scope.row.pkTableName}}
+                            </el-link>
+                        </template>
+                        
+                    </el-table-column>
+                    <el-table-column prop="pkColumnName" label="PK Column" min-width="120">
+                        <template v-slot="scope">
+                            <el-tag type="info">{{scope.row.pkColumnName}}</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="updateRule" label="Update Rule" />
+                    <el-table-column prop="deleteRule" label="Delete Rule" />
+                </el-table>
+            </div>
             
             <div  v-if="tableMeta.triggers.length > 0">
                 <h3>Triggers</h3>
@@ -176,7 +205,11 @@ export default {
         },
 
         onCellClick(row) {
-            row.toEditDescription = true
+            if (row.toEditDescription == true) {
+                row.toEditDescription = false
+            } else {
+                row.toEditDescription = true
+            }
         },
 
         onUpdateDescription(tableName, columnName, row) {
