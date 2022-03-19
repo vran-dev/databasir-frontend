@@ -17,12 +17,11 @@
             inactive-text="单选模式" 
             @change="onMultiSelectionModeChange"
             :loading="loadings.multiSelectionModeChanging"/>
-            
               <el-tree 
                 ref="treeRef"
                 :data="tocData.value" 
-                :default-checked-keys="tocData.checkedNodes"
                 :show-checkbox="tocData.isMultiSelectionMode"
+                :default-checked-keys="defaultCheckedKeys"
                 node-key="id" 
                 highlight-current
                 :props="tocData.treeProps"
@@ -70,7 +69,7 @@
                 </template>
               </el-dropdown>
               
-              <el-select @change="onProjectDocumentVersionChange" v-model="projectData.documentFilter.version" placeholder="历史版本" v-select-more="loadMoreDocumentVersions" v-loading="loadings.loadingVersions" clearable>
+              <el-select @change="onProjectDocumentVersionChange" v-model="projectData.documentFilter.version" placeholder="当前版本" v-select-more="loadMoreDocumentVersions" v-loading="loadings.loadingVersions" clearable>
                 <el-option
                 v-for="item in versionData.versions"
                 :key="item.version"
@@ -79,16 +78,40 @@
                 >
                 </el-option>
               </el-select>
+              <el-select 
+                v-if="documentDiffData.diffModeEnabled"
+                @change="onProjectDocumentCompareVersionChange"
+                v-model="documentDiffData.originalVersion" 
+                placeholder="对比版本" 
+                v-select-more="loadMoreDocumentVersions" 
+                v-loading="loadings.loadingVersions" 
+                clearable>
+                <el-option
+                v-for="item in versionData.versions"
+                :key="item.version"
+                :label="'['+item.createAt +']->'+item.version+''"
+                :value="item.version"
+                >
+                </el-option>
+              </el-select>
+              <el-switch 
+              v-model="documentDiffData.diffModeEnabled" 
+              :before-change="onDiffModeChange"
+              v-if="activeTab == 'tableDocument'" 
+              active-text="显示版本差异"/>
             </el-space>
           </div>
         </el-header>
         <el-main>
-          <el-tabs model-value="tableDocument">
+          <el-tabs model-value="tableDocument" @tab-click="onTabClick">
             <!-- multi list documentation -->
             <el-tab-pane label="列表" name="tableDocument">
               <DocumentList 
                 :tablesData="documentData.tables"
                 :overviewData="documentData.overview"
+                :overviewDiff="documentDiffData.overviewDiff"
+                :tablesDiff="documentDiffData.tablesDiff"
+                :diffEnabled="documentDiffData.diffModeEnabled"
                 @onRemark="showDiscussionDrawer"/>
             </el-tab-pane>
 
@@ -157,7 +180,7 @@
 <script>
 import { reactive, computed, ref } from 'vue'
 import {  useRoute } from 'vue-router'
-import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables } from '@/api/Document'
+import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables, getDiff } from '@/api/Document'
 import { ElMessage } from 'element-plus'
 import Diagram from '../components/document/Diagram.vue'
 import DocumentDiscussion from '../components/document/DocumentDiscussion.vue'
@@ -201,13 +224,14 @@ export default {
     // toc
     const tocData = reactive({
       value: [{id: -1, name: '概览'}],
+      checkedValue: [{id: -1, name: '概览'}],
       treeProps: {
         children: 'children',
         label: 'name',
       },
-      checkedNodes: [],
       isMultiSelectionMode: false
     })
+    const defaultCheckedKeys = computed(() => tocData.checkedValue.map(item => item.id))
     // document component
     const documentData = reactive({
       tables: [],
@@ -218,6 +242,8 @@ export default {
       showComment: false,
       tables: []
     })
+    // active tab
+    const activeTab = ref("tableDocument")
     const treeRef = ref()
 
     const fetchDocumentTables = (tableIds, callback) => {
@@ -289,6 +315,7 @@ export default {
         onTocNodeCheckChange()
       } else {
         const curr = treeRef.value.getCurrentNode()
+        tocData.checkedValue = tocData.value.map(item => { return {id: item.id, name: item.name} })
         if (curr == null) {
           onTocNodeClick({id: -1})
         } else {
@@ -316,10 +343,27 @@ export default {
         // init toc data
         tocData.value = documentResp.data.tables
         tocData.value.unshift({ id: -1, name: '概览'})
-        tocData.checkedNodes = tocData.value.map(d => d.id)
-        // init document data
-        documentData.overview = documentResp.data
-        documentData.tables = []
+        if (tocData.isMultiSelectionMode) {
+          // 根据名称恢复用户已选择的节点
+          const checkedNames = new Set(treeRef.value.getCheckedNodes().map(item => item.name))
+          const checkedNodes = tocData.value.filter(item => checkedNames.has(item.name)).map(item => { return {id: item.id, name: item.name} })
+          tocData.checkedValue = checkedNodes
+          fetchDocumentTables(checkedNodes.map(item => item.id), data => {
+            if (checkedNodes.some(item => item.id == -1)) {
+              documentData.overview = projectData.simpleDocumentData
+            } else {
+              documentData.overview = null
+            }
+            documentData.tables = data
+            umlData.tables = data
+          })
+        } else {
+          tocData.checkedValue = tocData.value.map(item => { return {id: item.id, name: item.name} })
+          // init document data
+          documentData.overview = documentResp.data
+          documentData.tables = []
+        }
+        
       } else {
         messageNotify('warn', '无可用数据')
       }
@@ -420,8 +464,100 @@ export default {
       }
     }
 
+    const onTabClick = (tab) => {
+      if (tab) {
+        activeTab.value = tab.props.name
+      }
+    }
+
+    const documentDiffData = reactive({
+      diffModeEnabled: false,
+      originalVersion: null,
+      overviewDiff: {
+        diffType: 'NONE',
+        tableDiffMap: new Map()
+      },
+      tablesDiff: {
+        diffType: 'NONE',
+        tableDiffMap: new Map()
+      }
+    })
+
+    const clearDocumentDiffData = () => {
+      documentDiffData.tablesDiff =  {
+        diffType: 'NONE',
+        tableDiffMap: new Map()
+      }
+      documentDiffData.overviewDiff = {
+        diffType: 'NONE',
+        tableDiffMap: new Map()
+      }
+    }
+
+    const onDiffModeChange = () => {
+      return new Promise((resolve) => {
+        if(documentDiffData.diffModeEnabled) {
+          clearDocumentDiffData()
+          documentDiffData.originalVersion = null
+          documentDiffData.diffModeEnabled = false
+        } else {
+          documentDiffData.diffModeEnabled = true
+        }
+        resolve();
+      })
+    }
+
+    const onProjectDocumentCompareVersionChange = () => {
+      if (!documentDiffData.originalVersion) {
+        clearDocumentDiffData()
+        return
+      }
+
+      const originalVersion = documentDiffData.originalVersion
+      const currentVersion = projectData.documentFilter.version
+      getDiff(projectData.projectId, {
+        originalVersion: originalVersion,
+        currentVersion: currentVersion,
+      }).then(resp => {
+        if (!resp.errCode) {
+          const diffResult = resp.data
+          const tablesField = diffResult.fields.find(item => item.fieldName == 'tables')
+
+          // database basic fields
+          const overviewDiff = {}
+          overviewDiff.diffType = diffResult.diffType
+          diffResult.fields.filter(item => item.fieldName != 'tables')
+          .forEach(item => {
+            Object.defineProperty(overviewDiff, item.fieldName, { value: { diffType: item.diffType} })
+          })
+          const simpleTableDiffMap = new Map(tablesField.fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
+          overviewDiff.tableDiffMap = simpleTableDiffMap
+          documentDiffData.overviewDiff = overviewDiff
+
+          // tables fields
+          const tableDiffMapping = (table) => {
+            const colMap = new Map(table.fields.find(f => f.fieldName == 'columns').fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
+            const idxMap = new Map(table.fields.find(f => f.fieldName == 'indexes').fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
+            const tgMap = new Map(table.fields.find(f => f.fieldName == 'triggers').fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
+            const fkMap = new Map(table.fields.find(f => f.fieldName == 'foreignKeys').fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
+            return {
+              diffType: table.diffType,
+              name: table.fieldName,
+              columnDiffMap: colMap,
+              indexDiffMap: idxMap,
+              triggerDiffMap: tgMap,
+              foreignKeyDiffMap: fkMap,
+            }
+          }
+          const tableDiffMap = new Map(tablesField.fields.map(table => [table.fieldName, tableDiffMapping(table)]))
+          documentDiffData.tablesDiff.diffType = tablesField.diffType
+          documentDiffData.tablesDiff.tableDiffMap = tableDiffMap
+        }
+      })
+    }
     return {
       tocData,
+      defaultCheckedKeys,
       documentData,
       projectData,
       versionData,
@@ -441,6 +577,11 @@ export default {
       onUmlExport,
       documentDiscussionData,
       showDiscussionDrawer,
+      activeTab,
+      onTabClick,
+      documentDiffData,
+      onDiffModeChange,
+      onProjectDocumentCompareVersionChange,
     }
   }
 }

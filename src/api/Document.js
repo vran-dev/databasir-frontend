@@ -28,6 +28,12 @@ export const getVersionByProjectId =(projectId, parameters) => {
     })
 }
 
+export const getDiff =(projectId, parameters) => {
+    return axios.get(base + "/projects/"+projectId+"/diff_documents", {
+        params: parameters
+    })
+}
+
 export const exportDocument = (projectId, params, name, callback) => {
     return fileDownload(base + "/projects/"+projectId+"/document_files", params, name, callback)
 }
