@@ -37,13 +37,13 @@
                 </el-table-column>
                 <el-table-column label="启用状态" resizable >
                     <template v-slot="scope">
-                        <el-switch v-model="scope.row.enabled" :loading="loading.userEnableLoading"  @change="onSwitchEnabled(scope.row.id, scope.row.enabled)">
+                        <el-switch v-model="scope.row.enabled" :loading="loading.userEnableLoading"  @change="onSwitchEnabled(scope.row.id, scope.row.enabled)" :disabled="shouldDisableSwitch(scope.row)">
                         </el-switch>
                     </template>
                 </el-table-column>
                 <el-table-column label="系统管理员">
                     <template v-slot="scope">
-                        <el-switch v-model="scope.row.isSysOwner" :loading="loading.sysOwnerLoading" @change="onChangeSysOwner(scope.row)">
+                        <el-switch v-model="scope.row.isSysOwner" :loading="loading.sysOwnerLoading" @change="onChangeSysOwner(scope.row)" :disabled="shouldDisableSwitch(scope.row)">
                         </el-switch>
                     </template>
                 </el-table-column>
@@ -139,6 +139,7 @@
 <script>
 import { listUsers, enableUser, disableUser, renewPassword, createUser, addSysOwnerTo, removeSysOwnerFrom, getByUserId } from "../api/User"
 import {ElMessage} from 'element-plus'
+import { user } from "../utils/auth"
 
 export default {
     data() {
@@ -298,7 +299,14 @@ export default {
             if(groupId) {
                 this.$router.push({path: '/groups/'+groupId, query: { groupName: groupName }})
             }
-        }
+        },
+        shouldDisableSwitch(row) {
+            const loginData = user.loadUserLoginData()
+            if (loginData && loginData.id == row.id) {
+                return true
+            }
+            return false
+        },
     }
 }
 
