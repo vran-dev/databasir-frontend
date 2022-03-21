@@ -30,6 +30,11 @@
                             <el-input v-model="form.smtpPort" placeholder="SMTP Port" />
                         </el-col>                                                                                                                                                                                                    
                     </el-form-item>
+                    <el-form-item  label="启用 SSL" prop="useSSL">
+                        <el-switch
+                            v-model="form.useSSL"
+                        />
+                    </el-form-item>
 
                     <el-form-item style="margin-top:38px">
                         <el-button type="primary" @click="onSubmit('formRef')">保存</el-button>
@@ -51,7 +56,8 @@ export default {
                 smtpHost: null,
                 smtpPort: null,
                 username: null,
-                password: null
+                password: null,
+                useSSL: false,
             },
             formRule: {
                 username: [this.requiredInputValidRule('请输入邮箱账号'), { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }],
