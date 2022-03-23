@@ -151,6 +151,15 @@ const routes = [
                     breadcrumb: breadcurmbMap.sysDatabaseType
                 }
             },
+            {
+                path: 'sysDocumentTemplate',
+                icon: 'document-add',
+                component: () => import('@/views/SysDocumentTemplateProperty.vue'),
+                meta: {
+                    nav: '文档模板',
+                    breadcrumb: breadcurmbMap.sysDocumentTemplate
+                }
+            },
             // TODO
             {
                 path: 'sysKey',

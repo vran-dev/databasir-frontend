@@ -102,6 +102,15 @@ function sysDatabaseType() {
     }
 }
 
+function sysDocumentTemplate() {
+    return {
+        name:'文档模板',
+        to: {
+            path: '/settings/sysDocumentTemplate'
+        } 
+    }
+}
+
 
 const breadcurmbMap = {
     index: () => [index() ],
@@ -114,7 +123,7 @@ const breadcurmbMap = {
     sysLog: () => [index(), sysLog()],
     sysOauth2: () => [index(), sysOauth2()],
     sysDatabaseType: () => [index(), sysDatabaseType()],
-
+    sysDocumentTemplate: () => [index(), sysDocumentTemplate()],
 }
 
 export default breadcurmbMap

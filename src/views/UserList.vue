@@ -149,7 +149,7 @@ export default {
                 userEnableLoading: false
             },
             userData: {
-                enabled: false
+                enabled: true
             },
             userFormRule: {
                 nickname: [this.requiredInputValidRule('昵称不能为空')],
