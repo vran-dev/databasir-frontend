@@ -80,13 +80,13 @@
             <div v-if="tableMeta.columns.length > 0" class="h3">Columns</div>
             <el-table :data="tableMeta.columns" border fit width='80%' @cell-dblclick="onCellClick" :row-class-name="predicateRowClass"  default-expand-all row-key="id">
                 <el-table-column type="index" />
-                <el-table-column prop="name" label="Name" min-width="120" >
+                <el-table-column prop="name" :label="columnFieldNameMapping('name')" min-width="120" >
                     <template v-slot="scope">
                         <span> {{scope.row.name}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="type" :formatter="columnTypeFormat" label="Type" width="140" />
-                <el-table-column label="Primary Key" width="120"> 
+                <el-table-column prop="type" :formatter="columnTypeFormat" :label="columnFieldNameMapping('type')" width="140" />
+                <el-table-column width="120" :label="columnFieldNameMapping('isPrimaryKey')"> 
                     <template v-slot="scope">
                         <el-tooltip content="YES" v-if="scope.row.isPrimaryKey">
                             <el-tag>
@@ -95,7 +95,7 @@
                         </el-tooltip>
                     </template>
                 </el-table-column>
-                <el-table-column prop="nullable" label="Is Nullable" width="120">
+                <el-table-column prop="nullable" :label="columnFieldNameMapping('nullable')" width="120">
                     <template v-slot="scope">
                         <el-tooltip content="NO" v-if="scope.row.nullable != 'YES'">
                             <el-tag type="info">
@@ -109,16 +109,16 @@
                         </el-tooltip>
                     </template>
                 </el-table-column>
-                <el-table-column prop="autoIncrement" label="Auto Increment" width="140">
+                <el-table-column prop="autoIncrement" :label="columnFieldNameMapping('autoIncrement')" width="140">
                     <template v-slot="scope">
                         <el-tag v-if="scope.row.autoIncrement == 'YES'">
                             YES
                         </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="defaultValue" label="default" min-width="120" />
-                <el-table-column prop="comment" label="comment"  />
-                <el-table-column label="description" min-width="160" resizable show-overflow-tooltip>
+                <el-table-column prop="defaultValue" :label="columnFieldNameMapping('defaultValue')" min-width="120" />
+                <el-table-column prop="comment" :label="columnFieldNameMapping('comment')" />
+                <el-table-column :label="columnFieldNameMapping('description')"  min-width="160" resizable show-overflow-tooltip>
                     <template v-slot="scope">
                         <span v-if="!scope.row.toEditDescription">
                             <pre>{{scope.row.description}}</pre>
@@ -143,12 +143,12 @@
                 <div class="h3">Indexes</div>
                 <el-table :data="tableMeta.indexes" border fit width='80%' :row-class-name="predicateRowClass" default-expand-all row-key="id">
                     <el-table-column type="index" />
-                    <el-table-column prop="name" label="Name" min-width="120" >
+                    <el-table-column prop="name" :label="indexFieldNameMapping('name')" min-width="120" >
                         <template v-slot="scope">
                             <span> {{scope.row.name}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="isUnique" label="Is Unique" width="120">
+                    <el-table-column prop="isUnique" :label="indexFieldNameMapping('isUnique')" width="120">
                     <template v-slot="scope">
                         <el-tooltip content="YES" v-if="scope.row.isUnique">
                             <el-tag>
@@ -157,7 +157,7 @@
                         </el-tooltip>
                     </template>
                     </el-table-column>
-                    <el-table-column label="Columns" min-width="150">
+                    <el-table-column :label="indexFieldNameMapping('columnNames')" min-width="150">
                         <template v-slot="scope">
                             <el-space>
                                 <el-tag v-for="(item, index) in scope.row.columnNames" :key="index" type="info">
@@ -173,18 +173,18 @@
                 <div class="h3">Foreign Keys</div>
                 <el-table :data="tableMeta.foreignKeys" border fit width='80%' :row-class-name="predicateRowClass"  default-expand-all row-key="id">
                     <el-table-column type="index" />
-                    <el-table-column prop="fkName" label="FK Name" min-width="120" >
+                    <el-table-column prop="fkName" :label="foreignKeyFieldNameMapping('fkName')" min-width="120" >
                         <template v-slot="scope">
                             <span> {{scope.row.fkName}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="fkColumnName" label="FK Column" min-width="120">
+                    <el-table-column prop="fkColumnName" :label="foreignKeyFieldNameMapping('fkColumnName')" min-width="120">
                         <template v-slot="scope">
                             <el-tag type="info">{{scope.row.fkColumnName}}</el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="pkName" label="PK Name" min-width="120" />
-                    <el-table-column prop="pkTableName" label="PK Table">
+                    <el-table-column prop="pkName" :label="foreignKeyFieldNameMapping('pkName')" min-width="120" />
+                    <el-table-column prop="pkTableName" :label="foreignKeyFieldNameMapping('pkTableName')">
                         <template v-slot="scope">
                             <el-link>
                                 {{scope.row.pkTableName}}
@@ -192,13 +192,13 @@
                         </template>
                         
                     </el-table-column>
-                    <el-table-column prop="pkColumnName" label="PK Column" min-width="120">
+                    <el-table-column prop="pkColumnName" :label="foreignKeyFieldNameMapping('pkColumnName')" min-width="120">
                         <template v-slot="scope">
                             <el-tag type="info">{{scope.row.pkColumnName}}</el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="updateRule" label="Update Rule" />
-                    <el-table-column prop="deleteRule" label="Delete Rule" />
+                    <el-table-column prop="updateRule" :label="foreignKeyFieldNameMapping('updateRule')" />
+                    <el-table-column prop="deleteRule" :label="foreignKeyFieldNameMapping('deleteRule')" />
                 </el-table>
             </div>
             
@@ -206,15 +206,15 @@
                 <div class="h3">Triggers</div>
                 <el-table :data="tableMeta.triggers" fit border width='80%' :row-class-name="predicateRowClass"  default-expand-all row-key="id">
                     <el-table-column type="index" />
-                    <el-table-column prop="name" label="Name" min-width="120" >
+                    <el-table-column prop="name" :label="triggerFieldNameMapping('name')" min-width="120" >
                         <template v-slot="scope">
                             <span> {{scope.row.name}}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="timing" label="timing" />
-                    <el-table-column prop="manipulation" label="manipulation" width="120" />
-                    <el-table-column prop="statement" label="statement" />
-                    <el-table-column prop="creatAt" label="creatAt" width="150" />
+                    <el-table-column prop="timing" :label="triggerFieldNameMapping('timing')" />
+                    <el-table-column prop="manipulation" :label="triggerFieldNameMapping('manipulation')" width="120" />
+                    <el-table-column prop="statement" :label="triggerFieldNameMapping('statement')" />
+                    <el-table-column prop="creatAt" :label="triggerFieldNameMapping('creatAt')" width="150" />
                 </el-table>
             </div>
         </el-col>
@@ -226,23 +226,6 @@
 .badge-item {
     margin-top:18px;
     margin-bottom: 6px;
-}
-
-.h2 {
-    font-size: 24px;
-    color: #606266;
-    font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
-  'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
-    margin-top: 13px;
-    margin-bottom: 13px;
-}
-.h3 {
-    font-size: 20px;
-    color: #909399;
-    font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
-  'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
-    margin-top: 18px;
-    margin-bottom: 18px;
 }
 
 .removed-item {
@@ -269,9 +252,56 @@
 
 <script>
 import { saveDescription } from '@/api/DocumentDescription'
+import { documentTemplatePropertiesKey } from '../../api/Const'
+import { listProperties } from '../../api/DocumentTemplate'
+
 export default {
     props: ['overviewData', 'tablesData', 'overviewDiff',"tablesDiff", 'diffEnabled'],
     emits: ['onRemark'],
+    data() {
+        return {
+            templateProperties: {
+                columnFieldNameMap: new Map(),
+                indexFieldNameMap:  new Map(),
+                triggerFieldNameMap:  new Map(),
+                foreignKeyFieldNameMap:  new Map(),
+            }
+        }
+    },
+    created(){
+        const rawData = sessionStorage.getItem(documentTemplatePropertiesKey)
+        if (!rawData) {
+            listProperties().then(resp => {
+                if(!resp.errCode) {
+                    sessionStorage.setItem(documentTemplatePropertiesKey, JSON.stringify(resp.data))
+                    const  columnFieldNameMap = new Map(resp.data.columnFieldNameProperties.map(prop => [prop.key, prop]))
+                    const  indexFieldNameMap = new Map(resp.data.indexFieldNameProperties.map(prop => [prop.key, prop]))
+                    const  triggerFieldNameMap = new Map(resp.data.triggerFieldNameProperties.map(prop => [prop.key, prop]))
+                    const  foreignKeyFieldNameMap = new Map(resp.data.foreignKeyFieldNameProperties.map(prop => [prop.key, prop]))
+                    const data = {
+                        columnFieldNameMap: columnFieldNameMap,
+                        indexFieldNameMap: indexFieldNameMap,
+                        triggerFieldNameMap: triggerFieldNameMap,
+                        foreignKeyFieldNameMap: foreignKeyFieldNameMap,
+                    }
+                    this.templateProperties = data
+                }
+            });
+        } else  {
+            const templateData = JSON.parse(sessionStorage.getItem(documentTemplatePropertiesKey))
+            const  columnFieldNameMap = new Map(templateData.columnFieldNameProperties.map(prop => [prop.key, prop]))
+            const  indexFieldNameMap = new Map(templateData.indexFieldNameProperties.map(prop => [prop.key, prop]))
+            const  triggerFieldNameMap = new Map(templateData.triggerFieldNameProperties.map(prop => [prop.key, prop]))
+            const  foreignKeyFieldNameMap = new Map(templateData.foreignKeyFieldNameProperties.map(prop => [prop.key, prop]))
+            const data = {
+                columnFieldNameMap: columnFieldNameMap,
+                indexFieldNameMap: indexFieldNameMap,
+                triggerFieldNameMap: triggerFieldNameMap,
+                foreignKeyFieldNameMap: foreignKeyFieldNameMap,
+            }
+            this.templateProperties = data
+        }
+    },
     computed: {
         simpleTables() {
             const tables = this.overviewData.tables.filter(d => d.id != -1).map(item => {
@@ -392,9 +422,11 @@ export default {
         },
 
         onUpdateDescription(tableName, columnName, row) {
+            let content = ''
             if (!row.description) {
-                this.$message.error("内容不能为空")
-                return;
+                content = ''
+            } else {
+                content = row.description
             }
             const projectId = this.$route.params.projectId
             const groupId = this.$route.params.groupId
@@ -402,7 +434,7 @@ export default {
             const body = {
                 tableName: tableName,
                 columnName: columnName,
-                content: row.description,
+                content: content,
             }
             saveDescription(groupId, projectId, body).then(resp => {
                 if(!resp.errCode) {
@@ -438,6 +470,23 @@ export default {
             } else {
                 return ""
             }
+        },
+
+        columnFieldNameMapping(fieldName) {
+            const prop = this.templateProperties.columnFieldNameMap.get(fieldName)
+            return prop.value ? prop.value : prop.defaultValue
+        },
+        indexFieldNameMapping(fieldName) {
+            const prop = this.templateProperties.indexFieldNameMap.get(fieldName)
+            return prop.value ? prop.value : prop.defaultValue
+        },
+        triggerdNameMapping(fieldName) {
+            const prop = this.templateProperties.triggerFieldNameMap.get(fieldName)
+            return prop.value ? prop.value : prop.defaultValue
+        },
+        foreignKeyFieldNameMapping(fieldName) {
+            const prop = this.templateProperties.foreignKeyFieldNameMap.get(fieldName)
+            return prop.value ? prop.value : prop.defaultValue
         },
     }
 }

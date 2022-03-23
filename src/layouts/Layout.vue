@@ -64,6 +64,23 @@
     --el-main-padding: 0px 20px 20px 20px;
 }
 
+.h2 {
+    font-size: 24px;
+    color: #606266;
+    font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
+  'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+    margin-top: 13px;
+    margin-bottom: 13px;
+}
+.h3 {
+    font-size: 20px;
+    color: #909399;
+    font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
+  'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+    margin-top: 18px;
+    margin-bottom: 18px;
+}
+
 </style>
 <script>
 import AppNav from '../components/AppNav.vue'
