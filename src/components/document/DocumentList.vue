@@ -74,10 +74,17 @@
                     class="badge-item">
                     <div :id="tableMeta.name+'['+tableMeta.id+']'" class="h2">{{ tableMeta.name }}</div>
                 </el-badge>
-                <div v-else :id="tableMeta.name+'['+tableMeta.id+']'" class="h2">{{ tableMeta.name }}</div>
+                <div v-else :id="tableMeta.name+'['+tableMeta.id+']'" class="h2">
+                    {{ tableMeta.name }}
+                    <el-tooltip content="Mock 数据">
+                        <el-button @click="showMockDataRules(tableMeta)" circle >M</el-button>
+                    </el-tooltip>
+                </div>
             </div>
 
-            <div v-if="tableMeta.columns.length > 0" class="h3">Columns</div>
+            <div v-if="tableMeta.columns.length > 0" class="h3">
+                Columns
+            </div>
             <el-table :data="tableMeta.columns" border fit width='80%' @cell-dblclick="onCellClick" :row-class-name="predicateRowClass"  default-expand-all row-key="id">
                 <el-table-column type="index" />
                 <el-table-column prop="name" :label="columnFieldNameMapping('name')" min-width="120" >
@@ -219,6 +226,91 @@
             </div>
         </el-col>
     </el-row>
+
+     <el-dialog
+        :title="mockTableName"
+        v-model="showMockDataDialog"
+        width="60%"
+    >
+        <el-tabs model-value="mockDataPane" >
+            <el-tab-pane label="Mock 数据" name="mockDataPane">
+                <div style="min-height: 120px;">
+                    <highlightjs
+                        language="sql"
+                        :code="mockDataSql"
+                    />
+                    <el-tooltip content="点击复制">
+                        <el-button icon="copy-document" type="text" class="copy-button" @click="copyMockSql()">
+                        </el-button>
+                    </el-tooltip>
+                    
+                </div>
+            </el-tab-pane>
+            <el-tab-pane label="生成规则" name="mockRulePane">
+                <el-table :data="mockDataRules">
+                    <el-table-column prop="columnName" label="名称" />
+                    <el-table-column prop="columnType" label="类型">
+                        <template v-slot="scope">
+                            <el-tag>{{ scope.row.columnType }}</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="mockDataType" label="Mock 类型" >
+                        <template v-slot="scope">
+                            <el-select v-model="scope.row.mockDataType" placeholder="请选择 Mock 类型">
+                                <el-option
+                                v-for="item in mockDataTypes"
+                                :key="item.value"
+                                :label="item.name"
+                                :value="item.value"
+                                >
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="dependentTableName" label="依赖表">
+                        <template v-slot="scope">
+                            <el-select v-model="scope.row.dependentTableName"  placeholder="选择关联表" @change="scope.row.dependentColumnName = null" v-if="scope.row.mockDataType == 'REF'">
+                                <el-option
+                                v-for="item in mockRefTables"
+                                :key="item.name"
+                                :label="item.name"
+                                :value="item.name"
+                                />
+                            </el-select>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="dependentColumnName" label="依赖列">
+                        <template v-slot="scope">
+                            <el-select v-model="scope.row.dependentColumnName"  placeholder="选择关联列" v-if="scope.row.mockDataType == 'REF'">
+                                <el-option
+                                v-for="item in mockRefColumns(scope.row.dependentTableName)"
+                                :key="item.name"
+                                :label="item.name"
+                                :value="item.name"
+                                >
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="mockDataScript" label="脚本">
+                        <template v-slot="scope">
+                            <el-input
+                                v-model="scope.row.mockDataScript"
+                                :autosize="{ minRows: 2, maxRows: 4 }"
+                                type="textarea"
+                                placeholder="表达式"
+                                v-if="scope.row.mockDataType == 'SCRIPT'"
+                            />
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-button style="margin-top:33px;" @click="saveTableMockRules()">保存</el-button>
+            </el-tab-pane>
+        </el-tabs>
+        
+        <template #footer>
+        </template>
+    </el-dialog>
 </template>
 
 <style>
@@ -248,15 +340,52 @@
     color: #A8ABB2;
 }
 
+.copy-button {
+    position:absolute;
+    right: 12px;
+    top: 12px;
+    color:#fff;
+}
+
+.copy-button:hover {
+    position:absolute;
+    right: 12px;
+    top: 12px;
+    color:#67C23A;
+}
+
+pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px;min-height: 100px;}/*!
+   Theme: Agate
+   Author: (c) Taufik Nurrohman <hi@taufik-nurrohman.com>
+   Maintainer: @taufik-nurrohman
+   Updated: 2021-04-24
+
+   #333
+   #62c8f3
+   #7bd694
+   #888
+   #a2fca2
+   #ade5fc
+   #b8d8a2
+   #c6b4f0
+   #d36363
+   #fc9b9b
+   #fcc28c
+   #ffa
+   #fff
+*/.hljs{background:#333;color:#fff}.hljs-doctag,.hljs-meta-keyword,.hljs-name,.hljs-strong{font-weight:700}.hljs-code,.hljs-emphasis{font-style:italic}.hljs-section,.hljs-tag{color:#62c8f3}.hljs-selector-class,.hljs-selector-id,.hljs-template-variable,.hljs-variable{color:#ade5fc}.hljs-meta-string,.hljs-string{color:#a2fca2}.hljs-attr,.hljs-quote,.hljs-selector-attr{color:#7bd694}.hljs-tag .hljs-attr{color:inherit}.hljs-attribute,.hljs-title,.hljs-type{color:#ffa}.hljs-number,.hljs-symbol{color:#d36363}.hljs-bullet,.hljs-template-tag{color:#b8d8a2}.hljs-built_in,.hljs-keyword,.hljs-literal,.hljs-selector-tag{color:#fcc28c}.hljs-code,.hljs-comment,.hljs-formula{color:#888}.hljs-link,.hljs-regexp,.hljs-selector-pseudo{color:#c6b4f0}.hljs-meta{color:#fc9b9b}.hljs-deletion{background:#fc9b9b;color:#333}.hljs-addition{background:#a2fca2;color:#333}.hljs-subst{color:#fff}.hljs a{color:inherit}.hljs a:focus,.hljs a:hover{color:inherit;text-decoration:underline}.hljs mark{background:#555;color:inherit}
+
 </style>
 
 <script>
 import { saveDescription } from '@/api/DocumentDescription'
 import { documentTemplatePropertiesKey } from '../../api/Const'
 import { listProperties } from '../../api/DocumentTemplate'
+import { listRules, getMockSql, saveTableRules } from '../../api/MockData'
+import { listTables } from '../../api/Document'
 
 export default {
-    props: ['overviewData', 'tablesData', 'overviewDiff',"tablesDiff", 'diffEnabled'],
+    props: ['overviewData', 'tablesData', 'overviewDiff',"tablesDiff", 'diffEnabled', 'docVersion'],
     emits: ['onRemark'],
     data() {
         return {
@@ -265,7 +394,57 @@ export default {
                 indexFieldNameMap:  new Map(),
                 triggerFieldNameMap:  new Map(),
                 foreignKeyFieldNameMap:  new Map(),
-            }
+            },
+            showMockDataDialog: false,
+            mockDataRules: [],
+            mockRefTables: [
+            ],
+            mockDataTypes: [
+                {
+                    name: "自动",
+                    value: "AUTO",
+                    icon: "Sunny",
+                },
+                {
+                    name: "关联",
+                    value: "REF"
+                },
+                {
+                    name: "脚本",
+                    value: "SCRIPT"
+                },
+                {
+                    name: "手机号",
+                    value: "PHONE",
+                    icon: "cellphone"
+                },
+                {
+                    name: "头像",
+                    value: "AVATAR_URL",
+                    icon: "avatar"
+                },
+                {
+                    name: "UUID",
+                    value: "UUID"
+                },
+                {
+                    name: "邮箱",
+                    value: "EMAIL",
+                    icon: "box"
+                },
+                {
+                    name: "姓名",
+                    value: "FULL_NAME",
+                    icon: "credit-card"
+                },
+                {
+                    name: "地址",
+                    value: "FULL_ADDRESS"
+                }
+            ],
+            mockTableId: null,
+            mockTableName: '',
+            mockDataSql: ''
         }
     },
     created(){
@@ -289,10 +468,10 @@ export default {
             });
         } else  {
             const templateData = JSON.parse(sessionStorage.getItem(documentTemplatePropertiesKey))
-            const  columnFieldNameMap = new Map(templateData.columnFieldNameProperties.map(prop => [prop.key, prop]))
-            const  indexFieldNameMap = new Map(templateData.indexFieldNameProperties.map(prop => [prop.key, prop]))
-            const  triggerFieldNameMap = new Map(templateData.triggerFieldNameProperties.map(prop => [prop.key, prop]))
-            const  foreignKeyFieldNameMap = new Map(templateData.foreignKeyFieldNameProperties.map(prop => [prop.key, prop]))
+            const columnFieldNameMap = new Map(templateData.columnFieldNameProperties.map(prop => [prop.key, prop]))
+            const indexFieldNameMap = new Map(templateData.indexFieldNameProperties.map(prop => [prop.key, prop]))
+            const triggerFieldNameMap = new Map(templateData.triggerFieldNameProperties.map(prop => [prop.key, prop]))
+            const foreignKeyFieldNameMap = new Map(templateData.foreignKeyFieldNameProperties.map(prop => [prop.key, prop]))
             const data = {
                 columnFieldNameMap: columnFieldNameMap,
                 indexFieldNameMap: indexFieldNameMap,
@@ -488,6 +667,83 @@ export default {
             const prop = this.templateProperties.foreignKeyFieldNameMap.get(fieldName)
             return prop.value ? prop.value : prop.defaultValue
         },
+        showMockDataRules(table) {
+            const tableId = table.id
+            this.showMockDataDialog = true
+            this.mockTableId = table.id
+            this.mockTableName = table.name
+
+            const projectId = this.$route.params.projectId
+            const groupId = this.$route.params.groupId
+            const body = {
+                tableId: tableId,
+                version: this.docVersion
+            }
+            listRules(groupId, projectId, body).then(resp => {
+                if(!resp.errCode) {
+                    this.mockDataRules = resp.data
+                }
+            })
+            this.generateMockSql(tableId)
+        },
+        generateMockSql(tableId) {
+            this.mockDataSql = ''
+            const projectId = this.$route.params.projectId
+            const groupId = this.$route.params.groupId
+            const body = {
+                tableId: tableId,
+                version: this.docVersion
+            }
+            getMockSql(groupId, projectId, body).then(resp => {
+                if(!resp.errCode) {
+                    this.mockDataSql = resp.data
+                }
+            })
+            
+            listTables(projectId, {
+                version: this.docVersion
+            }).then(resp => {
+                if(!resp.errCode) {
+                    this.mockRefTables = resp.data
+                }
+            })
+        },
+        mockRefColumns(tableName) {
+            if (!tableName) {
+                return []
+            }
+            if (!this.mockRefTables.find(item => item.name == tableName)) {
+                return []
+            }
+            return this.mockRefTables.find(item => item.name == tableName).columns
+        },
+
+        saveTableMockRules() {
+            const projectId = this.$route.params.projectId
+            const groupId = this.$route.params.groupId
+
+            saveTableRules(groupId, projectId,  this.mockTableId, this.mockDataRules).then(resp => {
+                if(!resp.errCode) {
+                    this.$message.success("保存成功");
+                    this.generateMockSql(this.mockTableId)
+                }
+            })
+        },
+
+        copyMockSql() {
+            if (!navigator.clipboard) {
+                this.$message.warning('浏览器不支持，请手动复制')
+                return
+            }
+            navigator.clipboard.writeText(this.mockDataSql)
+            .then(() => {
+                this.$message.success('复制成功')
+            })
+            .catch(err => {
+                console.log('操作异常', err);
+                this.$message.error("复制失败，请手动选中复制")
+            })
+        }
     }
 }
 

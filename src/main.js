@@ -1,6 +1,12 @@
 import { createApp } from 'vue'
 import ElementPlus from 'element-plus'
 import * as Icons from '@element-plus/icons'
+
+import 'highlight.js/styles/stackoverflow-light.css';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import hljsVuePlugin from "@highlightjs/vue-plugin";
+
 import 'element-plus/dist/index.css'
 import router from './router'
 import store from './store'
@@ -41,6 +47,9 @@ app.directive("select-more", {
     },
 });
 
+
+hljs.registerLanguage('javascript', javascript);
+app.use(hljsVuePlugin)
 app.use(store)
 app.use(ElementPlus)
 app.use(router)
