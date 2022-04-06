@@ -112,6 +112,7 @@
                 :overviewDiff="documentDiffData.overviewDiff"
                 :tablesDiff="documentDiffData.tablesDiff"
                 :diffEnabled="documentDiffData.diffModeEnabled"
+                :docVersion="projectData.documentFilter.version"
                 @onRemark="showDiscussionDrawer"/>
             </el-tab-pane>
 

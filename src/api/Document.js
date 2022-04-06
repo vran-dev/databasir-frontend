@@ -38,6 +38,12 @@ export const exportDocument = (projectId, params, name, callback) => {
     return fileDownload(base + "/projects/"+projectId+"/document_files", params, name, callback)
 }
 
+export const listTables =(projectId, parameters) => {
+    return axios.get(base + "/projects/"+projectId+"/tables", {
+        params: parameters
+    })
+}
+
 function fileDownload(path, params, name, callback){
     axios.get(path, {
       responseType: 'blob', 
