@@ -50,7 +50,8 @@
                 <el-table-column prop="createAt" label="创建时间" min-width="140"/>
                 <el-table-column label="操作" min-width="120" resizable >
                     <template v-slot="scope">
-                        <el-button type="danger" size="small" @Click.stop="onRenewPassword(scope.row.id)">重置密码</el-button>
+                        <el-button icon="Refresh" type="warning" size="small" @Click.stop="onRenewPassword(scope.row.id)">重置密码</el-button>
+                        <el-button icon="Delete" type="danger" size="small" @Click.stop="onDeleteUser(scope.row.id)">删除账号</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -137,7 +138,7 @@
 </template>
 
 <script>
-import { listUsers, enableUser, disableUser, renewPassword, createUser, addSysOwnerTo, removeSysOwnerFrom, getByUserId } from "../api/User"
+import { listUsers, enableUser, disableUser, renewPassword, createUser, addSysOwnerTo, removeSysOwnerFrom, getByUserId, deleteByUserId } from "../api/User"
 import {ElMessage} from 'element-plus'
 import { user } from "../utils/auth"
 
@@ -222,6 +223,25 @@ export default {
                         ElMessage({
                             showClose: true,
                             message: '密码重置成功',
+                            type: 'success',
+                            duration: 3 * 1000
+                        });
+                    }
+                })
+            })
+        },
+        onDeleteUser(userId) {
+            this.$confirm('确认删除该用户吗？删除后无法恢复，请谨慎操作', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                deleteByUserId(userId).then(resp => {
+                    if (!resp.errCode) {
+                        this.fetchUsers()
+                        ElMessage({
+                            showClose: true,
+                            message: '用户删除成功',
                             type: 'success',
                             duration: 3 * 1000
                         });

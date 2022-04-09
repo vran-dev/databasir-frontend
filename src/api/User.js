@@ -21,6 +21,10 @@ export const getByUserId = (userId) => {
     return axios.get(base+"/"+userId)
 }
 
+export const deleteByUserId = (userId) => {
+    return axios.delete(base+"/"+userId)
+}
+
 export const createUser = (request) => {
     return axios.post(base, request)
 }
