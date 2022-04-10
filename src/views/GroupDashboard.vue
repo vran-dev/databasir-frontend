@@ -34,7 +34,7 @@
                 <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
                 <el-table-column label="项目名称" min-width="120" fixed="left" resizable>
                     <template v-slot="scope">
-                        <el-link :underline="true" @click.stop="toDocumentPage(scope.row)">
+                        <el-link :underline="true" @click="toDocumentPage(scope.row)">
                             <el-icon v-if="scope.row.isFavorite" ><star-filled /></el-icon>
                             {{ scope.row.name }}
                         </el-link>
@@ -71,17 +71,17 @@
                             <template #dropdown>
                             <el-dropdown-menu>
                                 <el-dropdown-item>
-                                    <el-button type="primary" size="small" @click.stop="toEditProject(scope.row)" icon="Edit">编辑项目</el-button>
+                                    <el-button type="primary" size="small" @click="toEditProject(scope.row)" icon="Edit">编辑项目</el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
-                                    <el-button type="primary" size="small" @click.stop="toDocumentPage(scope.row)" icon="View">查看文档</el-button>
+                                    <el-button type="primary" size="small" @click="toDocumentPage(scope.row)" icon="View">查看文档</el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
                                     <el-button 
                                         v-if="!scope.row.isFavorite"
                                         type="primary" 
                                         size="small" 
-                                        @click.stop="onAddProjectFavorite(scope.row)" 
+                                        @click="onAddProjectFavorite(scope.row)" 
                                         icon="Star">
                                         关注项目
                                     </el-button>
@@ -89,16 +89,16 @@
                                         v-else
                                         type="warning" 
                                         size="small" 
-                                        @click.stop="onRemoveProjectFavorite(scope.row)" 
+                                        @click="onRemoveProjectFavorite(scope.row)" 
                                         icon="StarFilled">
                                         取消关注
                                     </el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
-                                    <el-button type="primary" size="small" @click.stop="toProjectOperationLogDrawer(scope.row)" icon="Tickets">查看日志</el-button>
+                                    <el-button type="primary" size="small" @click="toProjectOperationLogDrawer(scope.row)" icon="Tickets">查看日志</el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId]">
-                                    <el-button type="danger" size="small" @click.stop="onProjectDelete(scope.row.id)"  icon="Remove">删除项目</el-button>
+                                    <el-button type="danger" size="small" @click="onProjectDelete(scope.row.id)"  icon="Remove">删除项目</el-button>
                                 </el-dropdown-item>
                             </el-dropdown-menu>
                             </template>
@@ -131,13 +131,13 @@
                         <el-row :gutter="33">
                             <el-col :span="8">
                                 <el-form-item label="名称" prop="name">
-                                        <el-input v-model="projectForm.name" placeholder="项目名称"></el-input>
+                                    <el-input v-model="projectForm.name" placeholder="项目名称"></el-input>
                                 </el-form-item>
                             </el-col>
 
                             <el-col :span="12">
                                 <el-form-item label="描述" prop="description">
-                                        <el-input v-model="projectForm.description" type="textarea" placeholder="项目描述"></el-input>
+                                    <el-input v-model="projectForm.description" type="textarea" placeholder="项目描述"></el-input>
                                 </el-form-item>   
                             </el-col>
                         </el-row>
@@ -830,14 +830,13 @@ export default {
             })
         },
         onProjectOperationLogCurrentPageChange(currentPage) {
-            if (currentPage && (currentPage -1) != this.projectOperationLogPageQuery.page) {
-                this.projectOperationLogPageQuery.page = currentPage - 1
+            if (currentPage) {
                 this.fetchProjectOperationLogs(currentPage)
             }
         },
         toProjectOperationLogDrawer(project) {
             this.projectOperationLogPageQuery.involveProjectId = project.id
-            this.fetchProjectOperationLogs()
+            this.onProjectOperationLogCurrentPageChange(1)
             this.isShowProjectOperationLogDrawer = true
         },
         

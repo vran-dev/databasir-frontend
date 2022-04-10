@@ -103,6 +103,7 @@
 
     <el-dialog 
         v-model="showTemplatePreview"
+        width="80%"
         title="模板预览">
         <el-row>
             <div class="h2">Column</div>

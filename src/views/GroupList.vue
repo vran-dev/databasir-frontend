@@ -266,7 +266,7 @@ export default {
              number: 1,
              size: 15,
              totalElements:0,
-             totalPages: 1
+             totalPages: 0
           },
           groupPageQuery: {
             page: 0,
@@ -279,7 +279,7 @@ export default {
             number: 1,
             size: 15,
             totalElements:0,
-            totalPages: 1
+            totalPages: 0
           },
           favoriteProjectPageQuery: {
             page: 0,
@@ -291,7 +291,7 @@ export default {
     
     created() {
         this.fetchGroupsFunction()
-        this.fetchUserFavorites()
+        this.onFavoriteProjectPageChange(1)
     },
 
     computed: {
@@ -444,9 +444,6 @@ export default {
             this.$router.push({path: "/groups/"+groupId, query: {groupName: groupName }})
         },
 
-        toGroupMemberListPage() {
-
-        },
         toDocumentPage(favoriteProject) {
             const groupId = favoriteProject.groupId
             const projectId = favoriteProject.projectId
