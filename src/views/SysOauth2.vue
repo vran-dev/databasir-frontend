@@ -153,7 +153,7 @@ export default {
                 number: 1,
                 size: 10,
                 totalElements:0,
-                totalPages: 1
+                totalPages: 0
             },
             appPageQuery: {
                 page: 0,
@@ -198,15 +198,13 @@ export default {
 
     created() {
         this.redirectUri = window.location.protocol + "//" +window.location.host+"/login/oauth2/"
-        this.fetchApps()
+        this.onAppCurrentPageChange(1)
     },
 
     methods: {
         fetchApps(currentPage) {
             if (currentPage) {
                 this.appPageQuery.page = currentPage - 1
-            } else {
-                this.appPageQuery.page = null
             }
             if (this.appPageQuery.appType == '') {
                 this.appPageQuery.appType = null
@@ -223,9 +221,8 @@ export default {
             })
         },
         onAppCurrentPageChange(currentPage) {
-            if (currentPage && (currentPage -1) != this.appPageQuery.page) {
-                this.appPageQuery.page = currentPage - 1
-                this.fetchApps(currentPage)
+            if (currentPage) {
+                this.fetchApps(currentPage - 1)
             }
         },
         onQuery() {

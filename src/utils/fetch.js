@@ -7,7 +7,7 @@ import { refreshAccessToken } from '../api/Login';
 const BASE_API = process.env.VUE_APP_API_URL
 // default config
 axios.defaults.baseURL = BASE_API,
-axios.defaults.timeout = 20 * 1000;
+axios.defaults.timeout = 15 * 1000;
 axios.defaults.withCredentials = false;
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 axios.defaults.headers.post["Access-Control-Allow-Origin-Type"] = "*";
@@ -77,16 +77,21 @@ axios.interceptors.response.use(
     return res;
   },
   (error) => {
-    if(error.response.status == 401) {
-      if (error.response.data.errCode == 'X_0002') {
-        user.removeUserLoginData()
-        notify('登陆状态失效，请重新登陆')
-        redirectLogin()
+    if (error.response) {
+      if(error.response.status == 401) {
+        if (error.response.data.errCode == 'X_0002') {
+          user.removeUserLoginData()
+          notify('登陆状态失效，请重新登陆')
+          redirectLogin()
+        }
+      } else if (error.response.status == 403) {
+        notify('无执行该操作的权限')
+      } else {
+        notify(error.message)
       }
-    } else if (error.response.status == 403) {
-      notify('无执行该操作的权限')
     } else {
-      notify(error.message)
+      console.log(error)
+      notify('网络异常，请稍后再试')
     }
     return Promise.reject(error);
   }
