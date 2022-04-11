@@ -18,7 +18,7 @@
             <el-table border :data="sampleData.columns" highlight-current-row>
                 <el-table-column :label="item.key" v-for="item in template.columnFieldNameProperties" :key="item.key" :prop="item.key">
                     <template #header>
-                        <el-input v-model="item.value" :placeholder="item.key" @change="saveColumnProperties()"/>
+                        <el-input v-model="item.value" :placeholder="item.key" @change="saveColumnProperties()" :input-style="inputStyle"/>
                     </template>
                 </el-table-column>
             </el-table>
@@ -33,7 +33,7 @@
             <el-table border :data="sampleData.indexes">
                 <el-table-column :label="item.key" v-for="item in template.indexFieldNameProperties" :key="item.key" :prop="item.key">
                     <template #header>
-                        <el-input v-model="item.value" :placeholder="item.key" @change="saveIndexProperties()"/>
+                        <el-input v-model="item.value" :placeholder="item.key" @change="saveIndexProperties()" :input-style="inputStyle"/>
                     </template>
                 </el-table-column>
             </el-table>
@@ -48,7 +48,7 @@
             <el-table border :data="sampleData.foreignKeys">
                 <el-table-column :label="item.key" v-for="item in template.foreignKeyFieldNameProperties" :key="item.key" :prop="item.key">
                     <template #header>
-                        <el-input v-model="item.value" :placeholder="item.key" @change="saveForeignKeyProperties()"/>
+                        <el-input v-model="item.value" :placeholder="item.key" @change="saveForeignKeyProperties()" :input-style="inputStyle"/>
                     </template>
                 </el-table-column>
             </el-table>
@@ -63,7 +63,7 @@
             <el-table border :data="sampleData.triggers">
                 <el-table-column :label="item.key" v-for="item in template.triggerFieldNameProperties" :key="item.key" :prop="item.key">
                     <template #header>
-                        <el-input v-model="item.value" :placeholder="item.key" @change="saveTriggerProperties()"/>
+                        <el-input v-model="item.value" :placeholder="item.key" @change="saveTriggerProperties()" :input-style="inputStyle"/>
                     </template>
                 </el-table-column>
             </el-table>
@@ -73,9 +73,6 @@
 <style>
 .el-row {
     margin-bottom: 12px;
-}
-.el-input input {
-    border: none;
 }
 </style>
 <script>
@@ -99,6 +96,10 @@ export default {
                 triggers: []
             },
             showSampleData: false,
+
+            inputStyle: {
+                border: 'none'
+            }
         }
     },
     watch: {
