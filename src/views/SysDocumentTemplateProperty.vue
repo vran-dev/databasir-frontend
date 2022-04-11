@@ -1,147 +1,81 @@
 <template>
+    <el-row>
+        <el-col>
+            <el-switch
+                v-model="showSampleData"
+                size="large"
+                active-text="展示示例数据"
+                inactive-text="隐藏示例数据"
+                @change="onSwitchShowSampleData"
+            />
+        </el-col>
+    </el-row>
+    <el-row>
+        <el-col>
+            <div class="h3">Columns</div>
+        </el-col>
+        <el-col>
+            <el-table border :data="sampleData.columns" highlight-current-row>
+                <el-table-column :label="item.key" v-for="item in template.columnFieldNameProperties" :key="item.key" :prop="item.key">
+                    <template #header>
+                        <el-input v-model="item.value" :placeholder="item.key" @change="saveColumnProperties()"/>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-col>
+    </el-row>
 
-    <el-tabs model-value="columnTab" @tab-click="handleClick">
-        <el-tab-pane label="列模板" name="columnTab">
-            <h1>列字段名配置</h1>
-            <el-row>
-                <el-col>
-                    <el-button type="primary"  @click="saveColumnProperties">保存</el-button>
-                    <el-button type="success"  @click="onTemplatePreview">预览</el-button>
-                </el-col>
-            </el-row>
-            <el-row>
-                <el-col>
-                    <el-table :data="template.columnFieldNameProperties"  border>
-                        <el-table-column prop="key" label="属性">
-                        </el-table-column>
-                        <el-table-column prop="value" label="值">
-                            <template v-slot="scope">
-                                    <el-input v-model="scope.row.value" placeholder="属性值"></el-input>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="defaultValue" label="默认值">
-                        </el-table-column>
-                    </el-table>
-                </el-col>
-            </el-row>
-        </el-tab-pane>
-        <el-tab-pane label="索引模板" name="indexTab">
-            <h1>索引字段名配置</h1>
-            <el-row>
-                <el-col>
-                    <el-button type="primary" @click="saveIndexProperties">保存</el-button>
-                    <el-button type="success"  @click="onTemplatePreview">预览</el-button>
-                </el-col>
-            </el-row>
-            <el-row>
-                <el-col>
-                    <el-table :data="template.indexFieldNameProperties"  border>
-                        <el-table-column prop="key" label="属性">
-                        </el-table-column>
-                        <el-table-column prop="value" label="值">
-                            <template v-slot="scope">
-                                <el-input v-model="scope.row.value" placeholder="属性值"></el-input>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="defaultValue" label="默认值">
-                        </el-table-column>
-                    </el-table>
-                </el-col>
-            </el-row>
-        </el-tab-pane>
-        <el-tab-pane label="外键模板" name="foreignKeyTab">
-            <h1>外键字段名配置</h1>
-            <el-row>
-                <el-col>
-                    <el-button type="primary" @click="saveForeignKeyProperties">保存</el-button>
-                    <el-button type="success"  @click="onTemplatePreview">预览</el-button>
-                </el-col>
-            </el-row>
-            <el-row>
-                <el-col>
-                    <el-table :data="template.foreignKeyFieldNameProperties"  border>
-                        <el-table-column prop="key" label="属性">
-                        </el-table-column>
-                        <el-table-column prop="value" label="值">
-                            <template v-slot="scope">
-                                <el-input v-model="scope.row.value" placeholder="属性值"></el-input>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="defaultValue" label="默认值">
-                        </el-table-column>
-                    </el-table>
-                </el-col>
-            </el-row>
-        </el-tab-pane>
-        <el-tab-pane label="触发器模板" name="triggerTab">
-            <h1>
-                触发器字段名配置
-            </h1>
-            <el-row>
-                <el-col>
-                    <el-button type="primary" @click="saveTriggerProperties">保存</el-button>
-                    <el-button type="success"  @click="onTemplatePreview">预览</el-button>
-                </el-col>
-            </el-row>
-            <el-row>
-                <el-col>
-                    <el-table :data="template.triggerFieldNameProperties"  border>
-                        <el-table-column prop="key" label="属性">
-                        </el-table-column>
-                        <el-table-column prop="value" label="值">
-                            <template v-slot="scope">
-                                <el-input v-model="scope.row.value" placeholder="属性值"></el-input>
-                            </template>
-                        </el-table-column>
-                        <el-table-column prop="defaultValue" label="默认值">
-                        </el-table-column>
-                    </el-table>
-                </el-col>
-            </el-row>
-        </el-tab-pane>
-    </el-tabs>
+    <el-row>
+        <el-col>
+            <div class="h3">Indexes</div>
+        </el-col>
+        <el-col>
+            <el-table border :data="sampleData.indexes">
+                <el-table-column :label="item.key" v-for="item in template.indexFieldNameProperties" :key="item.key" :prop="item.key">
+                    <template #header>
+                        <el-input v-model="item.value" :placeholder="item.key" @change="saveIndexProperties()"/>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-col>
+    </el-row>
 
-    <el-dialog 
-        v-model="showTemplatePreview"
-        width="80%"
-        title="模板预览">
-        <el-row>
-            <div class="h2">Column</div>
-            <el-col>
-                <el-table border>
-                    <el-table-column :label="item.value?item.value:item.defaultValue" v-for="(item, index) in template.columnFieldNameProperties" :key="index"></el-table-column>
-                </el-table>
-            </el-col>
-        </el-row>
-        <el-row>
-            <div class="h2">Index</div>
-            <el-col>
-                <el-table border>
-                    <el-table-column :label="item.value?item.value:item.defaultValue" v-for="(item, index) in template.indexFieldNameProperties" :key="index"></el-table-column>
-                </el-table>
-            </el-col>
-        </el-row>
-        <el-row>
-            <div class="h2">Foreign Key</div>
-            <el-col>
-                <el-table border>
-                    <el-table-column :label="item.value?item.value:item.defaultValue" v-for="(item, index) in template.foreignKeyFieldNameProperties" :key="index"></el-table-column>
-                </el-table>
-            </el-col>
-        </el-row>
-        <el-row>
-            <div class="h2">Trigger</div>
-            <el-col>
-                <el-table border>
-                    <el-table-column :label="item.value?item.value:item.defaultValue" v-for="(item, index) in template.triggerFieldNameProperties" :key="index"></el-table-column>
-                </el-table>
-            </el-col>
-        </el-row>
-    </el-dialog>
+    <el-row>
+        <el-col>
+            <div class="h3">Foreign Keys</div>
+        </el-col>
+        <el-col>
+            <el-table border :data="sampleData.foreignKeys">
+                <el-table-column :label="item.key" v-for="item in template.foreignKeyFieldNameProperties" :key="item.key" :prop="item.key">
+                    <template #header>
+                        <el-input v-model="item.value" :placeholder="item.key" @change="saveForeignKeyProperties()"/>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-col>
+    </el-row>
+
+    <el-row>
+        <el-col>
+            <div class="h3">Trigger</div>
+        </el-col>
+        <el-col>
+            <el-table border :data="sampleData.triggers">
+                <el-table-column :label="item.key" v-for="item in template.triggerFieldNameProperties" :key="item.key" :prop="item.key">
+                    <template #header>
+                        <el-input v-model="item.value" :placeholder="item.key" @change="saveTriggerProperties()"/>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-col>
+    </el-row>
 </template>
 <style>
 .el-row {
     margin-bottom: 12px;
+}
+.el-input input {
+    border: none;
 }
 </style>
 <script>
@@ -157,7 +91,14 @@ export default {
                 indexFieldNameProperties:[],
                 triggerFieldNameProperties:[]
             },
-            showTemplatePreview: false
+
+            sampleData: {
+                columns: [],
+                indexes: [],
+                foreignKeys: [],
+                triggers: []
+            },
+            showSampleData: false,
         }
     },
     watch: {
@@ -189,7 +130,6 @@ export default {
                 }
             })
         },
-
         saveIndexProperties() {
             const body = {
                 type: "INDEX_FIELD_NAME",
@@ -226,8 +166,22 @@ export default {
                 }
             })
         },
-        onTemplatePreview() {
-            this.showTemplatePreview = true
+        onSwitchShowSampleData(isShow) {
+            if (isShow) {
+                const columnJsonData = '[{"id":409,"name":"id","type":"INT","size":10,"decimalDigits":1,"comment":"id comment","description":"this is id","isPrimaryKey":true,"nullable":"NO","autoIncrement":"YES","defaultValue":"1","discussionCount":null,"createAt":"2022-04-10 13:45:06"},{"id":410,"name":"email","type":"VARCHAR","size":512,"decimalDigits":null,"comment":"","description":null,"isPrimaryKey":false,"nullable":"NO","autoIncrement":"NO","defaultValue":null,"discussionCount":null,"createAt":"2022-04-10 13:45:06"},{"id":411,"name":"username","type":"VARCHAR","size":128,"decimalDigits":null,"comment":"","description":null,"isPrimaryKey":false,"nullable":"NO","autoIncrement":"NO","defaultValue":null,"discussionCount":null,"createAt":"2022-04-10 13:45:06"},{"id":412,"name":"password","type":"TEXT","size":65535,"decimalDigits":null,"comment":"","description":null,"isPrimaryKey":false,"nullable":"NO","autoIncrement":"NO","defaultValue":null,"discussionCount":null,"createAt":"2022-04-10 13:45:06"}]'
+                this.sampleData.columns = JSON.parse(columnJsonData)
+                const indexJsonData = '[{"id":96,"name":"uk_email","isUnique":true,"columnNames":["email","deleted_token"],"createAt":"2022-04-10 13:45:06"},{"id":97,"name":"uk_username","isUnique":true,"columnNames":["username","deleted_token"],"createAt":"2022-04-10 13:45:06"},{"id":98,"name":"PRIMARY","isUnique":true,"columnNames":["id"],"createAt":"2022-04-10 13:45:06"}]'
+                this.sampleData.indexes = JSON.parse(indexJsonData)
+                const foreignKeyJsonData = '[{"fkName":"dept_manager_ibfk_2","fkTableName":"dept_manager","fkColumnName":"dept_no","pkName":"PRIMARY","pkTableName":"departments","pkColumnName":"dept_no","updateRule":"CASCADE","deleteRule":"CASCADE"},{"fkName":"dept_manager_ibfk_1","fkTableName":"dept_manager","fkColumnName":"emp_no","pkName":"PRIMARY","pkTableName":"employees","pkColumnName":"emp_no","updateRule":"CASCADE","deleteRule":"CASCADE"}]'
+                this.sampleData.foreignKeys = JSON.parse(foreignKeyJsonData)
+                const triggerJsonData = '[{"id":1,"name":"custom trigger","timing":"before","manipulation":"insert","statement":"sql","triggerCreateAt":"1970-01-01 00:00:00"}]'
+                this.sampleData.triggers = JSON.parse(triggerJsonData)
+            } else {
+                this.sampleData.columns = []
+                this.sampleData.indexes = []
+                this.sampleData.foreignKeys = []
+                this.triggers = []
+            }
         }
     }
 }
