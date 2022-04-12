@@ -147,7 +147,7 @@ const routes = [
                 icon: 'office-building',
                 component: () => import('@/views/SysDatabaseType.vue'),
                 meta: {
-                    nav: '数据库类型',
+                    nav: '数据库扩展',
                     breadcrumb: breadcurmbMap.sysDatabaseType
                 }
             },

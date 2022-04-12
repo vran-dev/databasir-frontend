@@ -31,7 +31,7 @@
             </el-descriptions>
 
             <div class="h3">Tables</div>
-            <el-table :data="simpleTables"  border width='80%' @cell-dblclick="onCellClick" :row-class-name="predicateRowClass">
+            <el-table :data="simpleTables"  border width='80%' @cell-dblclick="onCellClick" :row-class-name="predicateRowClass" highlight-current-row>
                 <el-table-column type="index" />
                 <el-table-column label="Name" min-width="160" resizable>
                     <template v-slot="scope">
@@ -46,8 +46,7 @@
                             {{scope.row.description}}
                         </span> 
                         <el-space v-else direction="vertical"  alignment="left" style="width: 100%;">
-                            <el-input v-model="scope.row.description" type="textarea" style="width: 100%;" autosize/>
-                            <el-button size="small" @click="onUpdateDescription(scope.row.name, null, scope.row)">提交</el-button>
+                            <el-input v-model="scope.row.description" type="textarea" style="width: 100%;" autosize :input-style="style.noBorderInput" @change="onUpdateDescription(scope.row.name, null, scope.row)"/>
                         </el-space>
                     </template>
                 </el-table-column>
@@ -76,8 +75,8 @@
                 </el-badge>
                 <div v-else :id="tableMeta.name+'['+tableMeta.id+']'" class="h2">
                     {{ tableMeta.name }}
-                    <el-tooltip content="Mock 数据">
-                        <el-button @click="showMockDataRules(tableMeta)" circle >M</el-button>
+                    <el-tooltip content="SQL 测试数据生成">
+                        <el-button @click="showMockDataRules(tableMeta)" round size="small">Insert</el-button>
                     </el-tooltip>
                 </div>
             </div>
@@ -85,7 +84,7 @@
             <div v-if="tableMeta.columns.length > 0" class="h3">
                 Columns
             </div>
-            <el-table :data="tableMeta.columns" border fit width='80%' @cell-dblclick="onCellClick" :row-class-name="predicateRowClass"  default-expand-all row-key="id">
+            <el-table :data="tableMeta.columns" border fit width='80%' @cell-dblclick="onCellClick" :row-class-name="predicateRowClass"  default-expand-all row-key="id" highlight-current-row>
                 <el-table-column type="index" />
                 <el-table-column prop="name" :label="columnFieldNameMapping('name')" min-width="120" >
                     <template v-slot="scope">
@@ -131,8 +130,7 @@
                             <pre>{{scope.row.description}}</pre>
                         </span> 
                         <el-space v-else direction="vertical"  alignment="left" style="width: 100%;">
-                            <el-input v-model="scope.row.description" type="textarea" style="width: 100%;" autosize/>
-                            <el-button size="small" @click="onUpdateDescription(tableMeta.name, scope.row.name, scope.row)">提交</el-button>
+                            <el-input v-model="scope.row.description" type="textarea" style="width: 100%;" autosize :input-style="style.noBorderInput" @change="onUpdateDescription(tableMeta.name, scope.row.name, scope.row)"/>
                         </el-space>
                     </template>
                 </el-table-column>
@@ -148,7 +146,7 @@
     
             <div v-if="tableMeta.indexes.length > 0">
                 <div class="h3">Indexes</div>
-                <el-table :data="tableMeta.indexes" border fit width='80%' :row-class-name="predicateRowClass" default-expand-all row-key="id">
+                <el-table :data="tableMeta.indexes" border fit width='80%' :row-class-name="predicateRowClass" default-expand-all row-key="id" highlight-current-row>
                     <el-table-column type="index" />
                     <el-table-column prop="name" :label="indexFieldNameMapping('name')" min-width="120" >
                         <template v-slot="scope">
@@ -178,7 +176,7 @@
 
             <div v-if="tableMeta.foreignKeys.length > 0">
                 <div class="h3">Foreign Keys</div>
-                <el-table :data="tableMeta.foreignKeys" border fit width='80%' :row-class-name="predicateRowClass"  default-expand-all row-key="id">
+                <el-table :data="tableMeta.foreignKeys" border fit width='80%' :row-class-name="predicateRowClass"  default-expand-all row-key="id" highlight-current-row>
                     <el-table-column type="index" />
                     <el-table-column prop="fkName" :label="foreignKeyFieldNameMapping('fkName')" min-width="120" >
                         <template v-slot="scope">
@@ -211,7 +209,7 @@
             
             <div  v-if="tableMeta.triggers.length > 0">
                 <div class="h3">Triggers</div>
-                <el-table :data="tableMeta.triggers" fit border width='80%' :row-class-name="predicateRowClass"  default-expand-all row-key="id">
+                <el-table :data="tableMeta.triggers" fit border width='80%' :row-class-name="predicateRowClass"  default-expand-all row-key="id" highlight-current-row>
                     <el-table-column type="index" />
                     <el-table-column prop="name" :label="triggerFieldNameMapping('name')" min-width="120" >
                         <template v-slot="scope">
@@ -233,7 +231,7 @@
         width="60%"
     >
         <el-tabs model-value="mockDataPane" >
-            <el-tab-pane label="Mock 数据" name="mockDataPane">
+            <el-tab-pane label="SQL 测试数据" name="mockDataPane">
                 <div style="min-height: 120px;">
                     <highlightjs
                         language="sql"
@@ -444,7 +442,12 @@ export default {
             ],
             mockTableId: null,
             mockTableName: '',
-            mockDataSql: ''
+            mockDataSql: '',
+            style: {
+                noBorderInput : {
+                    border: 'none'
+                }
+            }
         }
     },
     created(){
