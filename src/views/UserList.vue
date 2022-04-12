@@ -7,17 +7,6 @@
                         <el-button type="primary"  icon="plus" style="width: 100%" @click="toCreatePage()"></el-button>
                     </el-tooltip>
                 </el-col>
-                <el-col :span="3">
-                    <el-select v-model="userPageQuery.enabled" placeholder="启用状态" @change="onQuery" clearable>
-                        <el-option
-                        v-for="item in [true, false]"
-                        :key="item"
-                        :label="item?'启用':'禁用'"
-                        :value="item"
-                        >
-                        </el-option>
-                    </el-select>
-                </el-col>
                 <el-col :span="6">
                     <el-input @change='onQuery' v-model="userPageQuery.nicknameOrUsernameOrEmailContains" label="用户名" placeholder="昵称、用户名或邮箱搜索" prefix-icon="search"/>
                 </el-col>
@@ -36,6 +25,17 @@
                     </template>
                 </el-table-column>
                 <el-table-column label="启用状态" resizable >
+                    <template #header>
+                        <el-select v-model="userPageQuery.enabled" placeholder="启用状态" @change="onQuery" clearable>
+                        <el-option
+                            v-for="item in [true, false]"
+                            :key="item"
+                            :label="item?'启用':'禁用'"
+                            :value="item"
+                            >
+                        </el-option>
+                    </el-select>
+                    </template>
                     <template v-slot="scope">
                         <el-switch v-model="scope.row.enabled" :loading="loading.userEnableLoading"  @change="onSwitchEnabled(scope.row.id, scope.row.enabled)" :disabled="shouldDisableSwitch(scope.row)">
                         </el-switch>
@@ -126,7 +126,6 @@
                     <el-switch v-model="userData.enabled">
                     </el-switch>
                 </el-form-item>
-                
                 <el-form-item>
                     <el-button type="primary" plain @click="onSaveUserData('userFormRef')">保存</el-button>
                     <el-button plain @click="isShowEditUserDialog = false">取消</el-button>

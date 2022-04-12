@@ -41,7 +41,7 @@
                 <el-table-column prop="urlPattern" label="URL 表达式" resizable>
                     <template v-slot="scope">
                         <el-tooltip :content="tableUrlSample(scope.row)">
-                            <el-link :underline="false" type="warning">
+                            <el-link :underline="false" type="success">
                             {{ scope.row.urlPattern }}
                             </el-link> 
                         </el-tooltip>

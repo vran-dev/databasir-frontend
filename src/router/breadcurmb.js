@@ -95,7 +95,7 @@ function sysOauth2() {
 
 function sysDatabaseType() {
     return {
-        name:'数据库类型',
+        name:'数据库扩展',
         to: {
             path: '/settings/sysDatabaseType'
         } 
