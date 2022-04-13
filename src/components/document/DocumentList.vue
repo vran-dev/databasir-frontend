@@ -238,10 +238,16 @@
                         :code="mockDataSql"
                     />
                     <el-tooltip content="点击复制">
-                        <el-button icon="copy-document" type="text" class="copy-button" @click="copyMockSql()">
+                        <el-button 
+                            icon="copy-document"
+                            type="text" 
+                            class="copy-button"
+                             @click="copyMockSql()" 
+                            v-clipboard:copy="mockDataSql" 
+                            v-clipboard:success="handleCopySuccess" 
+                            v-clipboard:error="handleCopyFail">
                         </el-button>
                     </el-tooltip>
-                    
                 </div>
             </el-tab-pane>
             <el-tab-pane label="生成规则" name="mockRulePane">
@@ -447,7 +453,7 @@ export default {
                 noBorderInput : {
                     border: 'none'
                 }
-            }
+            },
         }
     },
     created(){
@@ -483,6 +489,7 @@ export default {
             }
             this.templateProperties = data
         }
+
     },
     computed: {
         simpleTables() {
@@ -734,19 +741,13 @@ export default {
         },
 
         copyMockSql() {
-            if (!navigator.clipboard) {
-                this.$message.warning('浏览器不支持，请手动复制')
-                return
-            }
-            navigator.clipboard.writeText(this.mockDataSql)
-            .then(() => {
-                this.$message.success('复制成功')
-            })
-            .catch(err => {
-                console.log('操作异常', err);
-                this.$message.error("复制失败，请手动选中复制")
-            })
-        }
+        },  
+        handleCopySuccess() {
+            this.$message.success("复制成功")
+        },
+        handleCopyFail() {
+            this.$message.success("复制失败，请手动复制")
+        },
     }
 }
 

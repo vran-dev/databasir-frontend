@@ -13,6 +13,7 @@ import store from './store'
 import App from './App.vue'
 import { user } from './utils/auth'
 import DatabaseIcon from './components/DatabaseIcon.vue'
+import { VueClipboard } from '@soerenmartius/vue3-clipboard'
 
 //  element icon
 const app = createApp(App)
@@ -53,5 +54,6 @@ app.use(hljsVuePlugin)
 app.use(store)
 app.use(ElementPlus)
 app.use(router)
+app.use(VueClipboard)
 app.mount('#app')
 
