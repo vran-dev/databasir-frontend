@@ -92,7 +92,11 @@
                     <el-row :gutter="28">
                         <el-col :span="10">
                              <el-form-item  label="驱动类名"  prop="jdbcDriverClassName">
-                                <el-input v-model="databaseTypeForm.jdbcDriverClassName" placeholder="jdbc 驱动类名，如 com.mysql.jdbc.Driver"></el-input>
+                                <el-input v-model="databaseTypeForm.jdbcDriverClassName" placeholder="jdbc 驱动类名，如 com.mysql.jdbc.Driver">
+                                    <template #append>
+                                        <el-link type="primary" @click="autoObtainDriverClassName()" v-loading="loadingClassName">自动获取</el-link>
+                                    </template>
+                                </el-input>
                             </el-form-item>
                         </el-col>
                         <el-col :span="10">
@@ -146,7 +150,7 @@
 
 <script>
 
-import {createDatabaseType, deleteDatabaseType, updateDatabaseType, listPage} from '@/api/DatabaseType'
+import {createDatabaseType, deleteDatabaseType, updateDatabaseType, listPage, resolveDriverClassName} from '@/api/DatabaseType'
 
 export default{
     data() {
@@ -216,7 +220,8 @@ export default{
                         description: 'schema 名称，如 user'
                     }
                 ]
-            }
+            },
+            loadingClassName: false
         }
     },
     created() {
@@ -326,7 +331,30 @@ export default{
             .replace('{{jdbc.protocol}}', row.jdbcProtocol)
             .replace('{{db.name}}', dbName)
             .replace('{{db.url}}', url)
-        }
+        },
+
+        autoObtainDriverClassName() {
+            if (!this.databaseTypeForm.jdbcDriverFileUrl) {
+                this.$message.warning("请求填写 JDBC 驱动下载地址")
+                return;
+            }
+
+            this.loadingClassName = true
+            const request = {
+                jdbcDriverFileUrl: this.databaseTypeForm.jdbcDriverFileUrl 
+            }
+            resolveDriverClassName(request)
+            .then(resp => {
+                if (!resp.errCode) {
+                    this.databaseTypeForm.jdbcDriverClassName = resp.data
+                    this.$message.success("获取成功")
+                }
+            })
+            .finally(() => {
+                this.loadingClassName = false
+            })
+        },
+
     }
 }
 </script>
