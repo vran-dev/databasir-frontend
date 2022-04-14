@@ -26,3 +26,6 @@ export const listPage = (filter) => {
     })
 }
 
+export const resolveDriverClassName = (request) => {
+    return axios.post(base + "/driver_class_name", request)
+}
