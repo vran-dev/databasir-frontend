@@ -17,33 +17,35 @@
             inactive-text="单选模式" 
             @change="onMultiSelectionModeChange"
             :loading="loadings.multiSelectionModeChanging"/>
-              <el-tree
-                ref="treeRef"
-                :data="tocData.value" 
-                :show-checkbox="tocData.isMultiSelectionMode"
-                :default-checked-keys="defaultCheckedKeys"
-                node-key="id" 
-                highlight-current
-                @node-click="onTocNodeClick" 
-                @check-change="onTocNodeCheckChange" 
-              >
-                <template #default="{ data }">
-                  <span class="span-ellipsis" >
-                    <el-tooltip :content='data.comment && data.comment != "" ? data.name + " /*"+data.comment+"*/":data.name' effect="light">
-                      <span>{{ data.name }}
-                        <span v-if="data.comment && data.comment != ''" style="color:#b1b3b8;">
-                          {{ '/*'+data.comment+'*/' }}
-                        </span>
-                        <span v-else-if="data.description && data.description != ''" style="color: #b1b3b8;">
-                          {{ '/*'+data.description+'*/' }}
-                        </span>
-                      </span>
-                      
-                    </el-tooltip>
-                  </span>
-                </template>
-              </el-tree>
 
+            <input type="text" class="search-input" placeholder="输入表名、注释进行搜索" v-model="searchTableText">
+
+            <el-tree
+              ref="treeRef"
+              :data="tocData.value" 
+              :show-checkbox="tocData.isMultiSelectionMode"
+              :default-checked-keys="defaultCheckedKeys"
+              node-key="id" 
+              highlight-current
+              @node-click="onTocNodeClick" 
+              @check-change="onTocNodeCheckChange" 
+              :filter-node-method="searchTables"
+            >
+              <template #default="{ data }">
+                <span class="span-ellipsis" >
+                  <el-tooltip :content='data.comment && data.comment != "" ? data.name + " /*"+data.comment+"*/":data.name' effect="light">
+                    <span>{{ data.name }}
+                      <span v-if="data.comment && data.comment != ''" style="color:#b1b3b8;">
+                        {{ '/*'+data.comment+'*/' }}
+                      </span>
+                      <span v-else-if="data.description && data.description != ''" style="color: #b1b3b8;">
+                        {{ '/*'+data.description+'*/' }}
+                      </span>
+                    </span>
+                  </el-tooltip>
+                </span>
+              </template>
+            </el-tree>
           </el-space>
       </el-aside>
       <el-container>
@@ -184,10 +186,26 @@
   overflow-y: auto;
   scrollbar-width: thin;
 }
+
+.search-input {
+    border-width: 0 0 1px 0;
+    border-style: solid;
+    width: 90%;
+    min-height: 33px;
+}
+
+.search-input::placeholder {
+    color: rgba(180, 180, 180, 0.808);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #000;
+}
 </style>
 
 <script>
-import { reactive, computed, ref } from 'vue'
+import { reactive, computed, ref, watch } from 'vue'
 import {  useRoute } from 'vue-router'
 import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables, getDiff } from '@/api/Document'
 import { ElMessage } from 'element-plus'
@@ -238,8 +256,27 @@ export default {
         children: 'children',
         label: 'name',
       },
-      isMultiSelectionMode: false
+      isMultiSelectionMode: false,
     })
+    const treeRef = ref()
+    const searchTableText = ref('')
+    watch(searchTableText, (val) => {
+      treeRef.value.filter(val)
+    })
+    const searchTables = (value, data) => {
+      if (!value) return true
+      if(data.name.includes(value)) {
+        return true;
+      }
+      if(data.comment && data.comment.includes(value)) {
+        return true;
+      }
+      if (data.description && data.description.includes(value)) {
+        return true;
+      }
+      return false;
+    }
+
     const defaultCheckedKeys = computed(() => tocData.checkedValue.map(item => item.id))
     // document component
     const documentData = reactive({
@@ -253,7 +290,6 @@ export default {
     })
     // active tab
     const activeTab = ref("tableDocument")
-    const treeRef = ref()
 
     const fetchDocumentTables = (tableIds, callback) => {
       let documentId = projectData.simpleDocumentData.id
@@ -591,6 +627,8 @@ export default {
       documentDiffData,
       onDiffModeChange,
       onProjectDocumentCompareVersionChange,
+      searchTables,
+      searchTableText,
     }
   }
 }
