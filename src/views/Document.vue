@@ -17,21 +17,28 @@
             inactive-text="单选模式" 
             @change="onMultiSelectionModeChange"
             :loading="loadings.multiSelectionModeChanging"/>
-              <el-tree 
+              <el-tree
                 ref="treeRef"
                 :data="tocData.value" 
                 :show-checkbox="tocData.isMultiSelectionMode"
                 :default-checked-keys="defaultCheckedKeys"
                 node-key="id" 
                 highlight-current
-                :props="tocData.treeProps"
                 @node-click="onTocNodeClick" 
                 @check-change="onTocNodeCheckChange" 
               >
-                <template #default="{ node }">
+                <template #default="{ data }">
                   <span class="span-ellipsis" >
-                    <el-tooltip :content='node.comment ? node.label + "("+node.comment+")":node.label' effect="light">
-                      <span>{{ node.label }}</span>
+                    <el-tooltip :content='data.comment && data.comment != "" ? data.name + " /*"+data.comment+"*/":data.name' effect="light">
+                      <span>{{ data.name }}
+                        <span v-if="data.comment && data.comment != ''" style="color:#b1b3b8;">
+                          {{ '/*'+data.comment+'*/' }}
+                        </span>
+                        <span v-else-if="data.description && data.description != ''" style="color: #b1b3b8;">
+                          {{ '/*'+data.description+'*/' }}
+                        </span>
+                      </span>
+                      
                     </el-tooltip>
                   </span>
                 </template>
@@ -151,10 +158,11 @@
   text-overflow: ellipsis;
   font-size: 14px;
   flex: 1;
-  display: flex;
+  display: inline-block;
   align-items: left;
   justify-content: space-between;
   font-size: 14px;
+  padding: 8px;
 } 
 
 .doc-toc-aside {
