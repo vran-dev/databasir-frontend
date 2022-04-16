@@ -76,7 +76,8 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="onMarkdownExport()">Markdown</el-dropdown-item>
-                    <el-dropdown-item @click="onUmlExport()">UML PNG</el-dropdown-item>
+                    <el-dropdown-item @click="onUmlExport('png')">UML PNG</el-dropdown-item>
+                    <el-dropdown-item @click="onUmlExport('svg')">UML SVG</el-dropdown-item>
                     <!-- <el-dropdown-item>Excel</el-dropdown-item> -->
                   </el-dropdown-menu>
                 </template>
@@ -136,7 +137,10 @@
                   <el-switch v-model="umlData.showComment" active-text="显示注释" inactive-text="隐藏注释"/>
                 </el-col>
               </el-row>
-              <diagram :model-data="umlData.tables" :show-comment="umlData.showComment" ref="umlDiagramComponentRef"></diagram>
+              <diagram 
+                :model-data="umlData.tables" 
+                :show-comment="umlData.showComment"
+                ref="umlDiagramComponentRef" />
             </el-tab-pane>
           </el-tabs>
 
@@ -450,9 +454,17 @@ export default {
       }, projectData.simpleDocumentData.databaseName, () => loadings.export = false)
     }
 
-    const umlDiagramComponentRef = ref(null)
-    const onUmlExport = () => {
-      umlDiagramComponentRef.value.exportUml()
+    const umlDiagramComponentRef = ref()
+    const onUmlExport = (type) => {
+      if (!umlDiagramComponentRef.value) {
+        ElMessage({
+          message:"请先切换到 UML 标签页面",
+          type:"warning",
+          group: true,
+        })
+        return;
+      }
+      umlDiagramComponentRef.value.exportUml(type)
     }
 
     const loadMoreDocumentVersions = debounce(async () => {
