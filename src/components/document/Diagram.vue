@@ -71,20 +71,27 @@ export default {
             const graph = this.createGraphInstance()
             this.redendarUml(graph)
         },
-        exportUml() {
-            this.graph.toPNG(
-                (dataUri) => {
-                    DataUri.downloadDataUri(dataUri, 'uml.png')
-                }, 
-                {
-                    padding: {
-                        top: 20,
-                        right: 30,
-                        bottom: 40,
-                        left: 50,
-                    },
-                }
-            )
+        exportUml(type) {
+            if (type == 'svg') {
+                this.graph.toSVG((dataUri) => {
+                    DataUri.downloadDataUri(DataUri.svgToDataUrl(dataUri), 'uml.svg')
+                })
+            } else {
+                this.graph.toPNG(
+                    (dataUri) => {
+                        DataUri.downloadDataUri(dataUri, 'uml.png')
+                    }, 
+                    {
+                        padding: {
+                            top: 20,
+                            right: 30,
+                            bottom: 40,
+                            left: 50,
+                        },
+                    }
+                )
+            }
+            
         },
         redendarUml(graph) {
             const tableList = this.modelData.map(table => {
