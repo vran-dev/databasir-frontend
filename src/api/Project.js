@@ -28,6 +28,9 @@ export const testConnection = (request) => {
     return axios.post(base + '/test_connection', request)
 }
 
+export const listProjectManualTasks = (id, body) => {
+    return axios.post(base + "/" + id +"/list_manual_tasks", body)
+}
 
 const groupProjectBase = '/api/v1.0/groups'
 

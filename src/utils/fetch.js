@@ -45,22 +45,7 @@ axios.interceptors.request.use(async function (config) {
   } else if (config.url == '/access_tokens' || config.url.startsWith('/oauth2') || config.url == '/login') {
     return config
   } else  {
-    if(!tokenRefreshLock) {
-      lock()
-      await refreshAndSaveAccessToken()
-      config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
-      unlock()
-      relaseRequests()
-      return config;
-    } else {
-      const promise = new Promise((resolve) => {
-        blockRequest(() => {
-          config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
-          resolve(config)
-        })
-      })
-      return promise
-    }
+    refreshAccessTokenAndConfig(config)
   }
 }, function (error) {
   unlock()
@@ -108,6 +93,25 @@ function notify(msg) {
     type: 'error',
     duration: 5 * 1000
   });
+}
+
+async function refreshAccessTokenAndConfig(config) {
+  if(!tokenRefreshLock) {
+    lock()
+    await refreshAndSaveAccessToken()
+    config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
+    unlock()
+    relaseRequests()
+    return config;
+  } else {
+    const promise = new Promise((resolve) => {
+      blockRequest(() => {
+        config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
+        resolve(config)
+      })
+    })
+    return promise
+  }
 }
 
 async function refreshAndSaveAccessToken() {
