@@ -52,15 +52,41 @@
         <el-header>
           <div>
             <el-space :size="28" style="margin-bottom: 33px;">
-              <el-button 
-                v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]"
-                type="success" 
-                style="width:100%" 
-                icon="Refresh" 
-                @click="onSyncProjectDocument" 
-                :loading="loadings.handleSync">
-                同步
-              </el-button>
+              
+              <el-dropdown v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]">
+                <el-button 
+                  v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]"
+                  type="success" 
+                  style="width:100%" 
+                  icon="Refresh" 
+                  @click="onSyncProjectDocument" 
+                  :loading="loadings.handleSync">
+                  同步
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu  v-if="projectTaskData.tasks.length > 0">
+                    <el-dropdown-item v-for="task in projectTaskData.tasks" :key="task.taskId" @click="onClickTaskProgress(task)">
+                      <el-progress v-if="task.status == 'FINISHED'" :percentage="100" :status="taskStatusToProgressStatus(task)" style="width: 150px">
+                        <el-tooltip content="点击刷新文档">
+                          <el-icon><circle-check /></el-icon>
+                        </el-tooltip>
+                      </el-progress>
+                      <el-progress v-else-if="task.status == 'FAILED'" :percentage="100" :status="taskStatusToProgressStatus(task)" style="width: 150px">
+                        <el-tooltip :content="task.result">
+                          <el-icon><warning /></el-icon>
+                        </el-tooltip>
+                      </el-progress>
+                      <el-progress v-else 
+                        :percentage="100"
+                        :indeterminate="true"
+                        :duration="5"
+                        style="width: 150px" >
+                        <el-icon><loading /></el-icon>
+                      </el-progress>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>  
               <el-dropdown v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]">
                 <el-button 
                   type="primary" 
@@ -205,10 +231,11 @@
 </style>
 
 <script>
-import { reactive, computed, ref, watch } from 'vue'
+import { reactive, computed, ref, watch, onBeforeUnmount } from 'vue'
 import {  useRoute } from 'vue-router'
 import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables, getDiff } from '@/api/Document'
-import { ElMessage } from 'element-plus'
+import { listProjectManualTasks } from '@/api/Project'
+import { ElMessage, ElNotification  } from 'element-plus'
 import Diagram from '../components/document/Diagram.vue'
 import DocumentDiscussion from '../components/document/DocumentDiscussion.vue'
 import DocumentList from '../components/document/DocumentList.vue'
@@ -434,20 +461,6 @@ export default {
       loadings.loadingVersions = false
     }
 
-    const onSyncProjectDocument = () => {
-      const projectId = route.params.projectId
-      loadings.handleSync = true
-      syncByProjectId(projectId)
-      .then(resp => {
-        if (!resp.errCode) {
-          initPageData()
-          messageNotify('success', '同步成功')
-        }
-        loadings.handleSync = false
-      })
-      .catch(() => loadings.handleSync = false)
-    }
-
     const onMarkdownExport = () => {
       const projectId = route.params.projectId
       loadings.export = true
@@ -600,6 +613,124 @@ export default {
         }
       })
     }
+
+    // project task status
+    const projectTaskData = reactive({
+      tasks: []
+    })
+
+    const onSyncProjectDocument = () => {
+      const projectId = route.params.projectId
+      loadings.handleSync = true
+      syncByProjectId(projectId)
+      .then(resp => {
+        if (!resp.errCode && resp.data) {
+          projectTaskData.tasks.push({
+            taskId: resp.data,
+            status: 'NEW'
+          })
+          messageNotify('success', '后台同步任务创建成功')
+        }
+        loadings.handleSync = false
+      })
+      .catch(() => loadings.handleSync = false)
+    }
+
+    const taskStatusToProgressStatus = (task) => {
+      if (task.status == 'NEW') {
+        return ''
+      } else if (task.status == 'RUNNING') {
+        return ''
+      } else if (task.status == 'FAILED') {
+        return 'exception'
+      } else if (task.status == 'FINISHED') {
+        return 'success'
+      }
+    }
+
+    const onClickTaskProgress = (task) => {
+      if (task.status == 'NEW' || task.status == 'RUNNING') {
+        return;
+      }
+      if (task.status == 'FAILED') {
+        projectTaskData.tasks = projectTaskData.tasks.filter(item => item.taskId != task.taskId)
+        return;
+      }
+      if(task.status == 'FINISHED') {
+        refreshDataFromNotification()
+        projectTaskData.tasks = projectTaskData.tasks.filter(item => item.taskId != task.taskId)
+        return;
+      }
+    }
+
+    const refreshDataFromNotification = () => {
+      initPageData()
+      ElNotification({
+          grouping: true,
+          type: 'success',
+          title: '刷新成功',
+          message: '文档已更新为最新内容',
+      })
+    }
+
+    // 每 3 秒查询一次任务状态
+    const pollTaskStatusTimer = setInterval(() => {
+      const hasNewOrRunning = projectTaskData.tasks.find(item => item.status == 'NEW' || item.status == 'RUNNING') 
+      if (projectTaskData.tasks.length > 0 && hasNewOrRunning) {
+        const body = {
+          taskIdIn: projectTaskData.tasks.map(task => task.taskId)
+        }
+        listProjectManualTasks(projectData.projectId, body).then(resp => {
+          if (!resp.errCode) {
+            const taskStatusMap = new Map(resp.data.map(item => [item.taskId, item]))
+            projectTaskData.tasks.forEach(task => {
+              if (taskStatusMap.has(task.taskId)) {
+                const remoteTask = taskStatusMap.get(task.taskId)
+                if (task.status != 'FINISHED' && remoteTask.status == 'FINISHED') {
+                  ElNotification({
+                      grouping: true,
+                      type: 'success',
+                      title: '文档同步成功',
+                      message: '同步任务已执行完成，点击即可刷新文档内容',
+                      onClick: refreshDataFromNotification
+                  })
+                }
+                if(task.status != 'FAILED' && remoteTask.status == 'FAILED') {
+                  ElNotification({
+                      grouping: true,
+                      type: 'error',
+                      title: '文档同步失败',
+                      message: '错误：' + remoteTask.result,
+                  })
+                }
+                task.status = remoteTask.status
+                task.result = remoteTask.result
+              }
+            })
+          }
+        })
+      }
+    }, 1000*3);
+
+    // 每 3 秒查询一次运行中的任务
+    const pollNewOrRunningTaskTimer = setInterval(() => {
+      const body = {
+        taskStatusIn: ['NEW', 'RUNNING']
+      }
+      listProjectManualTasks(projectData.projectId, body).then(resp => {
+          if (!resp.errCode) {
+            const localTaskIdSet = new Set(projectTaskData.tasks.map(task => task.taskId))
+            const newTasks = resp.data.filter(task => !localTaskIdSet.has(task.taskId))
+            projectTaskData.tasks.push(...newTasks)
+          }
+        })
+    }, 1000 * 3);
+
+    onBeforeUnmount(() => {
+      clearInterval(pollTaskStatusTimer)
+      clearInterval(pollNewOrRunningTaskTimer)
+    })
+    
     return {
       tocData,
       defaultCheckedKeys,
@@ -629,6 +760,9 @@ export default {
       onProjectDocumentCompareVersionChange,
       searchTables,
       searchTableText,
+      projectTaskData,
+      taskStatusToProgressStatus,
+      onClickTaskProgress,
     }
   }
 }
