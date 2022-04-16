@@ -1,7 +1,13 @@
 <template>
   <template v-if="isShowNoDataPage">
       <el-empty description="似乎还没有同步过文档" >
-          <el-button type="primary" icon='refresh' round size='large' @click="onSyncProjectDocument" :loading="loadings.handleSync">同步</el-button>
+          <document-sync-task-dropdown 
+                :projectData="projectData" 
+                :projectTaskData="projectTaskData" 
+                :loading="loadings.handleSync"
+                @onSync="onSyncProjectDocument"
+                @onProgressBarClick="onClickTaskProgress"
+                />
       </el-empty>
   </template>
   <template v-else-if="isShowLoadingPage">
@@ -52,41 +58,13 @@
         <el-header>
           <div>
             <el-space :size="28" style="margin-bottom: 33px;">
-              
-              <el-dropdown v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]">
-                <el-button 
-                  v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]"
-                  type="success" 
-                  style="width:100%" 
-                  icon="Refresh" 
-                  @click="onSyncProjectDocument" 
-                  :loading="loadings.handleSync">
-                  同步
-                </el-button>
-                <template #dropdown>
-                  <el-dropdown-menu  v-if="projectTaskData.tasks.length > 0">
-                    <el-dropdown-item v-for="task in projectTaskData.tasks" :key="task.taskId" @click="onClickTaskProgress(task)">
-                      <el-progress v-if="task.status == 'FINISHED'" :percentage="100" :status="taskStatusToProgressStatus(task)" style="width: 150px">
-                        <el-tooltip content="点击刷新文档">
-                          <el-icon><circle-check /></el-icon>
-                        </el-tooltip>
-                      </el-progress>
-                      <el-progress v-else-if="task.status == 'FAILED'" :percentage="100" :status="taskStatusToProgressStatus(task)" style="width: 150px">
-                        <el-tooltip :content="task.result">
-                          <el-icon><warning /></el-icon>
-                        </el-tooltip>
-                      </el-progress>
-                      <el-progress v-else 
-                        :percentage="100"
-                        :indeterminate="true"
-                        :duration="5"
-                        style="width: 150px" >
-                        <el-icon><loading /></el-icon>
-                      </el-progress>
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>  
+              <document-sync-task-dropdown 
+                :projectData="projectData" 
+                :projectTaskData="projectTaskData" 
+                :loading="loadings.handleSync"
+                @onSync="onSyncProjectDocument"
+                @onProgressBarClick="onClickTaskProgress"
+                />
               <el-dropdown v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]">
                 <el-button 
                   type="primary" 
@@ -239,12 +217,14 @@ import { ElMessage, ElNotification  } from 'element-plus'
 import Diagram from '../components/document/Diagram.vue'
 import DocumentDiscussion from '../components/document/DocumentDiscussion.vue'
 import DocumentList from '../components/document/DocumentList.vue'
+import DocumentSyncTaskDropdown from '../components/document/DocumentSyncTaskDropdown.vue'
 
 export default {
   components: {
     Diagram,
     DocumentDiscussion,
-    DocumentList
+    DocumentList,
+    DocumentSyncTaskDropdown
   },
   setup() {
     const route = useRoute()
