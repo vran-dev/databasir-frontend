@@ -325,14 +325,6 @@ export default {
         console.log(data)
         callback(data)
       }))
-
-      // getTables(route.params.projectId, documentId, tableIds).then(resp => {
-      //   if (!resp.errCode) {
-      //     callback(resp.data)
-      //   } else {
-      //     messageNotify('warn', '加载数据异常，请稍后再试')
-      //   }
-      // })
     }
 
     const onTocNodeClick = (node) => {
