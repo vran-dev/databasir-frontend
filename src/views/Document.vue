@@ -218,6 +218,7 @@ import {  useRoute } from 'vue-router'
 import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables, getDiff } from '@/api/Document'
 import { listProjectManualTasks } from '@/api/Project'
 import { ElMessage, ElNotification  } from 'element-plus'
+import axios from '@/utils/fetch'
 import Diagram from '../components/document/Diagram.vue'
 import DocumentDiscussion from '../components/document/DocumentDiscussion.vue'
 import DocumentList from '../components/document/DocumentList.vue'
@@ -304,13 +305,26 @@ export default {
 
     const fetchDocumentTables = (tableIds, callback) => {
       let documentId = projectData.simpleDocumentData.id
-      getTables(route.params.projectId, documentId, tableIds).then(resp => {
-        if (!resp.errCode) {
-          callback(resp.data)
-        } else {
-          messageNotify('warn', '加载数据异常，请稍后再试')
+      // 为了避免超时，将 id 分为多个组进行查询，每个组的数据量为 20
+      let multiArray = []
+      let currArray = []
+      for (var i = 0; i< tableIds.length; i++) {
+        if (i != 0 && i % 20 == 0) {
+          multiArray.push(currArray)
+          currArray = []
         }
-      })
+        currArray.push(tableIds[i])
+        if (i == (tableIds.length - 1)) {
+          multiArray.push(currArray)
+        }
+      }
+      console.log(multiArray)
+      const requestArray = multiArray.map(ids => getTables(route.params.projectId, documentId, ids))
+      axios.all(requestArray).then(axios.spread((...res) => {
+        const data = res.flatMap(item => item.data)
+        console.log(data)
+        callback(data)
+      }))
     }
 
     const onTocNodeClick = (node) => {
@@ -353,7 +367,7 @@ export default {
       }
     }
 
-    const onTocNodeCheckChange = () => {
+    const onTocNodeCheckChange = (callback) => {
       fetchDocumentTables(treeRef.value.getCheckedKeys(), data => {
         if (treeRef.value.getCheckedKeys().some(n => n== -1)) {
           documentData.overview = projectData.simpleDocumentData
@@ -362,13 +376,16 @@ export default {
         }
         documentData.tables = data
         umlData.tables = data
+        if (callback) {
+          callback()
+        }
       })
     }
 
     const onMultiSelectionModeChange = (val) => {
       loadings.multiSelectionModeChanging = true
       if (val) {
-        onTocNodeCheckChange()
+        onTocNodeCheckChange(() => { loadings.multiSelectionModeChanging = false})
       } else {
         const curr = treeRef.value.getCurrentNode()
         tocData.checkedValue = tocData.value.map(item => { return {id: item.id, name: item.name} })
@@ -377,8 +394,8 @@ export default {
         } else {
           onTocNodeClick(curr)
         }
+        loadings.multiSelectionModeChanging = false
       }
-      loadings.multiSelectionModeChanging = false
     }
 
     const initPageData = async () => {
