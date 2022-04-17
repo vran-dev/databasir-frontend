@@ -30,24 +30,35 @@ function blockRequest(request) {
   blockRequests.push(request)
 }
 
-function relaseRequests() {
+function relaseRequests(config) {
   blockRequests.forEach(request => {
-    request()
+    request(config)
   })
   blockRequests = []
 }
 
 // 请求拦截器
 axios.interceptors.request.use(async function (config) {
+  if (config.url == '/access_tokens' || config.url.startsWith('/oauth2') || config.url == '/login') {
+    return config
+  }
+
   if (token.hasValidAccessToken()) {
     config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
     return config;
-  } else if (config.url == '/access_tokens' || config.url.startsWith('/oauth2') || config.url == '/login') {
-    return config
-  } else  {
-    refreshAccessTokenAndConfig(config)
-    return config
   }
+  if (tokenRefreshLock) {
+    const promise = new Promise((resolve) => {
+      blockRequest(() => {
+        if (config) {
+          config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
+        }
+        resolve(config)
+      })
+    })
+    return promise
+  } 
+  return config
 }, function (error) {
   unlock()
   return Promise.reject(error);
@@ -69,12 +80,14 @@ axios.interceptors.response.use(
           user.removeUserLoginData()
           notify('登陆状态失效，请重新登陆')
           redirectLogin()
+        } else if (error.response.data.errCode == 'X_0004') {
+            return refresh(error.config).then(() => retryFromResponse(error.config))
         }
       } else if (error.response.status == 403) {
         notify('无执行该操作的权限')
       } else {
         notify(error.message)
-      }
+      } 
     } else {
       console.log(error)
       notify('网络异常，请稍后再试')
@@ -82,6 +95,54 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+async function refresh(config) {
+  const refreshToken = user.getRefreshToken()
+  if(!refreshToken) {
+    redirectLogin()
+  }
+
+  if(tokenRefreshLock) {
+    return new Promise((resolve) => {
+      blockRequest(() => {
+        if (config) {
+          config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
+        }
+        resolve(config)
+      })
+    })
+  }
+
+  lock()
+  return await refreshAccessToken(refreshToken).then(resp => {
+    if (resp.errCode) {
+      redirectLogin()
+    } else {
+      token.saveAccessToken(resp.data.accessToken, resp.data.accessTokenExpireAt)
+      unlock()
+    }
+  }).finally(() => unlock())
+}
+
+async function retryFromResponse(config) {
+  try {
+    const res = await axios({
+      method: config.method,
+      data: config.data,
+      url: config.url,
+      baseURL: config.baseURL,
+      headers: {
+        Authorization: 'Bearer ' + token.loadAccessToken()
+      },
+    })
+    relaseRequests(config)
+    return res;
+  } catch(error) {
+    console.log(error)
+    notify("网络异常，请稍后再试");
+  }
+}
+
 
 function redirectLogin () {
   user.removeUserLoginData()
@@ -92,44 +153,9 @@ function notify(msg) {
   ElMessage({
     message: msg,
     type: 'error',
-    duration: 5 * 1000
+    duration: 5 * 1000,
+    grouping: true,
   });
-}
-
-async function refreshAccessTokenAndConfig(config) {
-  if(!tokenRefreshLock) {
-    lock()
-    await refreshAndSaveAccessToken()
-    config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
-    unlock()
-    relaseRequests()
-    return config;
-  } else {
-    const promise = new Promise((resolve) => {
-      blockRequest(() => {
-        config.headers.Authorization = 'Bearer ' + token.loadAccessToken()
-        resolve(config)
-      })
-    })
-    return promise
-  }
-}
-
-async function refreshAndSaveAccessToken() {
-  const refreshToken = user.getRefreshToken()
-  if (refreshToken) {
-    const accessToken = await refreshAccessToken(refreshToken).then(resp => {
-      if (!resp.errCode) {
-        token.saveAccessToken(resp.data.accessToken, resp.data.accessTokenExpireAt)
-        return resp.data.accessToken
-      } else {
-        redirectLogin()
-       }
-    })
-    return accessToken
-  } else {
-    redirectLogin()
-  }
 }
 
 export default axios;
