@@ -46,6 +46,7 @@ axios.interceptors.request.use(async function (config) {
     return config
   } else  {
     refreshAccessTokenAndConfig(config)
+    return config
   }
 }, function (error) {
   unlock()

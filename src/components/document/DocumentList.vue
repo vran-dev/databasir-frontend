@@ -33,14 +33,14 @@
             <div class="h3">Tables</div>
             <el-table :data="simpleTables"  border width='80%' @cell-dblclick="onCellClick" :row-class-name="predicateRowClass" highlight-current-row>
                 <el-table-column type="index" />
-                <el-table-column label="Name" min-width="160" resizable>
+                <el-table-column :label="tableFieldNameMapping('name')" min-width="160" resizable>
                     <template v-slot="scope">
                         <span> {{scope.row.name}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="type" label="Type" width="200"  resizable />
-                <el-table-column prop="comment" label="comment" min-width="160" resizable />
-                <el-table-column label="description" min-width="160" resizable>
+                <el-table-column prop="type" :label="tableFieldNameMapping('type')" width="200"  resizable />
+                <el-table-column prop="comment" :label="tableFieldNameMapping('comment')" min-width="160" resizable />
+                <el-table-column :label="tableFieldNameMapping('description')" min-width="160" resizable>
                     <template v-slot="scope">
                         <span v-if="!scope.row.toEditDescription">
                             {{scope.row.description}}
@@ -50,7 +50,7 @@
                         </el-space>
                     </template>
                 </el-table-column>
-                <el-table-column prop="remark" label="discussion" min-width="120" resizable >
+                <el-table-column prop="remark" label="讨论" min-width="120" resizable >
                     <template v-slot="scope">
                         <el-badge :value="scope.row.discussionCount" :max="99" class="item" v-if="scope.row.discussionCount" type="info">
                             <el-button @click="onRemark(scope.row.name)" size="small" icon="chat-line-round"></el-button>
@@ -99,7 +99,10 @@
                         <span> {{scope.row.name}}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="type" :formatter="columnTypeFormat" :label="columnFieldNameMapping('type')" width="140" />
+                <el-table-column prop="type" :label="columnFieldNameMapping('type')" />
+                <el-table-column prop="size" :label="columnFieldNameMapping('size')"  />
+                <el-table-column prop="decimalDigits" :label="columnFieldNameMapping('decimalDigits')"  />
+
                 <el-table-column width="120" :label="columnFieldNameMapping('isPrimaryKey')"> 
                     <template v-slot="scope">
                         <el-tooltip content="YES" v-if="scope.row.isPrimaryKey">
@@ -142,7 +145,7 @@
                         </el-space>
                     </template>
                 </el-table-column>
-                <el-table-column prop="remark" label="discussion" min-width="60" resizable>
+                <el-table-column prop="remark" label="讨论" min-width="60" resizable>
                     <template v-slot="scope">
                         <el-badge :value="scope.row.discussionCount" :max="99" class="item" v-if="scope.row.discussionCount" type="info">
                             <el-button @click="onRemark(tableMeta.name, scope.row.name)" size="small" icon="chat-line-round"></el-button>
@@ -408,6 +411,7 @@ export default {
     data() {
         return {
             templateProperties: {
+                tableFieldNameMap: new Map(),
                 columnFieldNameMap: new Map(),
                 indexFieldNameMap:  new Map(),
                 triggerFieldNameMap:  new Map(),
@@ -476,11 +480,13 @@ export default {
             listProperties().then(resp => {
                 if(!resp.errCode) {
                     sessionStorage.setItem(documentTemplatePropertiesKey, JSON.stringify(resp.data))
-                    const  columnFieldNameMap = new Map(resp.data.columnFieldNameProperties.map(prop => [prop.key, prop]))
-                    const  indexFieldNameMap = new Map(resp.data.indexFieldNameProperties.map(prop => [prop.key, prop]))
-                    const  triggerFieldNameMap = new Map(resp.data.triggerFieldNameProperties.map(prop => [prop.key, prop]))
-                    const  foreignKeyFieldNameMap = new Map(resp.data.foreignKeyFieldNameProperties.map(prop => [prop.key, prop]))
+                    const columnFieldNameMap = new Map(resp.data.columnFieldNameProperties.map(prop => [prop.key, prop]))
+                    const indexFieldNameMap = new Map(resp.data.indexFieldNameProperties.map(prop => [prop.key, prop]))
+                    const triggerFieldNameMap = new Map(resp.data.triggerFieldNameProperties.map(prop => [prop.key, prop]))
+                    const foreignKeyFieldNameMap = new Map(resp.data.foreignKeyFieldNameProperties.map(prop => [prop.key, prop]))
+                    const tableFieldNameMap = new Map(resp.data.tableFieldNameProperties.map(prop => [prop.key, prop]))
                     const data = {
+                        tableFieldNameMap: tableFieldNameMap,
                         columnFieldNameMap: columnFieldNameMap,
                         indexFieldNameMap: indexFieldNameMap,
                         triggerFieldNameMap: triggerFieldNameMap,
@@ -491,11 +497,13 @@ export default {
             });
         } else  {
             const templateData = JSON.parse(sessionStorage.getItem(documentTemplatePropertiesKey))
+            const tableFieldNameMap = new Map(templateData.tableFieldNameProperties.map(prop => [prop.key, prop]))
             const columnFieldNameMap = new Map(templateData.columnFieldNameProperties.map(prop => [prop.key, prop]))
             const indexFieldNameMap = new Map(templateData.indexFieldNameProperties.map(prop => [prop.key, prop]))
             const triggerFieldNameMap = new Map(templateData.triggerFieldNameProperties.map(prop => [prop.key, prop]))
             const foreignKeyFieldNameMap = new Map(templateData.foreignKeyFieldNameProperties.map(prop => [prop.key, prop]))
             const data = {
+                tableFieldNameMap: tableFieldNameMap,
                 columnFieldNameMap: columnFieldNameMap,
                 indexFieldNameMap: indexFieldNameMap,
                 triggerFieldNameMap: triggerFieldNameMap,
@@ -674,21 +682,43 @@ export default {
                 return ""
             }
         },
-
+        tableFieldNameMapping(fieldName) {
+            const prop = this.templateProperties.tableFieldNameMap.get(fieldName)
+            if (!prop) {
+                return fieldName;
+            }
+            return prop.value ? prop.value : prop.defaultValue
+        },
         columnFieldNameMapping(fieldName) {
             const prop = this.templateProperties.columnFieldNameMap.get(fieldName)
+            if (!prop) {
+                console.log('can not found column field: '+fieldName)
+                return fieldName;
+            }
             return prop.value ? prop.value : prop.defaultValue
         },
         indexFieldNameMapping(fieldName) {
             const prop = this.templateProperties.indexFieldNameMap.get(fieldName)
+            if (!prop) {
+                console.log('can not found index field: '+fieldName)
+                return fieldName;
+            }
             return prop.value ? prop.value : prop.defaultValue
         },
         triggerdNameMapping(fieldName) {
             const prop = this.templateProperties.triggerFieldNameMap.get(fieldName)
+            if (!prop) {
+                console.log('can not found trigger field: '+fieldName)
+                return fieldName;
+            }
             return prop.value ? prop.value : prop.defaultValue
         },
         foreignKeyFieldNameMapping(fieldName) {
             const prop = this.templateProperties.foreignKeyFieldNameMap.get(fieldName)
+            if (!prop) {
+                console.log('can not found fk field: '+fieldName)
+                return fieldName;
+            }
             return prop.value ? prop.value : prop.defaultValue
         },
         showMockDataRules(table) {

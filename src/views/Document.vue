@@ -318,11 +318,9 @@ export default {
           multiArray.push(currArray)
         }
       }
-      console.log(multiArray)
       const requestArray = multiArray.map(ids => getTables(route.params.projectId, documentId, ids))
       axios.all(requestArray).then(axios.spread((...res) => {
         const data = res.flatMap(item => item.data)
-        console.log(data)
         callback(data)
       }))
     }
