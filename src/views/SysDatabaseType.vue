@@ -130,7 +130,7 @@
                         </el-col>
                     </el-row>
                     <el-form-item style="margin-top: 33px">
-                        <el-button type="primary" @click="onFormSave('formDataRef')">保存</el-button>
+                        <el-button type="primary" @click="onFormSave('formDataRef')" :loading="loadingSave">保存</el-button>
                         <el-button @click="isShowEditDialog = false">取消</el-button>
                     </el-form-item>
                 </el-form>
@@ -221,7 +221,8 @@ export default{
                     }
                 ]
             },
-            loadingClassName: false
+            loadingClassName: false,
+            loadingSave: false,
         }
     },
     created() {
@@ -281,23 +282,25 @@ export default{
         },
 
         onUpdate() {
+            this.loadingSave = true
             updateDatabaseType(this.databaseTypeForm).then(resp => {
                 if(!resp.errCode) {
                     this.$message.success('更新成功')
                     this.isShowEditDialog = false
                     this.fetchDatabaseTypes()
                 }
-            })
+            }).finally(() => this.loadingSave = false)
         },
 
         onCreate() {
+            this.loadingSave = true
             createDatabaseType(this.databaseTypeForm).then(resp => {
                 if(!resp.errCode) {
                     this.$message.success('创建成功')
                     this.isShowEditDialog = false
                     this.onPageChange(1, true)
                 }
-            })
+            }).finally(() => this.loadingSave = false)
         },
 
         onQuery(){

@@ -5,8 +5,8 @@
                 :projectData="projectData" 
                 :projectTaskData="projectTaskData" 
                 :loading="loadings.handleSync"
-                @onSync="onSyncProjectDocument"
-                @onProgressBarClick="onClickTaskProgress"
+                @on-sync="onSyncProjectDocument"
+                @on-progress-click="onClickTaskProgress"
                 />
       </el-empty>
   </template>
@@ -119,7 +119,7 @@
         <el-main>
           <el-tabs model-value="tableDocument" @tab-click="onTabClick">
             <!-- multi list documentation -->
-            <el-tab-pane label="列表" name="tableDocument">
+            <el-tab-pane label="文档" name="tableDocument">
               <DocumentList 
                 :tablesData="documentData.tables"
                 :overviewData="documentData.overview"
