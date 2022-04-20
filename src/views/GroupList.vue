@@ -254,7 +254,6 @@ export default {
           },
           groupDataRule: {
             name: [this.requiredInputValidRule('请输入有效昵称')],
-            description: [this.requiredInputValidRule('请输入有效邮箱')]
           },
           userQueryData: {
               nicknameContains: null,
