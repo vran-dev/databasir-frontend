@@ -32,8 +32,11 @@ export const listProjectManualTasks = (id, body) => {
     return axios.post(base + "/" + id +"/list_manual_tasks", body)
 }
 
-const groupProjectBase = '/api/v1.0/groups'
+export const cancelProjectTask = (projectId, taskId) => {
+    return axios.patch(base + "/" + projectId +"/tasks/" + taskId+"/cancel")
+}
 
+const groupProjectBase = '/api/v1.0/groups'
 
 export const updateProject = (request) => {
    return axios.patch(groupProjectBase +'/'+request.groupId+'/projects', request);

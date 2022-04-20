@@ -1,13 +1,71 @@
 <template>
+  <el-card v-if="projectTaskData.showTaskList && projectTaskData.tasks.length > 0" style="position:fixed;right: 20px !important; top: 80px !important;width:300px;z-index:1000;">
+    <template #header>
+      <div class="card-header">
+        <span>任务列表</span>
+        <el-button icon="Close" type="text" @click="projectTaskData.showTaskList = false" style="color:#303133;"></el-button>
+      </div>
+    </template>
+    <div 
+        v-for="task in projectTaskData.tasks" 
+        :key="task.taskId">
+        
+        <el-progress :percentage="100" 
+            :indeterminate="task.status == 'NEW' || task.status == 'RUNNING'"
+            style="width: 100%"  
+            :status="taskStatusToProgressStatus(task)">
+            <el-tooltip content="点击刷新文档" v-if="task.status == 'FINISHED'">
+                <el-button 
+                  type="text" 
+                  icon="RefreshRight" 
+                  style="color:#67C23A"
+                  @click="onClickTaskProgress(task)">
+                  已完成
+                </el-button>
+            </el-tooltip>
+            <el-tooltip :content="task.result" v-else-if="task.status == 'FAILED'">
+                <el-button 
+                  type="text" 
+                  icon="WarningFilled" 
+                  style="color:#F56C6C"
+                  @click="onClickTaskProgress(task)">
+                  已失败
+                </el-button>
+            </el-tooltip>
+            <el-tooltip :content="task.result" v-else-if="task.status == 'CANCELED'">
+                <el-button 
+                  type="text" 
+                  icon="WarningFilled" 
+                  style="color:#E6A23C"
+                  @click="onClickTaskProgress(task)">
+                  已取消
+                </el-button>
+            </el-tooltip>
+            <el-tooltip content="点击取消同步" v-else>
+                <el-button type="text" 
+                  icon="CircleCloseFilled" 
+                  @click="onClickTaskProgress(task)">
+                  同步中
+                </el-button>
+            </el-tooltip>
+        </el-progress>
+    </div>
+  </el-card>
   <template v-if="isShowNoDataPage">
       <el-empty description="似乎还没有同步过文档" >
-          <document-sync-task-dropdown 
-                :projectData="projectData" 
-                :projectTaskData="projectTaskData" 
-                :loading="loadings.handleSync"
-                @onSync="onSyncProjectDocument"
-                @onProgressBarClick="onClickTaskProgress"
-                />
+        
+        <el-button-group>
+          <el-button 
+            type="success" 
+            icon="Refresh" 
+            @click="onSyncProjectDocument"
+            :loading="loadings.handleSync">
+            同步
+          </el-button>
+          <el-button v-if="projectTaskData.tasks.length > 0" type="success" icon="List" @click="projectTaskData.showTaskList = !projectTaskData.showTaskList">
+            {{ projectTaskData.tasks.length }}
+          </el-button>
+        </el-button-group>
       </el-empty>
   </template>
   <template v-else-if="isShowLoadingPage">
@@ -58,13 +116,18 @@
         <el-header>
           <div>
             <el-space :size="28" style="margin-bottom: 33px;">
-              <document-sync-task-dropdown 
-                :projectData="projectData" 
-                :projectTaskData="projectTaskData" 
-                :loading="loadings.handleSync"
-                @onSync="onSyncProjectDocument"
-                @onProgressBarClick="onClickTaskProgress"
-                />
+            <el-button-group>
+              <el-button 
+                type="success" 
+                icon="Refresh" 
+                @click="onSyncProjectDocument"
+                :loading="loadings.handleSync">
+                同步
+              </el-button>
+              <el-button v-if="projectTaskData.tasks.length > 0" type="success" icon="List" @click="projectTaskData.showTaskList = !projectTaskData.showTaskList">
+                {{ projectTaskData.tasks.length }}
+              </el-button>
+            </el-button-group>
               <el-dropdown v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+projectData.groupId, 'GROUP_MEMBER?groupId='+projectData.groupId]">
                 <el-button 
                   type="primary" 
@@ -119,7 +182,7 @@
         <el-main>
           <el-tabs model-value="tableDocument" @tab-click="onTabClick">
             <!-- multi list documentation -->
-            <el-tab-pane label="列表" name="tableDocument">
+            <el-tab-pane label="文档" name="tableDocument">
               <DocumentList 
                 :tablesData="documentData.tables"
                 :overviewData="documentData.overview"
@@ -210,26 +273,30 @@
     outline: none;
     border-color: #000;
 }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 </style>
 
 <script>
 import { reactive, computed, ref, watch, onBeforeUnmount } from 'vue'
 import {  useRoute } from 'vue-router'
 import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables, getDiff } from '@/api/Document'
-import { listProjectManualTasks } from '@/api/Project'
-import { ElMessage, ElNotification  } from 'element-plus'
+import { listProjectManualTasks, cancelProjectTask } from '@/api/Project'
+import { ElMessage, ElNotification } from 'element-plus'
 import axios from '@/utils/fetch'
 import Diagram from '../components/document/Diagram.vue'
 import DocumentDiscussion from '../components/document/DocumentDiscussion.vue'
 import DocumentList from '../components/document/DocumentList.vue'
-import DocumentSyncTaskDropdown from '../components/document/DocumentSyncTaskDropdown.vue'
 
 export default {
   components: {
     Diagram,
     DocumentDiscussion,
     DocumentList,
-    DocumentSyncTaskDropdown
   },
   setup() {
     const route = useRoute()
@@ -623,6 +690,7 @@ export default {
 
     // project task status
     const projectTaskData = reactive({
+      showTaskList: true,
       tasks: []
     })
 
@@ -636,6 +704,7 @@ export default {
             taskId: resp.data,
             status: 'NEW'
           })
+          projectTaskData.showTaskList = true
           messageNotify('success', '后台同步任务创建成功')
         }
         loadings.handleSync = false
@@ -643,20 +712,17 @@ export default {
       .catch(() => loadings.handleSync = false)
     }
 
-    const taskStatusToProgressStatus = (task) => {
-      if (task.status == 'NEW') {
-        return ''
-      } else if (task.status == 'RUNNING') {
-        return ''
-      } else if (task.status == 'FAILED') {
-        return 'exception'
-      } else if (task.status == 'FINISHED') {
-        return 'success'
-      }
-    }
-
     const onClickTaskProgress = (task) => {
       if (task.status == 'NEW' || task.status == 'RUNNING') {
+        cancelProjectTask(projectData.projectId, task.taskId).then(resp => {
+            if (!resp.errCode) {
+                task.status = 'CANCELED'
+                ElMessage({
+                    message: "取消成功",
+                    type: "success"
+                })
+            }
+        })
         return;
       }
       if (task.status == 'FAILED') {
@@ -668,6 +734,7 @@ export default {
         projectTaskData.tasks = projectTaskData.tasks.filter(item => item.taskId != task.taskId)
         return;
       }
+
     }
 
     const refreshDataFromNotification = () => {
@@ -694,15 +761,24 @@ export default {
               if (taskStatusMap.has(task.taskId)) {
                 const remoteTask = taskStatusMap.get(task.taskId)
                 if (task.status != 'FINISHED' && remoteTask.status == 'FINISHED') {
-                  ElNotification({
+                  task.status = remoteTask.status
+                  task.result = remoteTask.result
+                  if (!projectData.simpleDocumentData) {
+                    initPageData()
+                  } else {
+                    ElNotification({
                       grouping: true,
                       type: 'success',
                       title: '文档同步成功',
                       message: '同步任务已执行完成，点击即可刷新文档内容',
                       onClick: refreshDataFromNotification
-                  })
+                    })
+                  }
                 }
+
                 if(task.status != 'FAILED' && remoteTask.status == 'FAILED') {
+                  task.status = remoteTask.status
+                  task.result = remoteTask.result
                   ElNotification({
                       grouping: true,
                       type: 'error',
@@ -710,8 +786,7 @@ export default {
                       message: '错误：' + remoteTask.result,
                   })
                 }
-                task.status = remoteTask.status
-                task.result = remoteTask.result
+                
               }
             })
           }
@@ -732,6 +807,20 @@ export default {
           }
         })
     }, 1000 * 3);
+
+    const taskStatusToProgressStatus = (task) => {
+        if (task.status == 'NEW') {
+            return ''
+        } else if (task.status == 'RUNNING') {
+            return ''
+        } else if (task.status == 'CANCELED') {
+            return 'warning'
+        } else if (task.status == 'FAILED') {
+            return 'exception'
+        } else if (task.status == 'FINISHED') {
+            return 'success'
+        }
+    }
 
     onBeforeUnmount(() => {
       clearInterval(pollTaskStatusTimer)
@@ -768,8 +857,8 @@ export default {
       searchTables,
       searchTableText,
       projectTaskData,
-      taskStatusToProgressStatus,
       onClickTaskProgress,
+      taskStatusToProgressStatus,
     }
   }
 }
