@@ -528,7 +528,6 @@ export default {
             },
             projectFormRules: {
                 name: [ {required: true, message: '名称不能为空',trigger: 'blur'}, ],
-                description: [ {required: true, message: '说明不能为空',trigger: 'blur'}, ],
                 dataSource: {
                     username: [ {required: true,message: '数据库用户名不能为空',trigger: 'blur'} ],
                     url: [ {required: true,message: '数据库连接地址不能为空',trigger: 'blur'} ],
