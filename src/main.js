@@ -38,7 +38,14 @@ app.directive("select-more", {
         const child = el.querySelector('.select-trigger');
         const id = child.getAttribute('aria-describedby');
         const poper = document.getElementById(id);
-        const selector = poper.querySelector('.el-scrollbar .el-select-dropdown__wrap');
+        if (poper == null) {
+            return;
+        }
+        const selector = poper.parentElement.querySelector('.el-select-dropdown .el-scrollbar .el-select-dropdown__wrap');
+        if (selector == null) {
+            console.log('load select component failed')
+            return;
+        }
         selector.addEventListener('scroll', function () {
             const condition = this.scrollHeight - this.scrollTop - 1 <= this.clientHeight;
             if (condition) {

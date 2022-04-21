@@ -372,11 +372,11 @@ export default {
 
     const fetchDocumentTables = (tableIds, callback) => {
       let documentId = projectData.simpleDocumentData.id
-      // 为了避免超时，将 id 分为多个组进行查询，每个组的数据量为 20
+      // 为了避免超时，将 id 分为多个组进行查询，每个组的数据量为 40
       let multiArray = []
       let currArray = []
       for (var i = 0; i< tableIds.length; i++) {
-        if (i != 0 && i % 20 == 0) {
+        if (i != 0 && i % 35 == 0) {
           multiArray.push(currArray)
           currArray = []
         }
