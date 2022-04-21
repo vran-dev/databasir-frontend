@@ -31,7 +31,7 @@
             </el-descriptions>
 
             <div class="h3">Tables</div>
-            <el-table :data="simpleTables"  border width='80%' @cell-dblclick="onCellClick" :row-class-name="predicateRowClass" highlight-current-row>
+            <el-table :data="simpleTables"  border width='80%' @row-dblclick="onCellClick" :row-class-name="predicateRowClass" highlight-current-row>
                 <el-table-column type="index" />
                 <el-table-column :label="tableFieldNameMapping('name')" min-width="160" resizable>
                     <template v-slot="scope">
