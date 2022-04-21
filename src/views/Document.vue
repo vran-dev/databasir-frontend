@@ -2,14 +2,14 @@
   <el-card v-if="projectTaskData.showTaskList && projectTaskData.tasks.length > 0" style="position:fixed;right: 20px !important; top: 80px !important;width:300px;z-index:1000;">
     <template #header>
       <div class="card-header">
-        <span>任务列表</span>
+        <el-button type="text" icon="List" style="color:#303133">任务列表</el-button>
         <el-button icon="Close" type="text" @click="projectTaskData.showTaskList = false" style="color:#303133;"></el-button>
       </div>
     </template>
     <div 
         v-for="task in projectTaskData.tasks" 
         :key="task.taskId">
-        
+        #{{ task.taskId }} | <span style="font-size:12px;">{{ task.runAt }}</span>
         <el-progress :percentage="100" 
             :indeterminate="task.status == 'NEW' || task.status == 'RUNNING'"
             style="width: 100%"  
@@ -82,8 +82,7 @@
             @change="onMultiSelectionModeChange"
             :loading="loadings.multiSelectionModeChanging"/>
 
-            <input type="text" class="search-input" placeholder="输入表名、注释进行搜索" v-model="searchTableText">
-
+            <el-input prefix-icon="Search" class="search-input" placeholder="输入表名、注释进行搜索" v-model="searchTableText"></el-input>
             <el-tree
               ref="treeRef"
               :data="tocData.value" 
@@ -259,19 +258,26 @@
 }
 
 .search-input {
-    border-width: 0 0 1px 0;
+    border-width: 0 0 0px 0;
     border-style: solid;
-    width: 90%;
+    width: 90% !important;
     min-height: 33px;
+    margin-right: 10px;
+}
+
+.search-input > div{
+    box-shadow: none;
 }
 
 .search-input::placeholder {
     color: rgba(180, 180, 180, 0.808);
 }
 
-.search-input:focus {
+.search-input:focus > div {
     outline: none;
-    border-color: #000;
+    border-width: 0 0 1px 0;
+    transition: 0.5s ease-in;
+    box-shadow:  0 0 0 1px var(--el-input-border-color,var(--el-border-color)) inset;
 }
 
 .card-header {
@@ -725,7 +731,7 @@ export default {
         })
         return;
       }
-      if (task.status == 'FAILED') {
+      if (task.status == 'FAILED' || task.status == 'CANCELED') {
         projectTaskData.tasks = projectTaskData.tasks.filter(item => item.taskId != task.taskId)
         return;
       }
@@ -760,6 +766,7 @@ export default {
             projectTaskData.tasks.forEach(task => {
               if (taskStatusMap.has(task.taskId)) {
                 const remoteTask = taskStatusMap.get(task.taskId)
+                task.runAt = remoteTask.runAt
                 if (task.status != 'FINISHED' && remoteTask.status == 'FINISHED') {
                   task.status = remoteTask.status
                   task.result = remoteTask.result
