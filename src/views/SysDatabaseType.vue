@@ -69,12 +69,12 @@
                         </el-input>
                         <el-row style="margin-top: 12px;">
                             <el-col>
-                                <el-link icon="Warning" href="http://localhost:3000/#/README/database-type-list/index" style="font-size: 12px;">点击查看模板</el-link>
+                                <el-link icon="Warning" href="http://doc.databasir.com/#/README/database-type-list/index" style="font-size: 12px;">点击查看模板</el-link>
                             </el-col>
                         </el-row>
                     </el-tab-pane>
                     <el-tab-pane label="JSON 导入" name="jsonImportTab">
-                        <el-link icon="Warning" href="http://localhost:3000/#/README/database-type-list/index" style="font-size: 12px;margin-bottom:6px;">点击查看模板</el-link>
+                        <el-link icon="Warning" href="http://doc.databasir.com/#/README/database-type-list/index" style="font-size: 12px;margin-bottom:6px;">点击查看模板</el-link>
                         <CodeEditor v-model="importJsonData" :languages="[['json','json']]" style="width: 100%"></CodeEditor>
                         <el-button type="plain" icon="Upload" @click="onImportByJson()" style="margin-top:12px;">导入</el-button>
                     </el-tab-pane>
