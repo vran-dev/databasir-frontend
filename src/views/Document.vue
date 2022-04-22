@@ -1,5 +1,6 @@
 <template>
-  <el-card v-if="projectTaskData.showTaskList && projectTaskData.tasks.length > 0" style="position:fixed;right: 20px !important; top: 80px !important;width:300px;z-index:1000;">
+  <!-- task list -->
+  <el-card id="task-list" v-if="projectTaskData.showTaskList && projectTaskData.tasks.length > 0" style="position:fixed;right: 20px !important; top: 80px !important;width:300px;z-index:1000;">
     <template #header>
       <div class="card-header">
         <el-button type="text" icon="List" style="color:#303133">任务列表</el-button>
@@ -9,10 +10,10 @@
     <div 
         v-for="task in projectTaskData.tasks" 
         :key="task.taskId">
-        #{{ task.taskId }} | <span style="font-size:12px;">{{ task.runAt }}</span>
-        <el-progress :percentage="100" 
+        #{{ task.taskId }} <span v-if="task.runAt">| <span style="font-size:12px;">开始于：{{ task.runAt }}</span></span>
+        <el-progress :percentage="task.status == 'NEW' ? 0 : 100" 
             :indeterminate="task.status == 'NEW' || task.status == 'RUNNING'"
-            style="width: 100%"  
+            style="width: 100%" 
             :status="taskStatusToProgressStatus(task)">
             <el-tooltip content="点击刷新文档" v-if="task.status == 'FINISHED'">
                 <el-button 
@@ -41,6 +42,14 @@
                   已取消
                 </el-button>
             </el-tooltip>
+            <el-tooltip content="点击取消同步" v-else-if="task.status == 'NEW'">
+                <el-button type="text" 
+                  icon="CircleCloseFilled" 
+                  @click="onClickTaskProgress(task)"
+                  style="color:#303133">
+                  等待中
+                </el-button>
+            </el-tooltip>
             <el-tooltip content="点击取消同步" v-else>
                 <el-button type="text" 
                   icon="CircleCloseFilled" 
@@ -51,6 +60,7 @@
         </el-progress>
     </div>
   </el-card>
+
   <template v-if="isShowNoDataPage">
       <el-empty description="似乎还没有同步过文档" >
         
@@ -745,11 +755,13 @@ export default {
 
     const refreshDataFromNotification = () => {
       initPageData()
+      const position = projectTaskData.showTaskList ? 'bottom-right':'top-right'
       ElNotification({
           grouping: true,
           type: 'success',
           title: '刷新成功',
           message: '文档已更新为最新内容',
+          position: position,
       })
     }
 
@@ -765,6 +777,7 @@ export default {
             const taskStatusMap = new Map(resp.data.map(item => [item.taskId, item]))
             projectTaskData.tasks.forEach(task => {
               if (taskStatusMap.has(task.taskId)) {
+                const position = projectTaskData.showTaskList ? 'bottom-right':'top-right'
                 const remoteTask = taskStatusMap.get(task.taskId)
                 task.runAt = remoteTask.runAt
                 if (task.status != 'FINISHED' && remoteTask.status == 'FINISHED') {
@@ -778,6 +791,7 @@ export default {
                       type: 'success',
                       title: '文档同步成功',
                       message: '同步任务已执行完成，点击即可刷新文档内容',
+                      position: position,
                       onClick: refreshDataFromNotification
                     })
                   }
@@ -791,9 +805,11 @@ export default {
                       type: 'error',
                       title: '文档同步失败',
                       message: '错误：' + remoteTask.result,
+                      position: position
                   })
                 }
                 
+                task.status  = remoteTask.status
               }
             })
           }
