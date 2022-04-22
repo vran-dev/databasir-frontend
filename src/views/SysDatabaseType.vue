@@ -59,81 +59,104 @@
                 </el-table-column>
             </el-table>
 
-            <el-dialog v-model="isShowEditDialog" width="38%" center destroy-on-close>
-                <el-form :model="databaseTypeForm" :rules="formDataRule" ref="formDataRef" label-position="top">
-                    <el-row :gutter="28">
-                        <el-col :span="10">
-                            <el-form-item label="数据库类型"  prop="databaseType">
-                                <el-input v-model="databaseTypeForm.databaseType" placeholder="请输入数据库类型名称"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="10">    
-                            <el-form-item label="图标地址" prop="icon">
-                                <el-input v-model="databaseTypeForm.icon" placeholder="图标地址"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-                    
-                    <el-row>
-                        <el-col :span="20">
-                            <el-form-item label="描述" prop="description">
-                                <el-input v-model="databaseTypeForm.description" type="textarea"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-                    <el-row>
-                        <el-col :span="20">
-                            <el-form-item label="JDBC 驱动下载地址"  prop="jdbcDriverFileUrl">
-                                <el-input v-model="databaseTypeForm.jdbcDriverFileUrl" placeholder="jdbc 驱动下载地址，如 https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-                    
-                    <el-row :gutter="28">
-                        <el-col :span="10">
-                             <el-form-item  label="驱动类名"  prop="jdbcDriverClassName">
-                                <el-input v-model="databaseTypeForm.jdbcDriverClassName" placeholder="jdbc 驱动类名，如 com.mysql.jdbc.Driver">
-                                    <template #append>
-                                        <el-link type="primary" @click="autoObtainDriverClassName()" v-loading="loadingClassName">自动获取</el-link>
-                                    </template>
-                                </el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="10">
-                            <el-form-item  label="协议头"  prop="jdbcProtocol">
-                                <el-input v-model="databaseTypeForm.jdbcProtocol" placeholder="协议头，如 jdbc:mysql，jdbc:postgresql，jdbc:mariadb 等"></el-input>
-                            </el-form-item>    
-                        </el-col>
-                    </el-row>
-
-                    <el-row>
-                        <el-col :span="20">
-                            <el-form-item label="URL 生成表达式"  prop="urlPattern">
-                                <el-col>
-                                    <el-input v-model="databaseTypeForm.urlPattern" placeholder="支持变量 {{jdbc.protocol}}, {{db.url}}, {{db.name}}">
-                                    </el-input>
+            <el-dialog v-model="isShowEditDialog" width="46%" center destroy-on-close>
+                <el-tabs v-model="activeTabName"  @tab-click="handleClick">
+                    <el-tab-pane label="链接导入" name="urlImportTab">
+                        <el-input v-model="importUrl" @change="onImportByUrl">
+                            <template #append>
+                                <el-button type="success" :loading="loadingFromUrl" @click="onImportByUrl()" style="color:#409EFF;">导入</el-button>
+                            </template>
+                        </el-input>
+                        <el-row style="margin-top: 12px;">
+                            <el-col>
+                                <el-link icon="Warning" href="http://localhost:3000/#/README/database-type-list/index" style="font-size: 12px;">点击查看模板</el-link>
+                            </el-col>
+                        </el-row>
+                    </el-tab-pane>
+                    <el-tab-pane label="JSON 导入" name="jsonImportTab">
+                        <el-link icon="Warning" href="http://localhost:3000/#/README/database-type-list/index" style="font-size: 12px;margin-bottom:6px;">点击查看模板</el-link>
+                        <CodeEditor v-model="importJsonData" :languages="[['json','json']]" style="width: 100%"></CodeEditor>
+                        <el-button type="plain" icon="Upload" @click="onImportByJson()" style="margin-top:12px;">导入</el-button>
+                    </el-tab-pane>
+                    <el-tab-pane label="表单创建" name="formTab">
+                        <el-form :model="databaseTypeForm" :rules="formDataRule" ref="formDataRef" label-position="top">
+                            <el-row :gutter="28">
+                                <el-col :span="10">
+                                    <el-form-item label="数据库类型"  prop="databaseType">
+                                        <el-input v-model="databaseTypeForm.databaseType" placeholder="请输入数据库类型名称"></el-input>
+                                    </el-form-item>
                                 </el-col>
+                                <el-col :span="10">    
+                                    <el-form-item label="图标地址" prop="icon">
+                                        <el-input v-model="databaseTypeForm.icon" placeholder="图标地址"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                            
+                            <el-row>
+                                <el-col :span="20">
+                                    <el-form-item label="描述" prop="description">
+                                        <el-input v-model="databaseTypeForm.description" type="textarea"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                            <el-row>
+                                <el-col :span="20">
+                                    <el-form-item label="JDBC 驱动下载地址"  prop="jdbcDriverFileUrl">
+                                        <el-input v-model="databaseTypeForm.jdbcDriverFileUrl" placeholder="jdbc 驱动下载地址，如 https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                            
+                            <el-row :gutter="28">
+                                <el-col :span="10">
+                                    <el-form-item  label="驱动类名"  prop="jdbcDriverClassName">
+                                        <el-input v-model="databaseTypeForm.jdbcDriverClassName" placeholder="jdbc 驱动类名，如 com.mysql.jdbc.Driver" >
+                                            <template #append>
+                                                <el-button type="text" :loading="loadingClassName" @click="autoObtainDriverClassName()" style="color:#409EFF; font-size: 12px; padding: 3px;">
+                                                    自动获取
+                                                </el-button>
+                                            </template>
+                                        </el-input>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="10">
+                                    <el-form-item  label="协议头"  prop="jdbcProtocol">
+                                        <el-input v-model="databaseTypeForm.jdbcProtocol" placeholder="协议头，如 jdbc:mysql，jdbc:postgresql，jdbc:mariadb 等"></el-input>
+                                    </el-form-item>    
+                                </el-col>
+                            </el-row>
+
+                            <el-row>
+                                <el-col :span="20">
+                                    <el-form-item label="URL 生成表达式"  prop="urlPattern">
+                                        <el-col>
+                                            <el-input v-model="databaseTypeForm.urlPattern" placeholder="支持变量 {{jdbc.protocol}}, {{db.url}}, {{db.name}}">
+                                            </el-input>
+                                        </el-col>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col>
+                                    <el-space>
+                                        <span>内置变量：</span>
+                                        <el-tooltip  v-for="(item, index) in constData.availableVariables" :key="index" :content="item.description">
+                                            <el-tag>{{item.name}}</el-tag>
+                                        </el-tooltip>
+                                    </el-space>
+                                </el-col>
+                            </el-row>
+                            <el-row style="margin-top: 20px">
+                                <el-col>
+                                    结果示例：<el-link type="success">{{urlSample}}</el-link>
+                                </el-col>
+                            </el-row>
+                            <el-form-item style="margin-top: 33px">
+                                <el-button type="primary" @click="onFormSave('formDataRef')" :loading="loadingSave">保存</el-button>
+                                <el-button @click="isShowEditDialog = false">取消</el-button>
                             </el-form-item>
-                        </el-col>
-                        <el-col>
-                            <el-space>
-                                <span>内置变量：</span>
-                                <el-tooltip  v-for="(item, index) in constData.availableVariables" :key="index" :content="item.description">
-                                    <el-tag>{{item.name}}</el-tag>
-                                </el-tooltip>
-                            </el-space>
-                        </el-col>
-                    </el-row>
-                    <el-row style="margin-top: 20px">
-                        <el-col>
-                            结果示例：<el-link type="success">{{urlSample}}</el-link>
-                        </el-col>
-                    </el-row>
-                    <el-form-item style="margin-top: 33px">
-                        <el-button type="primary" @click="onFormSave('formDataRef')" :loading="loadingSave">保存</el-button>
-                        <el-button @click="isShowEditDialog = false">取消</el-button>
-                    </el-form-item>
-                </el-form>
+                        </el-form>
+                    </el-tab-pane>
+                </el-tabs>
             </el-dialog>
         </el-main>
         <el-footer>
@@ -148,11 +171,22 @@
     </el-container>
 </template>
 
+<style>
+.prism-editor__textarea:focus {
+  outline: none;
+}
+</style>
 <script>
 
 import {createDatabaseType, deleteDatabaseType, updateDatabaseType, listPage, resolveDriverClassName} from '@/api/DatabaseType'
+import axios from 'axios';
+import { ElMessage, ElNotification } from 'element-plus';
+import CodeEditor from 'simple-code-editor';
 
 export default{
+    components: {
+        CodeEditor
+    },
     data() {
         return {
             databaseTypes: [],
@@ -221,12 +255,29 @@ export default{
                     }
                 ]
             },
+            activeTabName: 'urlImportTab',
+            importJsonData: '',
+            importUrl: null,
+            loadingFromUrl: false,
             loadingClassName: false,
             loadingSave: false,
+            cmOptions: {
+                mode: "text/javascript", // 语言模式
+                theme: "dracula", // 主题
+                lineNumbers: false, // 显示行号
+                smartIndent: true, // 智能缩进
+                indentUnit: 4, // 智能缩进单位为4个空格长度
+                foldGutter: false, // 启用行槽中的代码折叠
+                styleActiveLine: false, // 显示选中行的样式
+            },
         }
     },
     created() {
         this.fetchDatabaseTypes();
+        const ele = document.getElementsByClassName('CodeMirror-gutter > CodeMirror-linenumbers')
+        if (ele) {
+            ele.style = 'width:29px;';
+        }
     },
     computed: {
         urlSample() {
@@ -319,8 +370,10 @@ export default{
 
         toEditPage(data) {
             if (data && data.id) {
+                this.activeTabName = 'formTab'
                 this.databaseTypeForm = JSON.parse(JSON.stringify(data));
             } else {
+                this.activeTabName = 'urlImportTab'
                 this.databaseTypeForm = {}
                 this.databaseTypeForm.urlPattern = this.constData.urlPattern
             }
@@ -358,6 +411,61 @@ export default{
             })
         },
 
+        onImportByUrl() {
+            if (!this.importUrl) {
+                this.$message.error('请填写合法的 URL')
+                return;
+            }
+            this.loadingFromUrl = true
+            axios.get(this.importUrl).then(resp => {
+                this.importJsonData = JSON.stringify(resp)
+            }).finally(() => this.loadingFromUrl = false)
+        },
+
+        onImportByJson() {
+            if (!this.importJsonData) {
+                ElMessage({
+                    message: 'JSON 不能为空',
+                    type: 'error',
+                    grouping: true
+                })
+                return;
+            }
+            try {
+                const obj = JSON.parse(this.importJsonData);
+                if (!obj.template) {
+                    ElMessage({
+                        message: 'JSON 不合法，缺少 template 参数',
+                        type: 'error',
+                        grouping: true
+                    })
+                    return;
+                }
+
+                if(!obj.template.urlPattern) {
+                     ElMessage({
+                        message: 'JSON 不合法，缺少 urlPattern 参数',
+                        type: 'error',
+                        grouping: true
+                    })
+                    return;
+                }
+                this.databaseTypeForm = obj.template
+                this.activeTabName = 'formTab'
+                ElNotification({
+                    message: '模板导入成功',
+                    type: 'success'
+                })
+            } catch(err) {
+                console.log(err)
+                ElMessage({
+                    message: 'JSON 格式有误，请重新检查',
+                    type: 'error',
+                    grouping: true
+                })
+            }
+            
+        },
     }
 }
 </script>
