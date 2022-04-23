@@ -50,8 +50,10 @@
                 <el-table-column prop="createAt" label="创建时间" min-width="140"/>
                 <el-table-column label="操作" min-width="120" resizable >
                     <template v-slot="scope">
-                        <el-button icon="Refresh" type="warning" size="small" @Click.stop="onRenewPassword(scope.row.id)">重置密码</el-button>
-                        <el-button icon="Delete" type="danger" size="small" @Click.stop="onDeleteUser(scope.row.id)">删除账号</el-button>
+                        <el-space direction="vertical">
+                            <el-button icon="Refresh" type="warning" size="small" @Click.stop="onRenewPassword(scope.row.id)">重置密码</el-button>
+                            <el-button icon="Delete" type="danger" size="small" @Click.stop="onDeleteUser(scope.row.id)">删除账号</el-button>
+                        </el-space>
                     </template>
                 </el-table-column>
             </el-table>

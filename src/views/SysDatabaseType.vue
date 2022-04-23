@@ -18,7 +18,7 @@
                 </el-table-column>
                 <el-table-column prop="icon" label="图标" >
                     <template v-slot="scope">
-                        <img :src="scope.row.icon" style="max-width: 25px; max-height: 25px;"/>
+                        <img :src="scope.row.icon" style="max-width: 35px; max-height: 35px;"/>
                     </template>
                 </el-table-column>
                 <el-table-column prop="description" label="描述" resizable/>
@@ -61,20 +61,40 @@
 
             <el-dialog v-model="isShowEditDialog" width="46%" center destroy-on-close>
                 <el-tabs v-model="activeTabName"  @tab-click="handleClick">
-                    <el-tab-pane label="链接导入" name="urlImportTab">
-                        <el-input v-model="importUrl" @change="onImportByUrl">
-                            <template #append>
-                                <el-button type="success" :loading="loadingFromUrl" @click="onImportByUrl()" style="color:#409EFF;">导入</el-button>
-                            </template>
-                        </el-input>
+                    <el-tab-pane label="内置模板" name="urlImportTab">
+                        <el-row>
+                            <el-col>
+                                <el-select placeholder="选择数据库" @change="onImportBySelect" v-model="selectDatabaseTypeTemplate" style="width:90%;">
+                                    <el-option
+                                        v-for="(item,index) in innerDatabaseTypes"
+                                        :key="index"
+                                        :value="item.template.databaseType"
+                                        :label="item.template.databaseType"
+                                        >
+                                        <el-tooltip :content="item.template.description" placement="left-start">
+                                            <img :src="item.template.icon" style="max-width: 25px; max-height: 25px;"/>
+                                        </el-tooltip>
+                                        <span
+                                            style="
+                                            float: right;
+                                            color: var(--el-text-color-secondary);
+                                            font-size: 13px;
+                                            ">
+                                            <span style="float: left">{{ item.template.databaseType }}</span>
+                                        </span>
+                                    </el-option>
+                                </el-select>
+                            </el-col>
+                        </el-row>
+                        
                         <el-row style="margin-top: 12px;">
                             <el-col>
-                                <el-link icon="Warning" href="http://doc.databasir.com/#/README/database-type-list/index" style="font-size: 12px;">点击查看模板</el-link>
+                                <el-link icon="Warning" href="https://doc.databasir.com/#/README/database-type-list/index" style="font-size: 12px;">点击查看更多</el-link>
                             </el-col>
                         </el-row>
                     </el-tab-pane>
                     <el-tab-pane label="JSON 导入" name="jsonImportTab">
-                        <el-link icon="Warning" href="http://doc.databasir.com/#/README/database-type-list/index" style="font-size: 12px;margin-bottom:6px;">点击查看模板</el-link>
+                        <el-link icon="Warning" href="https://doc.databasir.com/#/README/database-type-list/index" style="font-size: 12px;margin-bottom:6px;">点击查看更多</el-link>
                         <CodeEditor v-model="importJsonData" :languages="[['json','json']]" style="width: 100%"></CodeEditor>
                         <el-button type="plain" icon="Upload" @click="onImportByJson()" style="margin-top:12px;">导入</el-button>
                     </el-tab-pane>
@@ -103,7 +123,11 @@
                             <el-row>
                                 <el-col :span="20">
                                     <el-form-item label="JDBC 驱动下载地址"  prop="jdbcDriverFileUrl">
-                                        <el-input v-model="databaseTypeForm.jdbcDriverFileUrl" placeholder="jdbc 驱动下载地址，如 https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar"></el-input>
+                                        <el-input v-model="databaseTypeForm.jdbcDriverFileUrl" placeholder="jdbc 驱动下载地址，如 https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar">
+                                            <template #suffix v-if="databaseTypeForm.jdbcDriverFilePath">
+                                                <el-button type="text" icon="SuccessFilled" style="color:#67C23A;"></el-button>
+                                            </template>
+                                        </el-input>
                                     </el-form-item>
                                 </el-col>
                             </el-row>
@@ -179,9 +203,9 @@
 <script>
 
 import {createDatabaseType, deleteDatabaseType, updateDatabaseType, listPage, resolveDriverClassName} from '@/api/DatabaseType'
-import axios from 'axios';
 import { ElMessage, ElNotification } from 'element-plus';
 import CodeEditor from 'simple-code-editor';
+import {innerDatabaseTypes} from '@/api/Const'
 
 export default{
     components: {
@@ -189,6 +213,7 @@ export default{
     },
     data() {
         return {
+            innerDatabaseTypes: innerDatabaseTypes,
             databaseTypes: [],
             pageData: {
                 data: [],
@@ -209,6 +234,7 @@ export default{
                 icon: null,
                 description: null,
                 jdbcDriverFileUrl: null,
+                jdbcDriverFilePath: null,
                 jdbcDriverClassName: null,
                 jdbcProtocol: null,
                 urlPattern: "",
@@ -257,7 +283,7 @@ export default{
             },
             activeTabName: 'urlImportTab',
             importJsonData: '',
-            importUrl: null,
+            selectDatabaseTypeTemplate: null,
             loadingFromUrl: false,
             loadingClassName: false,
             loadingSave: false,
@@ -274,10 +300,6 @@ export default{
     },
     created() {
         this.fetchDatabaseTypes();
-        const ele = document.getElementsByClassName('CodeMirror-gutter > CodeMirror-linenumbers')
-        if (ele) {
-            ele.style = 'width:29px;';
-        }
     },
     computed: {
         urlSample() {
@@ -411,15 +433,18 @@ export default{
             })
         },
 
-        onImportByUrl() {
-            if (!this.importUrl) {
-                this.$message.error('请填写合法的 URL')
+        onImportBySelect(val) {
+            if (!val) {
+                this.$message.error('请选择模板')
                 return;
             }
-            this.loadingFromUrl = true
-            axios.get(this.importUrl).then(resp => {
-                this.importJsonData = JSON.stringify(resp)
-            }).finally(() => this.loadingFromUrl = false)
+            const item = this.innerDatabaseTypes.find(item => item.template.databaseType == val)
+            if (!item) {
+                this.$message.error('请选择正确的模板')
+                return
+            }
+            this.importJsonData = JSON.stringify(item)
+            this.onImportByJson()
         },
 
         onImportByJson() {
@@ -450,7 +475,9 @@ export default{
                     })
                     return;
                 }
+                const id = this.databaseTypeForm.id
                 this.databaseTypeForm = obj.template
+                this.databaseTypeForm.id = id
                 this.activeTabName = 'formTab'
                 ElNotification({
                     message: '模板导入成功',

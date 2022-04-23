@@ -111,7 +111,7 @@
                         </el-table-column>
                         <el-table-column label="数据库类型">
                             <template v-slot="scope">
-                                <database-icon :databaseType="scope.row.databaseType" />
+                                <database-icon :databaseType="scope.row.databaseType" :icon="scope.row.icon"/>
                             </template>
                         </el-table-column>
                         <el-table-column prop="databaseName" label="数据库名称" />

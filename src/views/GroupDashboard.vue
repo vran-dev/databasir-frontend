@@ -43,10 +43,10 @@
                 <el-table-column prop="databaseName" label="数据库" width="200"  resizable />
                 <el-table-column prop="schemaName" label="Schema" width="200"  resizable />
                 <el-table-column label="数据库类型">
-                            <template v-slot="scope">
-                                <database-icon :databaseType="scope.row.databaseType" />
-                            </template>
-                        </el-table-column>
+                    <template v-slot="scope">
+                        <database-icon :databaseType="scope.row.databaseType" :icon="databaseTypeIcon(scope.row)"/>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="description" label="说明" min-width="160" resizable />
                 <el-table-column label="定时同步" align="center">
                     <template v-slot="scope">
@@ -809,6 +809,13 @@ export default {
                 path: "/groups/" + groupId + "/projects/" + projectId +  "/documents",
                 query: { projectName: project.name }
             })
+        },
+        databaseTypeIcon(type) {
+            const result = this.databaseTypes.find(item => item.databaseType == type.databaseType)
+            if (result) {
+                return result.icon
+            }
+            return null;
         },
 
         // project operation logs

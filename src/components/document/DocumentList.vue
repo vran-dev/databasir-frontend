@@ -131,6 +131,9 @@
                         <el-tag v-if="scope.row.autoIncrement == 'YES'">
                             YES
                         </el-tag>
+                        <el-tag v-else type="info">
+                            NO
+                        </el-tag>
                     </template>
                 </el-table-column>
                 <el-table-column prop="defaultValue" :label="columnFieldNameMapping('defaultValue')" min-width="120" />
