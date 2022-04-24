@@ -200,6 +200,7 @@
                 :diffEnabled="documentDiffData.diffModeEnabled"
                 :docVersion="projectData.documentFilter.version"
                 @onRemark="showDiscussionDrawer"/>
+                <el-backtop :right="100" :bottom="100"/>
             </el-tab-pane>
 
             <!-- model UML -->
