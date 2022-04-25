@@ -8,22 +8,27 @@
                 <el-table-column prop="operationName" label="操作" />
                 <el-table-column label="状态" >
                     <template #header>
-                        <el-select v-model="projectOperationLogPageQuery.isSuccess" placeholder="状态" @change="onQuery" clearable size="small" tag-type="success">
-                            <el-option
-                            v-for="item in [true, false]"
-                            :key="item"
-                            :label="item?'成功':'失败'"
-                            :value="item"
-                            >
-                            </el-option>
-                        </el-select>
+                        <el-dropdown>
+                            <span>
+                                {{logStatusColumnLabel}}
+                            <el-icon>
+                                <arrow-down />
+                            </el-icon>
+                            </span>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item v-for="(item, index) in logStatusMap" :key="index" @click="onLogStatusFilter(item)" :icon="item.icon">{{ item.text }}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
                     </template>
+                    
                     <template v-slot="scope">
                         <span v-if="scope.row.isSuccess">
                             <el-tag type="success">成功</el-tag>
                         </span>
                         <span v-else>
-                            <el-tag  type="danger">失败</el-tag>
+                            <el-tag type="danger">失败</el-tag>
                         </span>
                     </template>
                 </el-table-column>
@@ -99,6 +104,8 @@ export default {
                 involveProjectId: null,
                 module: null,
             },
+            logStatusColumnLabel: '全部',
+            logStatusMap: [{text: '全部', icon:'List', value: null }, {text: '成功', icon:'CircleCheck', value: true },{text: '失败', icon:'CircleClose', value: false },]
         }
     },
 
@@ -131,6 +138,10 @@ export default {
         },
         onQuery() {
             this.fetchProjectOperationLogs()
+        },
+        onLogStatusFilter(item) {
+            this.projectOperationLogPageQuery.isSuccess = item.value
+            this.onQuery();
         }
     }
 }

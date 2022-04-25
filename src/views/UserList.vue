@@ -24,17 +24,25 @@
                         </el-link>
                     </template>
                 </el-table-column>
-                <el-table-column label="启用状态" resizable >
+
+                <el-table-column 
+                    :label="userEnabledColumnLabel" 
+                    resizable 
+                    align="center">
                     <template #header>
-                        <el-select v-model="userPageQuery.enabled" placeholder="启用状态" @change="onQuery" clearable>
-                        <el-option
-                            v-for="item in [true, false]"
-                            :key="item"
-                            :label="item?'启用':'禁用'"
-                            :value="item"
-                            >
-                        </el-option>
-                    </el-select>
+                        <el-dropdown>
+                            <span>
+                                {{userEnabledColumnLabel}}
+                            <el-icon>
+                                <arrow-down />
+                            </el-icon>
+                            </span>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item v-for="(item, index) in userEnabledStatusMap" :key="index" @click="onEnabledStatusFilter(item)" :icon="item.icon">{{ item.text }}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
                     </template>
                     <template v-slot="scope">
                         <el-switch v-model="scope.row.enabled" :loading="loading.userEnableLoading"  @change="onSwitchEnabled(scope.row.id, scope.row.enabled)" :disabled="shouldDisableSwitch(scope.row)">
@@ -51,8 +59,10 @@
                 <el-table-column label="操作" min-width="120" resizable >
                     <template v-slot="scope">
                         <el-space direction="vertical">
-                            <el-button icon="Refresh" type="warning" size="small" @Click.stop="onRenewPassword(scope.row.id)">重置密码</el-button>
-                            <el-button icon="Delete" type="danger" size="small" @Click.stop="onDeleteUser(scope.row.id)">删除账号</el-button>
+                            <el-button icon="Refresh" plain size="small" @Click.stop="onRenewPassword(scope.row.id)">重置密码</el-button>
+                            <el-button icon="Delete" type="danger" plain size="small" @Click.stop="onDeleteUser(scope.row.id)">
+                                删除账号
+                            </el-button>
                         </el-space>
                     </template>
                 </el-table-column>
@@ -171,6 +181,8 @@ export default {
             userDetailData: {
 
             },
+            userEnabledColumnLabel: '状态',
+            userEnabledStatusMap: [{text:'启用', value: true, icon: 'CircleCheck'}, {text:'禁用', value: false, icon:'CircleClose'}, {text: '全部', value: null, icon:'List'}],
             isShowUserDetailDrawer: false,
             isShowEditUserDialog: false,
             roleNameFormatter: function(row, column, role) {
@@ -212,6 +224,10 @@ export default {
             } else {
                 disableUser(userId)
             }
+        },
+        onEnabledStatusFilter(item){
+            this.userPageQuery.enabled = item.value
+            this.onQuery()
         },
         onRenewPassword(userId) {
             this.$confirm('确认重置该用户密码？新密码将通过邮件下发', '提示', {

@@ -34,9 +34,11 @@
                 <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
                 <el-table-column label="项目名称" min-width="120" fixed="left" resizable>
                     <template v-slot="scope">
+                        <el-link :underline="false">
+                            <el-icon v-if="scope.row.isFavorite"><star-filled /></el-icon>
                         <el-link :underline="true" @click="toDocumentPage(scope.row)">
-                            <el-icon v-if="scope.row.isFavorite" ><star-filled /></el-icon>
-                            {{ scope.row.name }}
+                                {{ scope.row.name }}
+                            </el-link>
                         </el-link>
                     </template>
                 </el-table-column>
@@ -71,15 +73,16 @@
                             <template #dropdown>
                             <el-dropdown-menu>
                                 <el-dropdown-item>
-                                    <el-button type="primary" size="small" @click="toEditProject(scope.row)" icon="Edit">编辑项目</el-button>
+                                    <el-button type="primary" plain size="small" @click="toEditProject(scope.row)" icon="Edit">编辑项目</el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
-                                    <el-button type="primary" size="small" @click="toDocumentPage(scope.row)" icon="View">查看文档</el-button>
+                                    <el-button type="primary" plain size="small" @click="toDocumentPage(scope.row)" icon="View">查看文档</el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
                                     <el-button 
                                         v-if="!scope.row.isFavorite"
                                         type="primary" 
+                                        plain
                                         size="small" 
                                         @click="onAddProjectFavorite(scope.row)" 
                                         icon="Star">
@@ -87,7 +90,7 @@
                                     </el-button>
                                     <el-button 
                                         v-else
-                                        type="warning" 
+                                        type="primary" 
                                         size="small" 
                                         @click="onRemoveProjectFavorite(scope.row)" 
                                         icon="StarFilled">
@@ -95,10 +98,10 @@
                                     </el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
-                                    <el-button type="primary" size="small" @click="toProjectOperationLogDrawer(scope.row)" icon="Tickets">查看日志</el-button>
+                                    <el-button type="primary" plain size="small" @click="toProjectOperationLogDrawer(scope.row)" icon="Tickets">查看日志</el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId]">
-                                    <el-button type="danger" size="small" @click="onProjectDelete(scope.row.id)"  icon="Remove">删除项目</el-button>
+                                    <el-button type="danger" plain size="small" @click="onProjectDelete(scope.row.id)"  icon="Remove">删除项目</el-button>
                                 </el-dropdown-item>
                             </el-dropdown-menu>
                             </template>
@@ -327,17 +330,6 @@
                     <el-button type="primary" style="width:100%" icon="plus" @click="onClickShowAddGroupMemberDrawer()">添加成员</el-button>
                 </el-tooltip>
             </el-col>
-            <el-col :span="3">
-                <el-select @change="onGroupMemberQuery" @clear="onGroupRoleFilterClear" v-model="groupMemberFilter.role" placeholder="选择角色过滤" clearable>
-                    <el-option
-                    v-for="item in roleTypes"
-                    :key="item"
-                    :label="formatRoleName(item)"
-                    :value="item"
-                    >
-                    </el-option>
-                </el-select>
-            </el-col>
             <el-col :span="8">
                 <el-input @change='onGroupMemberQuery()' v-model="groupMemberFilter.nicknameOrUsernameOrEmailContains" placeholder="成员昵称、用户名、邮箱搜索" prefix-icon="search"/>
             </el-col>
@@ -350,10 +342,27 @@
                     <el-table-column prop="nickname" label="昵称" min-width="120" fixed="left" resizable />
                     <el-table-column prop="username" label="用户名" min-width="120" resizable />
                     <el-table-column prop="email" label="邮箱" width="200"  resizable />
-                    <el-table-column label="角色" resizable align="center">
+                    <el-table-column :label="roleColumnLabel" 
+                        resizable 
+                        align="center">
+                        <template #header>
+                            <el-dropdown>
+                                <span>
+                                    {{roleColumnLabel}}
+                                <el-icon>
+                                    <arrow-down />
+                                </el-icon>
+                                </span>
+                                <template #dropdown>
+                                    <el-dropdown-menu>
+                                        <el-dropdown-item v-for="(role, index) in roleAndNameMap" :key="index" @click="onGroupMemberRoleFilter(role)" :icon="role.icon">{{ role.text }}</el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </template>
+                            </el-dropdown>
+                        </template>
                         <template v-slot="scope">
-                            <el-tag v-if="scope.row.role == 'GROUP_OWNER'" type="danger" effect="plain"> {{ formatRoleName(scope.row.role )}} </el-tag>
-                            <el-tag v-else effect="plain"> {{ formatRoleName(scope.row.role )}} </el-tag>
+                                <el-tag v-if="scope.row.role == 'GROUP_OWNER'" type="danger" effect="plain"> {{ formatRoleName(scope.row.role )}} </el-tag>
+                                <el-tag v-else effect="plain"> {{ formatRoleName(scope.row.role )}} </el-tag>
                         </template>
                     </el-table-column>
                     <el-table-column prop="createAt" label="入组时间" min-width="160" resizable />
@@ -562,7 +571,8 @@ export default {
             // ======= common domain ======
             groupId: null,
             databaseTypes: [],
-            roleTypes: ['GROUP_OWNER', 'GROUP_MEMBER']
+            roleColumnLabel: '角色',
+            roleAndNameMap: [{text: '全部', icon: 'List'}, {text: '组长', value: 'GROUP_OWNER', icon:'UserFilled'}, {text:'组员', value: 'GROUP_MEMBER', icon: 'User'}]
         }
     },
 
@@ -620,10 +630,17 @@ export default {
         },
         onGroupMemberQuery() {
             this.groupMemberFilter.page = 0
-            if (this.groupMemberFilter.role == '') {
-                this.groupMemberFilter.role = null
-            }
             this.fetchGroupMembers()
+        },
+        onGroupMemberRoleFilter(role) {
+            if(!role.value) {
+                this.roleColumnLabel = '角色';
+                this.groupMemberFilter.role = null
+            } else {
+                this.roleColumnLabel = role.text;
+                this.groupMemberFilter.role = role.value
+            }
+            this.onGroupMemberQuery()
         },
         onGroupMemberCurrentPageChange(currentPage) {
             if (currentPage && (currentPage -1) != this.groupMemberFilter.page) {
