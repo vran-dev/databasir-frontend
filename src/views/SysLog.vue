@@ -141,6 +141,11 @@ export default {
         },
         onLogStatusFilter(item) {
             this.projectOperationLogPageQuery.isSuccess = item.value
+            if (item.value == null){
+                this.logStatusColumnLabel = '状态'
+            } else {
+                this.logStatusColumnLabel = item.text
+            }
             this.onQuery();
         }
     }

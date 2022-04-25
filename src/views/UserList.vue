@@ -227,6 +227,11 @@ export default {
         },
         onEnabledStatusFilter(item){
             this.userPageQuery.enabled = item.value
+            if (item.value == null){
+                this.userEnabledColumnLabel = '状态'
+            } else {
+                this.userEnabledColumnLabel = item.text
+            }
             this.onQuery()
         },
         onRenewPassword(userId) {
