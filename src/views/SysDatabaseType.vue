@@ -108,7 +108,7 @@
                                 </el-col>
                                 <el-col :span="10">    
                                     <el-form-item label="图标地址" prop="icon">
-                                        <el-input v-model="databaseTypeForm.icon" placeholder="图标地址"></el-input>
+                                        <el-input v-model="databaseTypeForm.icon"></el-input>
                                     </el-form-item>
                                 </el-col>
                             </el-row>
@@ -120,22 +120,68 @@
                                     </el-form-item>
                                 </el-col>
                             </el-row>
+
                             <el-row>
-                                <el-col :span="20">
+                                <el-col :span="4">
+                                    <el-form-item label="驱动获取方式" required prop="isLocalUpload">
+                                        <el-select v-model="databaseTypeForm.isLocalUpload" placeholder="请选择" size="small">
+                                            <el-option
+                                                v-for="item in loadDriverOptions"
+                                                :key="item.isLocalUpload"
+                                                :label="item.name"
+                                                :value="item.isLocalUpload"
+                                                :on-remove="onUploadFileRemoved"
+                                            />
+                                        </el-select>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                            <el-row>
+                                <el-col :span="20" v-if="!databaseTypeForm.isLocalUpload">
                                     <el-form-item label="JDBC 驱动下载地址"  prop="jdbcDriverFileUrl">
-                                        <el-input v-model="databaseTypeForm.jdbcDriverFileUrl" placeholder="jdbc 驱动下载地址，如 https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar">
-                                            <template #suffix v-if="databaseTypeForm.jdbcDriverFilePath">
+                                        <el-input v-model="databaseTypeForm.jdbcDriverFileUrl" placeholder="您可以从 maven 仓库获取 Jar 下载地址">
+                                            <template #prefix>
+                                                <el-tooltip content="如 https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.28/mysql-connector-java-8.0.28.jar" effect="light">
+                                                    <el-icon class="el-input__icon"><Link /></el-icon>
+                                                </el-tooltip>
+                                            </template>
+                                            <template #suffix v-if="databaseTypeForm.jdbcDriverFilePath && databaseTypeForm.jdbcDriverFileUrl != ''">
                                                 <el-button type="text" icon="SuccessFilled" style="color:#67C23A;"></el-button>
                                             </template>
                                         </el-input>
                                     </el-form-item>
                                 </el-col>
+                                <el-col :span="20" v-if="databaseTypeForm.isLocalUpload">
+                                    <span v-if="uploadedFileList.length != 0">{{ uploadedFileList[0].name}}</span>
+                                    <el-upload
+                                        drag
+                                        :class="{hideUpload: uploadedFileList.length != 0}"
+                                        action="#"
+                                        :http-request="manualUploadDriver"
+                                        :file-list="uploadedFileList"
+                                        list-type="picture"
+                                        accept=".jar"
+                                        limit="1"
+                                        style="margin-top:10px;margin-bottom:20px;">
+                                        <div>
+                                            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                                            <div class="el-upload__text">
+                                                拖动文件到此处或点击上传
+                                            </div>
+                                        </div>
+                                    </el-upload>
+                                </el-col>
                             </el-row>
-                            
+
                             <el-row :gutter="28">
-                                <el-col :span="10">
+                                <el-col :span="12">
                                     <el-form-item  label="驱动类名"  prop="jdbcDriverClassName">
-                                        <el-input v-model="databaseTypeForm.jdbcDriverClassName" placeholder="jdbc 驱动类名，如 com.mysql.jdbc.Driver" >
+                                        <el-input v-model="databaseTypeForm.jdbcDriverClassName">
+                                            <template #prefix>
+                                                <el-tooltip content="如 com.mysql.jdbc.Driver" effect="light">
+                                                    <el-icon class="el-input__icon"><InfoFilled /></el-icon>
+                                                </el-tooltip>
+                                            </template>
                                             <template #append>
                                                 <el-button type="text" :loading="loadingClassName" @click="autoObtainDriverClassName()" style="color:#409EFF; font-size: 12px; padding: 3px;">
                                                     自动获取
@@ -144,9 +190,15 @@
                                         </el-input>
                                     </el-form-item>
                                 </el-col>
-                                <el-col :span="10">
+                                <el-col :span="8">
                                     <el-form-item  label="协议头"  prop="jdbcProtocol">
-                                        <el-input v-model="databaseTypeForm.jdbcProtocol" placeholder="协议头，如 jdbc:mysql，jdbc:postgresql，jdbc:mariadb 等"></el-input>
+                                        <el-input v-model="databaseTypeForm.jdbcProtocol">
+                                            <template #prefix>
+                                                <el-tooltip content="如 jdbc:mysql，jdbc:postgresql，jdbc:mariadb 等" effect="light">
+                                                    <el-icon class="el-input__icon"><InfoFilled /></el-icon>
+                                                </el-tooltip>
+                                            </template>
+                                        </el-input>
                                     </el-form-item>    
                                 </el-col>
                             </el-row>
@@ -199,13 +251,18 @@
 .prism-editor__textarea:focus {
   outline: none;
 }
+
+.hideUpload .el-upload--picture{
+  display:none !important;   /* 上传按钮隐藏 */
+}
 </style>
 <script>
 
-import {createDatabaseType, deleteDatabaseType, updateDatabaseType, listPage, resolveDriverClassName} from '@/api/DatabaseType'
+import {createDatabaseType, deleteDatabaseType, updateDatabaseType, listPage, resolveDriverClassName, uploadDriver} from '@/api/DatabaseType'
 import { ElMessage, ElNotification } from 'element-plus';
 import CodeEditor from 'simple-code-editor';
 import {innerDatabaseTypes} from '@/api/Const'
+import { token } from '../utils/auth';
 
 export default{
     components: {
@@ -237,6 +294,7 @@ export default{
                 jdbcDriverFilePath: null,
                 jdbcDriverClassName: null,
                 jdbcProtocol: null,
+                isLocalUpload: false,
                 urlPattern: "",
             },
             formDataRule: {
@@ -296,6 +354,8 @@ export default{
                 foldGutter: false, // 启用行槽中的代码折叠
                 styleActiveLine: false, // 显示选中行的样式
             },
+            loadDriverOptions: [{name:'链接下载', isLocalUpload: false}, {name:'本地导入', isLocalUpload: true}],
+            uploadedFileList: []
         }
     },
     created() {
@@ -356,6 +416,11 @@ export default{
 
         onUpdate() {
             this.loadingSave = true
+            if(this.databaseTypeForm.isLocalUpload) {
+                this.databaseTypeForm.jdbcDriverFileUrl = null
+            } else {
+                this.databaseTypeForm.jdbcDriverFilePath = null;
+            }
             updateDatabaseType(this.databaseTypeForm).then(resp => {
                 if(!resp.errCode) {
                     this.$message.success('更新成功')
@@ -367,6 +432,11 @@ export default{
 
         onCreate() {
             this.loadingSave = true
+            if(this.databaseTypeForm.isLocalUpload) {
+                this.databaseTypeForm.jdbcDriverFileUrl = null
+            } else {
+                this.databaseTypeForm.jdbcDriverFilePath = null;
+            }
             createDatabaseType(this.databaseTypeForm).then(resp => {
                 if(!resp.errCode) {
                     this.$message.success('创建成功')
@@ -375,11 +445,17 @@ export default{
                 }
             }).finally(() => this.loadingSave = false)
         },
-
+        requestHeader() {
+            return {
+                Authorization:'Bearer ' + token.loadAccessToken()
+            }
+        },
         onQuery(){
             this.fetchDatabaseTypes()
         },
-
+        onUploadFileRemoved(){
+            this.databaseTypeForm.jdbcDriverFilePath = null;
+        },
         onPageChange(currentPage, force) {
              if (currentPage && (currentPage -1) != this.pageFilter.page) {
                 this.pageFilter.page = currentPage - 1
@@ -389,15 +465,39 @@ export default{
                 this.fetchDatabaseTypes()
             }
         },
+        manualUploadDriver(params) {
+            let fd = new FormData();
+            fd.append('file', params.file);
+            return uploadDriver(fd)
+                .then(resp => {
+                    if (!resp.errCode) {
+                        this.databaseTypeForm.isLocalUpload = true;
+                        this.databaseTypeForm.jdbcDriverFilePath = resp.data;
+                        this.$message.success('上传成功')
+                        this.uploadedFileList = [{ name: resp.data, url: require('@/assets/common/jar.svg')}]
+                    }
+                })
+                .catch(() => {
+                    this.$message.error('上传失败，请重新上传')
+                })
+        },
 
         toEditPage(data) {
             if (data && data.id) {
                 this.activeTabName = 'formTab'
                 this.databaseTypeForm = JSON.parse(JSON.stringify(data));
+                this.databaseTypeForm.isLocalUpload = this.databaseTypeForm.jdbcDriverFileUrl == "";
+                if (this.databaseTypeForm.jdbcDriverFileUrl == "") {
+                    this.uploadedFileList = [{ name: this.databaseTypeForm.jdbcDriverFilePath, url: require('@/assets/common/jar.svg')}]
+                } else {
+                    this.uploadedFileList = []
+                }
             } else {
                 this.activeTabName = 'urlImportTab'
                 this.databaseTypeForm = {}
                 this.databaseTypeForm.urlPattern = this.constData.urlPattern
+                this.databaseTypeForm.isLocalUpload = false
+                this.uploadedFileList = []
             }
             this.isShowEditDialog = true
         },
@@ -412,14 +512,15 @@ export default{
         },
 
         autoObtainDriverClassName() {
-            if (!this.databaseTypeForm.jdbcDriverFileUrl) {
-                this.$message.warning("请求填写 JDBC 驱动下载地址")
+            if (!this.databaseTypeForm.jdbcDriverFileUrl && !this.databaseTypeForm.jdbcDriverFilePath) {
+                this.$message.warning("请填写驱动下载地址或上传驱动文件")
                 return;
             }
 
             this.loadingClassName = true
             const request = {
-                jdbcDriverFileUrl: this.databaseTypeForm.jdbcDriverFileUrl 
+                jdbcDriverFileUrl: this.databaseTypeForm.isLocalUpload ? null : this.databaseTypeForm.jdbcDriverFileUrl,
+                jdbcDriverFilePath: this.databaseTypeForm.isLocalUpload ? this.databaseTypeForm.jdbcDriverFilePath : null,
             }
             resolveDriverClassName(request)
             .then(resp => {
@@ -474,6 +575,9 @@ export default{
                         grouping: true
                     })
                     return;
+                }
+                if(obj.template.isLocalUpload != true) {
+                    obj.template.isLocalUpload = false;
                 }
                 const id = this.databaseTypeForm.id
                 this.databaseTypeForm = obj.template

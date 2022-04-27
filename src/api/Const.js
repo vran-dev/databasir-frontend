@@ -2,6 +2,8 @@ export const databaseTypes = ['mysql', 'postgresql']
 
 export const documentTemplatePropertiesKey = "document_template_properties"
 
+export const appHost = process.env.VUE_APP_API_URL
+
 export const innerDatabaseTypes = [
     {
       author: {},
@@ -12,7 +14,8 @@ export const innerDatabaseTypes = [
         description: "mysql-8.0.28",
         jdbcDriverClassName: "com.mysql.cj.jdbc.Driver",
         jdbcProtocol: "jdbc:mysql",
-        urlPattern: "{{jdbc.protocol}}://{{db.url}}/{{db.name}}"
+        urlPattern: "{{jdbc.protocol}}://{{db.url}}/{{db.name}}",
+        isLocalUpload: false,
       }
     },
     {
@@ -24,7 +27,8 @@ export const innerDatabaseTypes = [
         description: "mysql-5.1.49",
         jdbcDriverClassName: "com.mysql.jdbc.Driver",
         jdbcProtocol: "jdbc:mysql",
-        urlPattern: "{{jdbc.protocol}}://{{db.url}}/{{db.name}}"
+        urlPattern: "{{jdbc.protocol}}://{{db.url}}/{{db.name}}",
+        isLocalUpload: false,
       }
     },
     {
@@ -36,7 +40,8 @@ export const innerDatabaseTypes = [
         description: "postgresql jdbc version 42.3.4",
         jdbcDriverClassName: "org.postgresql.Driver",
         jdbcProtocol: "jdbc:postgresql",
-        urlPattern: "{{jdbc.protocol}}://{{db.url}}/{{db.name}}"
+        urlPattern: "{{jdbc.protocol}}://{{db.url}}/{{db.name}}",
+        isLocalUpload: false,
       }
     },
     {
@@ -48,7 +53,8 @@ export const innerDatabaseTypes = [
         description: "mariadb-3.0.3",
         jdbcDriverClassName: "org.mariadb.jdbc.Driver",
         jdbcProtocol: "jdbc:mariadb",
-        urlPattern: "{{jdbc.protocol}}://{{db.url}}/{{db.name}}"
+        urlPattern: "{{jdbc.protocol}}://{{db.url}}/{{db.name}}",
+        isLocalUpload: false,
       }
     },
     {
@@ -60,7 +66,8 @@ export const innerDatabaseTypes = [
         description: "oracle-thin-12.2.0.1",
         jdbcDriverClassName: "oracle.jdbc.OracleDriver",
         jdbcProtocol: "jdbc:oracle:thin",
-        urlPattern: "{{jdbc.protocol}}:@{{db.url}}:{{db.name}}"
+        urlPattern: "{{jdbc.protocol}}:@{{db.url}}:{{db.name}}",
+        isLocalUpload: false,
       }
     },
     {
@@ -72,7 +79,8 @@ export const innerDatabaseTypes = [
         description: "sqlServer-9.4.1.jre8",
         jdbcDriverClassName: "com.microsoft.sqlserver.jdbc.SQLServerDriver",
         jdbcProtocol: "jdbc:sqlserver",
-        urlPattern: "{{jdbc.protocol}}://{{db.url}};databaseName={{db.name}}"
+        urlPattern: "{{jdbc.protocol}}://{{db.url}};databaseName={{db.name}}",
+        isLocalUpload: false,
       }
     }
   ]

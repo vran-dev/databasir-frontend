@@ -29,3 +29,11 @@ export const listPage = (filter) => {
 export const resolveDriverClassName = (request) => {
     return axios.post(base + "/driver_class_name", request)
 }
+
+export const uploadDriver = (formData) => {
+    return axios.post('/api/v1.0/database_types/upload_driver', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+    })
+}
