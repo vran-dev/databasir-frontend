@@ -107,13 +107,26 @@
               <template #default="{ data }">
                 <span class="span-ellipsis" >
                   <el-tooltip :content='data.comment && data.comment != "" ? data.name + " /*"+data.comment+"*/":data.name' effect="light">
-                    <span>{{ data.name }}
-                      <span v-if="data.comment && data.comment != ''" style="color:#b1b3b8;">
-                        {{ '/*'+data.comment+'*/' }}
+                    <span>
+                      <span v-if="documentDiffData.diffModeEnabled && data.diffType == 'ADDED'" style="color:#67C23A">
+                        {{ data.name }}
+                        <span  style="color: #95d475;">
+                          {{ tocItemComment(data) }}
+                        </span>
                       </span>
-                      <span v-else-if="data.description && data.description != ''" style="color: #b1b3b8;">
-                        {{ '/*'+data.description+'*/' }}
+                      <span v-else-if="documentDiffData.diffModeEnabled && data.diffType == 'MODIFIED'" style="color: #E6A23C">
+                        {{ data.name }}
+                        <span  style="color: #f3d19e;">
+                          {{ tocItemComment(data) }}
+                        </span>
                       </span>
+                      <span v-else>
+                        {{ data.name }}
+                        <span  style="color: #b1b3b8;">
+                          {{ tocItemComment(data) }}
+                        </span>
+                      </span>
+                      
                     </span>
                   </el-tooltip>
                 </span>
@@ -147,9 +160,15 @@
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item @click="onMarkdownExport()">Markdown</el-dropdown-item>
-                    <el-dropdown-item @click="onUmlExport('png')">UML PNG</el-dropdown-item>
-                    <el-dropdown-item @click="onUmlExport('svg')">UML SVG</el-dropdown-item>
+                    <el-dropdown-item @click="onMarkdownExport()">
+                      Markdown
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="onUmlExport('png')">
+                      UML PNG
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="onUmlExport('svg')">
+                      UML SVG
+                    </el-dropdown-item>
                     <!-- <el-dropdown-item>Excel</el-dropdown-item> -->
                   </el-dropdown-menu>
                 </template>
@@ -195,8 +214,6 @@
               <DocumentList 
                 :tablesData="documentData.tables"
                 :overviewData="documentData.overview"
-                :overviewDiff="documentDiffData.overviewDiff"
-                :tablesDiff="documentDiffData.tablesDiff"
                 :diffEnabled="documentDiffData.diffModeEnabled"
                 :docVersion="projectData.documentFilter.version"
                 @onRemark="showDiscussionDrawer"/>
@@ -301,7 +318,7 @@
 <script>
 import { reactive, computed, ref, watch, onBeforeUnmount } from 'vue'
 import {  useRoute } from 'vue-router'
-import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables, getDiff } from '@/api/Document'
+import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables } from '@/api/Document'
 import { listProjectManualTasks, cancelProjectTask } from '@/api/Project'
 import { ElMessage, ElNotification } from 'element-plus'
 import axios from '@/utils/fetch'
@@ -372,6 +389,15 @@ export default {
       }
       return false;
     }
+    const tocItemComment = (data) => {
+      if (data.comment && data.comment != '') {
+        return '/*'+data.comment+'*/'
+      }
+      if (data.description && data.description != '') {
+        return '/*'+data.description+'*/'
+      }
+      return ""
+    }
 
     const defaultCheckedKeys = computed(() => tocData.checkedValue.map(item => item.id))
     // document component
@@ -402,7 +428,11 @@ export default {
           multiArray.push(currArray)
         }
       }
-      const requestArray = multiArray.map(ids => getTables(route.params.projectId, documentId, ids))
+      const requestArray = multiArray.map(ids => getTables(route.params.projectId, documentId, {
+        tableIds: ids,
+        currentVersion: projectData.documentFilter.version,
+        originalVersion: documentDiffData.originalVersion
+      }))
       axios.all(requestArray).then(axios.spread((...res) => {
         const data = res.flatMap(item => item.data)
         callback(data)
@@ -487,7 +517,10 @@ export default {
       versionData.totalPage = versionResp.data.totalPages
 
       // get simple document
-      const documentResp = await getSimpleOneByProjectId(route.params.projectId, projectData.documentFilter)
+      const documentResp = await getSimpleOneByProjectId(route.params.projectId, {
+        version: projectData.documentFilter.version,
+        originalVersion: documentDiffData.originalVersion
+      })
       if (documentResp.errCode) {
         messageNotify('error', '同步失败：'+documentResp.errMessage)
       } else if (documentResp.data) {
@@ -496,7 +529,7 @@ export default {
         projectData.groupId = route.params.groupId
         projectData.projectId = route.params.projectId
         // init toc data
-        tocData.value = documentResp.data.tables
+        tocData.value = documentResp.data.tables.filter(item => item.diffType != 'REMOVED')
         tocData.value.unshift({ id: -1, name: '概览'})
         if (tocData.isMultiSelectionMode) {
           // 根据名称恢复用户已选择的节点
@@ -621,26 +654,15 @@ export default {
 
     const documentDiffData = reactive({
       diffModeEnabled: false,
-      originalVersion: null,
-      overviewDiff: {
-        diffType: 'NONE',
-        tableDiffMap: new Map()
-      },
-      tablesDiff: {
-        diffType: 'NONE',
-        tableDiffMap: new Map()
-      }
+      originalVersion: null
     })
 
     const clearDocumentDiffData = () => {
-      documentDiffData.tablesDiff =  {
-        diffType: 'NONE',
-        tableDiffMap: new Map()
+      // TODO
+      if (documentData.overview) {
+        documentData.overview.diffType = 'NONE'
       }
-      documentDiffData.overviewDiff = {
-        diffType: 'NONE',
-        tableDiffMap: new Map()
-      }
+      documentDiffData.originalVersion = null
     }
 
     const onDiffModeChange = () => {
@@ -649,60 +671,19 @@ export default {
           clearDocumentDiffData()
           documentDiffData.originalVersion = null
           documentDiffData.diffModeEnabled = false
+          onProjectDocumentCompareVersionChange()
         } else {
           documentDiffData.diffModeEnabled = true
+          resolve();
         }
-        resolve();
       })
     }
 
     const onProjectDocumentCompareVersionChange = () => {
       if (!documentDiffData.originalVersion) {
         clearDocumentDiffData()
-        return
-      }
-
-      const originalVersion = documentDiffData.originalVersion
-      const currentVersion = projectData.documentFilter.version
-      getDiff(projectData.projectId, {
-        originalVersion: originalVersion,
-        currentVersion: currentVersion,
-      }).then(resp => {
-        if (!resp.errCode) {
-          const diffResult = resp.data
-          const tablesField = diffResult.fields.find(item => item.fieldName == 'tables')
-
-          // database basic fields
-          const overviewDiff = {}
-          overviewDiff.diffType = diffResult.diffType
-          diffResult.fields.filter(item => item.fieldName != 'tables')
-          .forEach(item => {
-            Object.defineProperty(overviewDiff, item.fieldName, { value: { diffType: item.diffType} })
-          })
-          const simpleTableDiffMap = new Map(tablesField.fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
-          overviewDiff.tableDiffMap = simpleTableDiffMap
-          documentDiffData.overviewDiff = overviewDiff
-
-          // tables fields
-          const tableDiffMapping = (table) => {
-            const colMap = new Map(table.fields.find(f => f.fieldName == 'columns').fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
-            const idxMap = new Map(table.fields.find(f => f.fieldName == 'indexes').fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
-            const tgMap = new Map(table.fields.find(f => f.fieldName == 'triggers').fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
-            const fkMap = new Map(table.fields.find(f => f.fieldName == 'foreignKeys').fields.map(item => [item.fieldName, { diffType: item.diffType, original: item.original, current: item.current }]))
-            return {
-              diffType: table.diffType,
-              name: table.fieldName,
-              columnDiffMap: colMap,
-              indexDiffMap: idxMap,
-              triggerDiffMap: tgMap,
-              foreignKeyDiffMap: fkMap,
-            }
-          }
-          const tableDiffMap = new Map(tablesField.fields.map(table => [table.fieldName, tableDiffMapping(table)]))
-          documentDiffData.tablesDiff.diffType = tablesField.diffType
-          documentDiffData.tablesDiff.tableDiffMap = tableDiffMap
-        }
-      })
+      } 
+      onProjectDocumentVersionChange()
     }
 
     // project task status
@@ -853,6 +834,7 @@ export default {
     
     return {
       tocData,
+      tocItemComment,
       defaultCheckedKeys,
       documentData,
       projectData,

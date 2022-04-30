@@ -15,8 +15,8 @@
             <!-- database overview -->
             <el-badge 
                 v-if="diffEnabled"
-                :value="overviewDiff.diffType" 
-                :type="diffTagType(overviewDiff.diffType)" 
+                :value="overviewData.diffType" 
+                :type="diffTagType(overviewData.diffType)" 
                 class="badge-item">
                 <div id="overview[-1]" class="h2">Overview</div>
             </el-badge>
@@ -114,16 +114,12 @@
                 </el-table-column>
                 <el-table-column prop="nullable" :label="columnFieldNameMapping('nullable')" width="120">
                     <template v-slot="scope">
-                        <el-tooltip content="NO" v-if="scope.row.nullable != 'YES'">
-                            <el-tag type="info">
-                                <del><em>null</em></del>
+                            <el-tag type="primary" v-if="scope.row.nullable == 'YES'">
+                                YES
                             </el-tag>
-                        </el-tooltip>
-                        <el-tooltip content="YES" v-else>
-                            <el-tag type="danger">
-                                <em>null</em>
+                            <el-tag type="info" v-else>
+                                NO
                             </el-tag>
-                        </el-tooltip>
                     </template>
                 </el-table-column>
                 <el-table-column prop="autoIncrement" :label="columnFieldNameMapping('autoIncrement')" width="140">
@@ -136,7 +132,16 @@
                         </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="defaultValue" :label="columnFieldNameMapping('defaultValue')" min-width="120" />
+                <el-table-column prop="defaultValue" :label="columnFieldNameMapping('defaultValue')" min-width="120" >
+                    <template v-slot="scope">
+                        <el-tag v-if="scope.row.nullable == 'YES' && scope.row.defaultValue == null" type="danger">
+                            null
+                        </el-tag>
+                        <span v-else>
+                            {{ scope.row.defaultValue}}
+                        </span>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="comment" :label="columnFieldNameMapping('comment')" />
                 <el-table-column :label="columnFieldNameMapping('description')"  min-width="160" resizable show-overflow-tooltip>
                     <template v-slot="scope">
@@ -411,7 +416,7 @@ import { listRules, getMockSql, saveTableRules } from '../../api/MockData'
 import { listTables } from '../../api/Document'
 
 export default {
-    props: ['overviewData', 'tablesData', 'overviewDiff',"tablesDiff", 'diffEnabled', 'docVersion'],
+    props: ['overviewData', 'tablesData', 'diffEnabled', 'docVersion'],
     emits: ['onRemark'],
     data() {
         return {
@@ -520,89 +525,43 @@ export default {
     },
     computed: {
         simpleTables() {
-            const tables = this.overviewData.tables.filter(d => d.id != -1).map(item => {
-                if (this.diffEnabled) {
-                    if (this.overviewDiff.tableDiffMap && this.overviewDiff.tableDiffMap.get(item.name)) {
-                        item.diffType = this.overviewDiff.tableDiffMap.get(item.name).diffType
-                    } else {
-                        item.diffType = null
-                    }
-                } else {
-                    item.diffType = null
-                }
-                return item;
-            })
-            if (this.diffEnabled) {
-                this.overviewDiff.tableDiffMap.forEach(value => {
-                    if (value.diffType == 'REMOVED') {
-                        const item = value.original
-                        item.diffType = 'REMOVED'
-                        tables.push(item)
-                    }
-                })
-            }
-            return tables
+            return this.overviewData.tables
         },
 
         tables() {
-            if (this.diffEnabled) {
-                const tableDiffMap = this.tablesDiff.tableDiffMap
-                const injectRemovedItem = (container, diffMap) => {
-                    diffMap.forEach(value => {
-                        if (value.diffType == 'REMOVED') {
-                            const item = value.original
-                            item.diffType = 'REMOVED'
-                            container.push(item)
+            const tables =  this.tablesData.map(table => {
+                const newTable = Object.assign({},table);
+                if (newTable.diffType == 'MODIFIED') {
+                    newTable.columns.forEach(item => {
+                        if(item.original) {
+                            item.original.isOriginal = true
+                            item.children = [item.original]
                         }
                     })
+                    newTable.indexes.forEach(item => {
+                        if(item.original) {
+                            item.original.isOriginal = true
+                            item.children = [item.original]
+                        }
+                    })
+                    newTable.triggers.forEach(item => {
+                        if(item.original) {
+                            item.original.isOriginal = true
+                            item.children = [item.original]
+                        }
+                    })
+                    newTable.foreignKeys.forEach(item => {
+                        if(item.original) {
+                            item.original.isOriginal = true
+                            item.children = [item.original]
+                        }
+                    })
+                    return newTable;
+                } else {
+                    return newTable;
                 }
-                const injectModifiedField = (target, source) => {
-                    if (source.diffType == 'MODIFIED') {
-                        const original = Object.assign({}, source.original)
-                        original.isOriginal = true
-                        target.children = [original]
-                    }
-                }
-                const diffObjMapping = (arr, diffMap) => {
-                    return arr.map(item => {
-                            const newObj = Object.assign({},item);
-                            if (diffMap.get(item.name)) {
-                                const data = diffMap.get(item.name)
-                                newObj.diffType = data.diffType
-                                injectModifiedField(newObj, data)
-                            }
-                            return newObj
-                        })
-                }
-                return this.tablesData.map(table => {
-
-                    const newTable = Object.assign({},table);
-                    if (tableDiffMap.get(table.name)) {
-                        const tableDiff = tableDiffMap.get(table.name)
-
-                        const cols = diffObjMapping(table.columns, tableDiff.columnDiffMap)
-                        injectRemovedItem(cols, tableDiff.columnDiffMap)
-
-                        const idxes = diffObjMapping(table.indexes, tableDiff.indexDiffMap)
-                        injectRemovedItem(idxes, tableDiff.indexDiffMap)
-
-                        const triggers = diffObjMapping(table.triggers, tableDiff.triggerDiffMap)
-                        injectRemovedItem(triggers, tableDiff.triggerDiffMap)
-
-                        const foreignKeys = diffObjMapping(table.foreignKeys, tableDiff.foreignKeyDiffMap)
-                        injectRemovedItem(foreignKeys, tableDiff.foreignKeyDiffMap)
-                        
-                        newTable.diffType =  tableDiff.diffType
-                        newTable.columns = cols
-                        newTable.indexes = idxes
-                        newTable.triggers = triggers
-                        newTable.foreignKeys = foreignKeys
-                    }
-                    return newTable
-                })
-            } else {
-                return this.tablesData
-            }
+            })
+            return tables;
         }
     },
     methods: {
@@ -674,6 +633,9 @@ export default {
 
         predicateRowClass( {row}) {
             const diffType = row.diffType
+            if(!this.diffEnabled) {
+                return ""
+            }
             if (diffType == 'REMOVED') {
                 return "removed-item"
             } else if (diffType == 'MODIFIED' || row.isOriginal) {
