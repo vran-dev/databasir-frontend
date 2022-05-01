@@ -66,20 +66,30 @@
     <el-row v-for="tableMeta in tables" :key="tableMeta.id" style="margin-top:0px !important;">
         <el-col :span="24">
             <div>
-                <el-badge 
-                    v-if="diffEnabled"
-                    :value="tableMeta.diffType" 
-                    :type="diffTagType(tableMeta.diffType)" 
-                    class="badge-item">
-                    <div :id="tableMeta.name+'['+tableMeta.id+']'" class="h2">{{ tableMeta.name }}</div>
+                <div v-if="diffEnabled">
+                    <el-badge 
+                        :value="tableMeta.diffType" 
+                        :type="diffTagType(tableMeta.diffType)" 
+                        class="badge-item">
+                        <div :id="tableMeta.name+'['+tableMeta.id+']'" class="h2">{{ tableMeta.name }}</div>
+                    </el-badge>
                     <div v-if="tableMeta.comment && tableMeta.comment !=''" class="table-quote">
                         <svg t="1649948233819" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7285" width="16" height="16"><path d="M195.2 458.24a259.84 259.84 0 0 1 177.92-160c92.16-29.44 47.04-128-34.56-102.72C146.56 249.28 32 395.52 32 586.56 32 736 117.12 832 249.28 832s215.04-79.68 215.04-203.52c0-177.28-168-219.52-269.12-170.24z m527.68 0a259.84 259.84 0 0 1 177.92-160c91.2-29.12 48-128-34.56-102.72-192 54.08-306.56 200-306.56 391.36 0 149.12 85.44 245.12 217.28 245.12S992 752.32 992 628.48c0-176.64-167.04-219.84-269.12-170.24z" fill="#909399" p-id="7286"></path></svg>
                         {{ tableMeta.comment }}
-                        <span v-if="diffEnabled && tableMeta.original && tableMeta.original.comment != tableMeta.comment">
-                            <del  class="table-quote"><br/>{{tableMeta.original.comment}}</del>
-                        </span>
                     </div>
-                </el-badge>
+                    <div v-else-if="tableMeta.description && tableMeta.description !=''" class="table-quote">
+                        <svg t="1649948233819" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7285" width="16" height="16"><path d="M195.2 458.24a259.84 259.84 0 0 1 177.92-160c92.16-29.44 47.04-128-34.56-102.72C146.56 249.28 32 395.52 32 586.56 32 736 117.12 832 249.28 832s215.04-79.68 215.04-203.52c0-177.28-168-219.52-269.12-170.24z m527.68 0a259.84 259.84 0 0 1 177.92-160c91.2-29.12 48-128-34.56-102.72-192 54.08-306.56 200-306.56 391.36 0 149.12 85.44 245.12 217.28 245.12S992 752.32 992 628.48c0-176.64-167.04-219.84-269.12-170.24z" fill="#909399" p-id="7286"></path></svg>
+                        {{ tableMeta.description }}
+                    </div>
+                    <!-- original -->
+                    <div v-if="diffEnabled && tableMeta.original && tableMeta.original.comment != tableMeta.comment" style="color: #c8c9cc;" class="table-quote">
+                        <del>
+                        <svg t="1649948233819" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7285" width="16" height="16"><path d="M195.2 458.24a259.84 259.84 0 0 1 177.92-160c92.16-29.44 47.04-128-34.56-102.72C146.56 249.28 32 395.52 32 586.56 32 736 117.12 832 249.28 832s215.04-79.68 215.04-203.52c0-177.28-168-219.52-269.12-170.24z m527.68 0a259.84 259.84 0 0 1 177.92-160c91.2-29.12 48-128-34.56-102.72-192 54.08-306.56 200-306.56 391.36 0 149.12 85.44 245.12 217.28 245.12S992 752.32 992 628.48c0-176.64-167.04-219.84-269.12-170.24z" fill="#909399" p-id="7286"></path></svg>
+                            {{tableMeta.original.comment}}
+                        </del>
+                    </div>
+                </div>
+                
                 <div v-else :id="tableMeta.name+'['+tableMeta.id+']'" class="h2">
                     {{ tableMeta.name }}
                     <el-tooltip content="SQL 测试数据生成">
@@ -352,7 +362,6 @@
 
 .badge-item {
     margin-top:18px;
-    margin-bottom: 6px;
 }
 
 .removed-item {
