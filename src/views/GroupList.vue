@@ -20,12 +20,12 @@
                     </el-row>
                     <el-row v-else :gutter="20" v-for="(partition, index) in partitionArray(4, groupPageData.data)" :key="index" >
                         <el-col :span="6"  v-for="group in partition" :key="group.id">
-                            <el-card shadow="hover" @mouseenter="mouseEnterGroupId=group.id" @mouseleave="mouseEnterGroupId=null">
+                            <el-card shadow="hover" @mouseenter="mouseEnterGroupId=group.id" @mouseleave="mouseEnterGroupId=null" @click="toGroupDashboard(group.id, group.name)">
                                 <el-divider content-position="right">
                                         <el-link :underline="false" 
                                             v-show="group.id == mouseEnterGroupId" 
                                             v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]" 
-                                            @click="toEditPage(group.id, group.name)"
+                                            v-on:click.stop="toEditPage(group.id, group.name)"
                                             icon="Edit"
                                             style="margin-right: 8px;" >
                                         </el-link>
