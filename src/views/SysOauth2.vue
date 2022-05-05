@@ -21,6 +21,9 @@
                         </el-option>
                     </el-select>
                 </el-col>
+                <el-col :span="24">
+                    <el-divider></el-divider>
+                </el-col>
             </el-row>
             <el-row :gutter="33">
                 <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="6" v-for="item in appPageData.data" :key="item.id" >
@@ -102,41 +105,7 @@
                     </el-card>
                 </el-col>
             </el-row>
-            <!-- <el-table :data="appPageData.data">
-                <el-table-column prop="registrationId" label="应用 ID" />
-                <el-table-column prop="appType" label="应用类型">
-                    <template v-slot="scope">
-                         <oauth2-app-type :app-type="scope.row.appType" :app-name="scope.row.appName"/> {{ scope.row.appType }}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="appName" label="名称" />
-                <el-table-column label="授权地址">
-                    <template v-slot="scope">
-                        <el-link type="info"> {{ scope.row.authUrl }}</el-link>
-                    </template>
-                </el-table-column>
-                <el-table-column label="资源地址">
-                    <template v-slot="scope">
-                        <el-link type="info"> {{ scope.row.resourceUrl }}</el-link>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="clientId" label="Client ID" >
-                </el-table-column>
-                <el-table-column prop="updateAt" label="更新时间" />
-                <el-table-column prop="createAt" label="创建时间" />
-                <el-table-column label="操作">
-                    <template v-slot="scope">
-                        <el-space>
-                            <el-button type="primary" size="small" icon="Edit" @click="onAppEdit(scope.row)">
-                                编辑
-                            </el-button>
-                            <el-button type="danger" @click="onDelete(scope.row)" size="small" icon="Delete">
-                                删除
-                            </el-button>
-                        </el-space>
-                    </template>
-                </el-table-column>
-            </el-table> -->
+            <el-empty :image-size="200" v-if="appPageData.data.length == 0" description="暂无数据"/>
 
             <el-dialog v-model="isShowEditAppDialog" width="38%" center destroy-on-close>
                 <el-form :model="appFormData" :rules="appFormDataRule" ref="appFormDataRef" label-position="top">
