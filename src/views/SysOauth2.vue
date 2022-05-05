@@ -1,17 +1,17 @@
 <template>
     <el-container>
-        <el-header>
+        <el-main>
             <el-row :gutter="12">
-                <el-col :span="2">
+                <el-col :xs="24" :sm="6" :md="6" :lg="3" :xl="3">
                     <el-tooltip content="创建应用" placement="top">
                         <el-button type="primary"  icon="plus" style="width: 100%" @click="onAppCreate()"></el-button>
                     </el-tooltip>
                 </el-col>
-                <el-col :span="6">
+                <el-col :xs="24" :sm="10" :md="10" :lg="6" :xl="4">
                     <el-input @change='onQuery' v-model="appPageQuery.appNameContains" label="应用名称" placeholder="应用名称搜素" prefix-icon="search"/>
                 </el-col>
-                <el-col :span="3">
-                    <el-select v-model="appPageQuery.appType" placeholder="应用类型" @change="onQuery" clearable >
+                <el-col :xs="24" :sm="8" :md="8" :lg="6" :xl="4">
+                    <el-select v-model="appPageQuery.appType" placeholder="应用类型" @change="onQuery" clearable style="width:100%;">
                         <el-option
                         v-for="item in appTypes"
                         :key="item"
@@ -21,11 +21,88 @@
                         </el-option>
                     </el-select>
                 </el-col>
-
             </el-row>
-        </el-header>
-        <el-main>
-            <el-table :data="appPageData.data">
+            <el-row :gutter="33">
+                <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="6" v-for="item in appPageData.data" :key="item.id" >
+                    <el-card shadow="hover">
+                        <el-divider content-position="left">
+                            <oauth2-app-type :app-type="item.appType" :app-name="item.appName"/>
+                            <span style="margin-left: 12px;">
+                                {{item.appName}}
+                            </span>
+                        </el-divider>
+
+                        <div>
+                            <el-descriptions
+                                :column="1"
+                                :size="size"
+                                border
+                            >   
+                                <el-descriptions-item label="appId">
+                                    <template #label>
+                                        <el-icon><top-right /></el-icon>
+                                        应用 ID
+                                    </template>
+                                    {{ item.registrationId }}
+                                </el-descriptions-item>
+                                <el-descriptions-item label="appType">
+                                    <template #label>
+                                        <el-icon><top-right /></el-icon>
+                                        应用类型
+                                    </template>
+                                    <el-tag>
+                                    {{ item.appType }}
+                                    </el-tag>
+                                </el-descriptions-item>
+                                <el-descriptions-item label="clientId">
+                                    <template #label>
+                                        <el-icon><tickets /></el-icon>
+                                        clientId
+                                    </template>
+                                    {{item.clientId}}
+                                </el-descriptions-item>
+                                <el-descriptions-item label="资源地址">
+                                    <template #label>
+                                        <el-icon>
+                                            <Link />
+                                        </el-icon>
+                                        资源地址
+                                    </template>
+                                    <el-link>{{item.authUrl}}</el-link>
+                                </el-descriptions-item>
+                                <el-descriptions-item label="授权地址">
+                                    <template #label>
+                                        <el-icon>
+                                            <Link />
+                                        </el-icon>
+                                        授权地址
+                                    </template>
+                                    <el-link>{{item.resourceUrl}}</el-link>
+                                </el-descriptions-item>
+                                <el-descriptions-item label="创建时间">
+                                    <template #label>
+                                        <el-icon><clock /></el-icon>
+                                        创建时间
+                                    </template>
+                                    {{item.createAt}}
+                                </el-descriptions-item>
+                            </el-descriptions>
+                        </div>
+                        
+                        <div style="margin-top:20px;">
+                            <el-space>
+                                <el-button type="primary" size="small" icon="Edit" @click="onAppEdit(item)">
+                                    编辑
+                                </el-button>
+                                <el-button type="danger" @click="onDelete(item)" size="small" icon="Delete">
+                                    删除
+                                </el-button>
+                            </el-space>
+                        </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+            <!-- <el-table :data="appPageData.data">
                 <el-table-column prop="registrationId" label="应用 ID" />
                 <el-table-column prop="appType" label="应用类型">
                     <template v-slot="scope">
@@ -59,51 +136,52 @@
                         </el-space>
                     </template>
                 </el-table-column>
-            </el-table>
+            </el-table> -->
+
             <el-dialog v-model="isShowEditAppDialog" width="38%" center destroy-on-close>
                 <el-form :model="appFormData" :rules="appFormDataRule" ref="appFormDataRef" label-position="top">
                     <el-row :gutter="28">
-                        <el-col :span="10">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="10" >
                             <el-form-item label="应用 ID"  prop="registrationId">
                                 <el-input v-model="appFormData.registrationId" placeholder="建议输入全英文字符"></el-input>
                             </el-form-item>
                         </el-col>
-                        <el-col :span="10">    
+                        <el-col :xs="24" :sm="24" :md="12" :lg="10">    
                             <el-form-item label="应用名称" prop="appName">
                                 <el-input v-model="appFormData.appName" placeholder="用户可理解的登陆应用名"></el-input>
                             </el-form-item>
                         </el-col>
                     </el-row>
                     <el-form-item label="应用类型" prop="appName">
-                                <el-select v-model="appFormData.appType" placeholder="请选择应用类型" size="default">
-                                    <el-option
-                                    v-for="item in appTypes"
-                                    :key="item"
-                                    :label="item"
-                                    :value="item"
-                                    >
-                                    </el-option>
-                                </el-select>
+                        <el-select v-model="appFormData.appType" placeholder="请选择应用类型" size="default">
+                            <el-option
+                            v-for="item in appTypes"
+                            :key="item"
+                            :label="item"
+                            :value="item"
+                            >
+                            </el-option>
+                        </el-select>
                     </el-form-item>
                     <el-row :gutter="28">
-                        <el-col :span="10">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="10">
                             <el-form-item label="Client Id" prop="clientId">
                                 <el-input v-model="appFormData.clientId" placeholder="Oauth2 平台下发的 clientId"></el-input>
                             </el-form-item>
                         </el-col>
-                        <el-col :span="10">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="10">
                             <el-form-item label="Client Secret" prop="clientSecret">
                                 <el-input v-model="appFormData.clientSecret" placeholder="Oauth2 平台下发的秘钥"></el-input>
                             </el-form-item>
                         </el-col>
                     </el-row>
                     <el-row :gutter="28">
-                        <el-col :span="10">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="10">
                             <el-form-item label="授权地址" prop="authUrl">
                                 <el-input v-model="appFormData.authUrl" placeholder="用于获取 access token 的服务地址"></el-input>
                             </el-form-item>
                         </el-col>
-                        <el-col :span="10">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="10">
                             <el-form-item label="资源地址" prop="resourceUrl">
                                 <el-input v-model="appFormData.resourceUrl" placeholder="用于获取用户信息的服务地址"></el-input>
                             </el-form-item>
@@ -138,6 +216,12 @@
         </el-footer>
     </el-container>
 </template>
+
+<style>
+.el-col {
+    margin-bottom:20px;
+}
+</style>
 
 <script>
 

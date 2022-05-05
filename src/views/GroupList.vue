@@ -4,12 +4,12 @@
             <el-container>
                 <el-main>
                     <el-row :gutter="12">
-                        <el-col :span="3" v-require-roles="['SYS_OWNER']">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="5" :xl="3"  v-require-roles="['SYS_OWNER']">
                             <el-tooltip content="创建一个分组" placement="top">
                                 <el-button type="primary"  icon="plus"  style="width:100%;" @click="toCreatePage()"></el-button>
                             </el-tooltip>
                         </el-col>
-                        <el-col :span="8">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" >
                             <el-input @change='onQuery' v-model="groupPageQuery.groupNameContains" label="组名" placeholder="组名称搜索" prefix-icon="search"/>
                         </el-col>
                     </el-row>
@@ -18,8 +18,8 @@
                             <el-empty description="请先创建分组"></el-empty>
                         </el-col>
                     </el-row>
-                    <el-row v-else :gutter="20" v-for="(partition, index) in partitionArray(4, groupPageData.data)" :key="index" >
-                        <el-col :span="6"  v-for="group in partition" :key="group.id">
+                    <el-row v-else :gutter="20" >
+                        <el-col :xs="24" :sm="12" :md="12" :lg="8" :xl="6"  v-for="(group) in groupPageData.data" :key="group.id" style="margin-bottom:20px;">
                             <el-card shadow="hover" @mouseenter="mouseEnterGroupId=group.id" @mouseleave="mouseEnterGroupId=null" @click="toGroupDashboard(group.id, group.name)">
                                 <el-divider content-position="right">
                                         <el-link :underline="false" 
@@ -228,11 +228,15 @@
 }
 
 .el-row {
-  margin-bottom: 20px;
+  margin-bottom: 6px;
 }
 
 .el-row:last-child {
   margin-bottom: 0;
+}
+
+.el-col {
+    margin-bottom: 20px;
 }
 
 </style>
@@ -263,13 +267,13 @@ export default {
           groupPageData: {
              data: [],
              number: 1,
-             size: 15,
+             size: 8,
              totalElements:0,
              totalPages: 0
           },
           groupPageQuery: {
             page: 0,
-            size: 15,
+            size: 12,
             groupNameContains: null
           },
 
@@ -345,16 +349,6 @@ export default {
                 return true
             }
         },
-        partitionArray(size, arr) {
-            var output = []
-            var idx = 0
-            for (var i = 0; i < arr.length; i += size)
-            {
-                output[idx++] = arr.slice(i, i + size)
-            }
-            return output
-        },
-
         onPageChange(currentPage) {
             if (currentPage) {
                 this.groupPageQuery.page = currentPage - 1

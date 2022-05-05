@@ -3,21 +3,21 @@
     <!-- project list -->
     <el-tab-pane label="项目列表">
         <el-row :gutter="12">
-            <el-col :span="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId, 'GROUP_MEMBER?groupId='+groupId]">
+            <el-col :xs="24" :sm="6" :md="4" :lg="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId, 'GROUP_MEMBER?groupId='+groupId]" style="margin-bottom:12px;">
                 <el-tooltip content="新建一个新项目" placement="top">
                     <el-button type="primary" style="width:100%" icon="plus" @click="toCreateProject">新建</el-button>
                 </el-tooltip>
             </el-col>
-            <el-col :span="6">
+            <el-col :xs="24" :sm="8" :md="5" :lg="6" style="margin-bottom:12px;">
                 <el-input @change='onProjectQuery' v-model="projectFilter.nameContains" label="项目名" placeholder="项目名称搜索" prefix-icon="search"/>
             </el-col>
-            <el-col :span="6">
+            <el-col :xs="24" :sm="8" :md="5" :lg="6" style="margin-bottom:12px;">
                 <el-input @change="onProjectQuery" v-model="projectFilter.databaseNameContains" label="数据库名" placeholder="数据库名称搜索" prefix-icon="search"/>
             </el-col>
-            <el-col :span="6">
+            <el-col :xs="24" :sm="8" :md="5" :lg="6" style="margin-bottom:12px;">
                 <el-input @change="onProjectQuery" v-model="projectFilter.schemaNameContains" label="Schema" placeholder="Schema 名称搜索" prefix-icon="search"/>
             </el-col>
-            <el-col :span="4">
+            <el-col :xs="24" :sm="8" :md="5" :lg="4" style="margin-bottom:12px;">
                 <el-select @change="onProjectQuery" @clear="onProjectDatabaseTypeClear()" v-model="projectFilter.databaseType" placeholder="选择数据库类型" clearable>
                     <el-option
                     v-for="(item, index) in databaseTypes"
@@ -132,13 +132,13 @@
                         <!-- basic -->
                         <h3>基础信息</h3>
                         <el-row :gutter="33">
-                            <el-col :span="8">
+                            <el-col :xs="24" :sm="24" :md="12" :lg="8">
                                 <el-form-item label="名称" prop="name">
                                     <el-input v-model="projectForm.name" placeholder="项目名称"></el-input>
                                 </el-form-item>
                             </el-col>
 
-                            <el-col :span="12">
+                            <el-col :xs="24" :sm="24" :md="12" >
                                 <el-form-item label="描述" prop="description">
                                     <el-input v-model="projectForm.description" type="textarea" placeholder="项目描述"></el-input>
                                 </el-form-item>   
@@ -148,23 +148,23 @@
                         <!-- connection -->
                         <h3>连接配置</h3>
                         <el-row :gutter="33">
-                            <el-col :span="8">
+                            <el-col :xs="24" :sm="24" :md="12" :lg="8">
                                 <el-form-item label="用户名" prop="dataSource.username">
                                     <el-input v-model="projectForm.dataSource.username" placeholder="root"></el-input>
                                 </el-form-item>
                             </el-col>
-                            <el-col :span="12">
+                            <el-col :xs="24" :sm="24" :md="12">
                                 <el-form-item label="密码"  prop="dataSource.password">
                                     <el-input v-model="projectForm.dataSource.password" placeholder="**********"  :type="password" show-password></el-input>
                                 </el-form-item>                         
                             </el-col>
 
-                            <el-col :span="8">
+                            <el-col :xs="24" :sm="24" :md="12" :lg="8">
                                 <el-form-item label="地址" prop="dataSource.url">
                                     <el-input v-model="projectForm.dataSource.url" placeholder="127.0.0.1:3306"></el-input>
                                 </el-form-item>
                             </el-col>
-                            <el-col :span="12">
+                            <el-col :xs="24" :sm="24" :md="12">
                                 <el-form-item label="数据库类型" prop="dataSource.databaseType">
                                     <el-select v-model="projectForm.dataSource.databaseType" placeholder="选择数据库类型" clearable>
                                         <el-option
@@ -178,28 +178,28 @@
                                 </el-form-item>
                             </el-col>
 
-                            <el-col :span="8">
+                            <el-col :xs="24" :sm="24" :md="12" :lg="8">
                                 <el-form-item label="数据库名称" prop="dataSource.databaseName">
                                     <el-input v-model="projectForm.dataSource.databaseName" placeholder="需要同步的数据库名称"></el-input>
                                 </el-form-item>
                             </el-col>
-                            <el-col :span="12">
+                            <el-col :xs="24" :sm="24" :md="12">
                                 <el-form-item label="Schema 名称" prop="dataSource.schemaName">
                                     <el-input v-model="projectForm.dataSource.schemaName" placeholder="需要同步的 Schema 名称"></el-input>
                                 </el-form-item>
                             </el-col>
                         </el-row>
                         <el-form-item :label="index > 0 ? '':'属性'" v-for="(item, index) in projectForm.dataSource.properties" :key="index">
-                                <el-col :span="6">
-                                    <el-input v-model.trim="item.key" placeholder="Key"></el-input>
-                                </el-col>
-                                <el-col  :span="6" style="margin-left:33px;">
-                                    <el-input v-model.trim="item.value" placeholder="Value" />
-                                </el-col>
-                                <el-col :span="8" style="margin-left:33px;">
-                                    <el-button type="danger" size="small" @click="removeDataSourceProperty(index)">- 删除</el-button>
-                                    <el-button type="primary" size="small" @click="addDataSourceProperty" v-if="(index+1) == projectForm.dataSource.properties.length">+ 添加</el-button>
-                                </el-col>
+                            <el-col :xs="24" :sm="8" :md="6" style="margin-right:18px;margin-bottom:12px;">
+                                <el-input v-model.trim="item.key" placeholder="Key"></el-input>
+                            </el-col>
+                            <el-col  :xs="24" :sm="8" :md="6" style="margin-right:18px;">
+                                <el-input v-model.trim="item.value" placeholder="Value" />
+                            </el-col>
+                            <el-col :xs="24" :sm="12" :md="8">
+                                <el-button type="text" size="small" @click="removeDataSourceProperty(index)" style="color:#F56C6C">- 删除</el-button>
+                                <el-button type="text" size="small" @click="addDataSourceProperty" v-if="(index+1) == projectForm.dataSource.properties.length">+ 添加</el-button>
+                            </el-col>
                         </el-form-item>
                         <el-form-item label="属性" v-if="projectForm.dataSource.properties.length == 0">
                             <el-button type="text" size="small" @click="addDataSourceProperty" >+ 添加</el-button>
@@ -247,12 +247,12 @@
 
                         <!-- ignore table name regex -->
                         <el-form-item :label="index > 0 ? '': '忽略表名称（支持正则表达式）'" v-for="(item, index) in projectForm.projectSyncRule.ignoreTableNameRegexes" :key="index">
-                            <el-col :span="6">
+                            <el-col :xs="24" :sm="12" :md="8" style="margin-right:18px;">
                                 <el-input v-model="projectForm.projectSyncRule.ignoreTableNameRegexes[index]" placeholder="name regex"></el-input>
                             </el-col>
-                            <el-col :span="6" :offset="1">
-                                <el-button type="danger" size="small" @click="removeIgnoreTableName(index)">- 删除</el-button>
-                                <el-button type="primary" size="small" @click="addIgnoreTableName" v-if="(index+1) == projectForm.projectSyncRule.ignoreTableNameRegexes.length">+ 添加</el-button>
+                            <el-col :xs="24" :sm="12" :md="8">
+                                <el-button type="text" size="small" @click="removeIgnoreTableName(index)" style="color:#F56C6C">- 删除</el-button>
+                                <el-button type="text" size="small" @click="addIgnoreTableName" v-if="(index+1) == projectForm.projectSyncRule.ignoreTableNameRegexes.length">+ 添加</el-button>
                             </el-col>
                         </el-form-item>
                         <el-form-item label="忽略表名称（支持正则表达式）" v-if="projectForm.projectSyncRule.ignoreTableNameRegexes.length == 0">
@@ -261,12 +261,13 @@
 
                         <!-- ignore column name regex -->
                         <el-form-item :label="index > 0 ? '' : '忽略列名称（支持正则表达式）'" v-for="(item, index) in projectForm.projectSyncRule.ignoreColumnNameRegexes" :key="index">
-                            <el-col :span="6">
+                            <el-col :xs="24" :sm="12" :md="8" style="margin-right:18px;">
                                 <el-input v-model="projectForm.projectSyncRule.ignoreColumnNameRegexes[index]" placeholder="name regex"></el-input>
                             </el-col>
-                            <el-col :span="6"  :offset="1">
-                                <el-button type="danger" size="small" @click="removeIgnoreColumnName(index)">- 删除</el-button>
-                                <el-button type="primary" size="small" @click="addIgnoreColumnName" v-if="(index+1) == projectForm.projectSyncRule.ignoreColumnNameRegexes.length">+ 添加</el-button>
+                            
+                            <el-col :xs="24" :sm="12" :md="8">
+                                <el-button type="text" size="small" @click="removeIgnoreColumnName(index)" style="color:#F56C6C">- 删除</el-button>
+                                <el-button type="text" size="small" @click="addIgnoreColumnName" v-if="(index+1) == projectForm.projectSyncRule.ignoreColumnNameRegexes.length">+ 添加</el-button>
                             </el-col>
                         </el-form-item>
                         <el-form-item label="忽略列名称（支持正则表达式）" v-if="projectForm.projectSyncRule.ignoreColumnNameRegexes.length == 0">
