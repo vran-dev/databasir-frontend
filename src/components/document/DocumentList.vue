@@ -251,14 +251,11 @@
                 <el-table :data="tableMeta.triggers" fit border width='80%' :row-class-name="predicateRowClass"  default-expand-all row-key="id" highlight-current-row>
                     <el-table-column type="index" />
                     <el-table-column prop="name" :label="triggerFieldNameMapping('name')" min-width="120" >
-                        <template v-slot="scope">
-                            <span> {{scope.row.name}}</span>
-                        </template>
                     </el-table-column>
                     <el-table-column prop="timing" :label="triggerFieldNameMapping('timing')" />
                     <el-table-column prop="manipulation" :label="triggerFieldNameMapping('manipulation')" width="120" />
                     <el-table-column prop="statement" :label="triggerFieldNameMapping('statement')" />
-                    <el-table-column prop="creatAt" :label="triggerFieldNameMapping('creatAt')" width="150" />
+                    <el-table-column prop="triggerCreateAt" :label="triggerFieldNameMapping('triggerCreateAt')" width="150" />
                 </el-table>
             </div>
         </el-col>
@@ -698,7 +695,7 @@ export default {
             }
             return prop.value ? prop.value : prop.defaultValue
         },
-        triggerdNameMapping(fieldName) {
+        triggerFieldNameMapping(fieldName) {
             const prop = this.templateProperties.triggerFieldNameMap.get(fieldName)
             if (!prop) {
                 console.log('can not found trigger field: '+fieldName)
