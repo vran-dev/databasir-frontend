@@ -9,7 +9,7 @@
             </el-space>
         </el-header>
         <el-main>
-            <el-table :data="pageData.data" border stripe>
+            <el-table :data="pageData.data" stripe>
                 <el-table-column prop="id" label="ID" width="50"/>
                 <el-table-column prop="databaseType" label="数据库类型" resizable>
                     <template v-slot="scope">
@@ -49,7 +49,7 @@
                 </el-table-column>
                 <el-table-column prop="updateAt" label="更新时间" />
                 <el-table-column prop="createAt" label="创建时间" />
-                <el-table-column  label="操作" resizable fixed="right">
+                <el-table-column  label="操作" resizable >
                     <template v-slot="scope">
                         <el-space alignment="left" direction="vertical">
                             <el-button type="primary" size="small" icon="Edit" @click="toEditPage(scope.row)">编辑</el-button>

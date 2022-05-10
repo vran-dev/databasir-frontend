@@ -2,20 +2,20 @@
     <el-container>
         <el-header>
             <el-row :gutter="12">
-                <el-col :span="2">
+                <el-col :xs="24" :sm="12" :md="3" :lg="2" :xl="2" style="margin-bottom:12px;">
                     <el-tooltip content="创建新用户" placement="top">
                         <el-button type="primary"  icon="plus" style="width: 100%" @click="toCreatePage()"></el-button>
                     </el-tooltip>
                 </el-col>
-                <el-col :span="6">
+                <el-col :xs="24" :sm="12" :md="6" :lg="6" :xl="6">
                     <el-input @change='onQuery' v-model="userPageQuery.nicknameOrUsernameOrEmailContains" label="用户名" placeholder="昵称、用户名或邮箱搜索" prefix-icon="search"/>
                 </el-col>
             </el-row>
         </el-header>
         <el-main>
-            <el-table :data="userPageData.content" border width='80%'>
-                <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
-                <el-table-column prop="nickname" label="昵称" min-width="120" fixed="left" resizable />
+            <el-table :data="userPageData.content" width='80%'>
+                <el-table-column prop="id" label="ID" min-width="60" />
+                <el-table-column prop="nickname" label="昵称" min-width="120" resizable />
                 <el-table-column prop="username" label="用户名" min-width="120" resizable />
                 <el-table-column label="邮箱" width="200"  resizable>
                     <template v-slot="scope">

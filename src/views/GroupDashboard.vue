@@ -30,9 +30,9 @@
             </el-col>
         </el-row>
         <el-row>
-            <el-table :data="projectPageData.data" border>
-                <el-table-column prop="id" label="ID" min-width="60" fixed="left" />
-                <el-table-column label="项目名称" min-width="120" fixed="left" resizable>
+            <el-table :data="projectPageData.data">
+                <el-table-column prop="id" label="ID" min-width="60" />
+                <el-table-column label="项目名称" min-width="120" resizable>
                     <template v-slot="scope">
                         <el-link :underline="false">
                             <el-icon v-if="scope.row.isFavorite"><star-filled /></el-icon>
@@ -61,7 +61,7 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="createAt" label="创建时间" min-width="120" resizable ></el-table-column>
-                <el-table-column fixed="right" label="操作" min-width="180" align="center"  resizable>
+                <el-table-column label="操作" min-width="180" align="center"  resizable>
                     <template v-slot="scope">
                         <el-dropdown>
                             <span>
@@ -339,8 +339,8 @@
         <el-row>
             <el-col>
                 <el-table :data="groupMemberPageData.data"  border width='80%'>
-                    <el-table-column prop="userId" label="用户 ID" min-width="60" fixed="left" />
-                    <el-table-column prop="nickname" label="昵称" min-width="120" fixed="left" resizable />
+                    <el-table-column prop="userId" label="用户 ID" min-width="60" />
+                    <el-table-column prop="nickname" label="昵称" min-width="120" resizable />
                     <el-table-column prop="username" label="用户名" min-width="120" resizable />
                     <el-table-column prop="email" label="邮箱" width="200"  resizable />
                     <el-table-column :label="roleColumnLabel" 
