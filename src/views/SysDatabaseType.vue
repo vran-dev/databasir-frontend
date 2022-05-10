@@ -1,64 +1,65 @@
 <template>
     <el-container>
         <el-header>
-            <el-space>
-                <el-tooltip content="创建">
-                    <el-button type="primary" style="min-width: 100px" @click="toEditPage()">+</el-button>
-                </el-tooltip>
-                <el-input @change='onQuery' v-model="pageFilter.databaseTypeContains" placeholder="数据库类型名称搜索" prefix-icon="search"/>
-            </el-space>
+            <el-row :gutter="18">
+                <el-col :xs="24" :sm="12" :md="6" :lg="4" :xl="4" style="margin-bottom:12px;">
+                    <el-tooltip content="创建">
+                        <el-button type="plain" style="width:100%;" @click="toEditPage()">+</el-button>
+                    </el-tooltip>
+                </el-col>
+                <el-col :xs="24" :sm="12" :md="10" :lg="6" :xl="6">
+                    <el-input @change='onQuery' v-model="pageFilter.databaseTypeContains" placeholder="数据库类型名称搜索" prefix-icon="search"/>
+                </el-col>
+            </el-row>
         </el-header>
         <el-main>
-            <el-table :data="pageData.data" stripe>
-                <el-table-column prop="id" label="ID" width="50"/>
-                <el-table-column prop="databaseType" label="数据库类型" resizable>
-                    <template v-slot="scope">
-                        {{ scope.row.databaseType }}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="icon" label="图标" >
-                    <template v-slot="scope">
-                        <img :src="scope.row.icon" style="max-width: 35px; max-height: 35px;"/>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="description" label="描述" resizable/>
-                <el-table-column prop="jdbcDriverFileUrl" label="驱动下载地址">
-                    <template v-slot="scope">
-                        <el-link :underline="false">
-                        {{ scope.row.jdbcDriverFileUrl }}
-                        </el-link> 
-                    </template>
-                </el-table-column>
-                <el-table-column prop="jdbcDriverClassName" label="驱动类名" resizable/>
-                <el-table-column label="协议头">
-                    <template v-slot="scope">
-                        <el-tag size="large">
-                        {{ scope.row.jdbcProtocol }}
-                        </el-tag> 
-                    </template>
-                </el-table-column>
-                <el-table-column prop="projectCount" label="引用项目数" width="100"/>
-                <el-table-column prop="urlPattern" label="URL 表达式" resizable>
-                    <template v-slot="scope">
-                        <el-tooltip :content="tableUrlSample(scope.row)">
-                            <el-link :underline="false" type="success">
-                            {{ scope.row.urlPattern }}
-                            </el-link> 
-                        </el-tooltip>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="updateAt" label="更新时间" />
-                <el-table-column prop="createAt" label="创建时间" />
-                <el-table-column  label="操作" resizable >
-                    <template v-slot="scope">
-                        <el-space alignment="left" direction="vertical">
-                            <el-button type="primary" size="small" icon="Edit" @click="toEditPage(scope.row)">编辑</el-button>
-                            <el-button type="danger" size="small" icon="Delete" @click="onDelete(scope.row)">删除</el-button>
-                        </el-space>
-                    </template>
-                </el-table-column>
-            </el-table>
+            <el-row :gutter="12">
+                <el-col :xs="24" :sm="12" :md="12" :lg="7" :xl="5" v-for="item in pageData.data" :key="item.id" style="margin-bottom:18px;cursor:pointer;">
+                    <el-card shadow="hover" 
+                    style="border-style:none;margin:0 auto;text-align:center;" 
+                    @click="toEditPage(item)"
+                    >
+                        <el-space direction="vertical">
+                            <div>
+                                <img v-if="item.icon && item.icon.trim != ''" :src="item.icon" style="max-width: 65px; height: 65px;"/>
+                                <img v-else :src="require('@/assets/database/default.svg')" style="max-width: 65px; height: 65px;">
+                            </div>
+                            <div>
+                                <el-popover
+                                :width="300"
+                                popper-style="box-shadow: rgb(14 18 22 / 35%) 0px 10px 38px -10px, rgb(14 18 22 / 20%) 0px 10px 20px -15px; padding: 20px;"
+                                >
+                                <template #reference>
+                                    <span>{{item.databaseType }}</span>
+                                </template>
+                                <template #default>
+                                    <div
+                                    style="display: flex; gap: 16px; flex-direction: column"
+                                    >
+                                        <div>
+                                            <p
+                                            class="demo-rich-content__name"
+                                            style="margin: 0; font-weight: 500"
+                                            >
+                                            {{item.description}}
+                                            </p>
+                                            <p
+                                            class="demo-rich-content__mention"
+                                            style="margin: 0; font-size: 14px; color: var(--el-color-info)"
+                                            >
+                                            存在 {{ item.projectCount }} 个项目引用
+                                            </p>
+                                        </div>
+                                    </div>
+                                </template>
+                                </el-popover>
+                                
 
+                            </div>
+                        </el-space>
+                    </el-card>
+                </el-col>
+            </el-row>
             <el-dialog v-model="isShowEditDialog" width="46%" center destroy-on-close>
                 <el-tabs v-model="activeTabName"  @tab-click="handleClick">
                     <el-tab-pane label="内置模板" name="urlImportTab">
@@ -100,6 +101,7 @@
                     </el-tab-pane>
                     <el-tab-pane label="表单创建" name="formTab">
                         <el-form :model="databaseTypeForm" :rules="formDataRule" ref="formDataRef" label-position="top">
+                            <h3>基础信息</h3>
                             <el-row :gutter="28">
                                 <el-col :span="10">
                                     <el-form-item label="数据库类型"  prop="databaseType">
@@ -111,16 +113,14 @@
                                         <el-input v-model="databaseTypeForm.icon"></el-input>
                                     </el-form-item>
                                 </el-col>
-                            </el-row>
-                            
-                            <el-row>
                                 <el-col :span="20">
                                     <el-form-item label="描述" prop="description">
                                         <el-input v-model="databaseTypeForm.description" type="textarea"></el-input>
                                     </el-form-item>
                                 </el-col>
                             </el-row>
-
+                            
+                            <h3>驱动配置</h3>
                             <el-row>
                                 <el-col :span="4">
                                     <el-form-item label="驱动获取方式" required prop="isLocalUpload">
@@ -231,6 +231,14 @@
                                 <el-button @click="isShowEditDialog = false">取消</el-button>
                             </el-form-item>
                         </el-form>
+                        <el-collapse v-if="databaseTypeForm.id">
+                            <el-collapse-item title="删除">
+                                <template #title>
+                                    <el-icon><info-filled /></el-icon>删除
+                                </template>
+                                <el-button type="plain" style="width:100%;" icon="Delete" @click="onDelete(databaseTypeForm)">删除</el-button>
+                            </el-collapse-item>
+                        </el-collapse>
                     </el-tab-pane>
                 </el-tabs>
             </el-dialog>
@@ -255,6 +263,7 @@
 .hideUpload .el-upload--picture{
   display:none !important;   /* 上传按钮隐藏 */
 }
+
 </style>
 <script>
 
@@ -385,7 +394,11 @@ export default{
         },
 
         onDelete(item) {
-            this.$confirm('确认删除该数据库类型吗？这将导致数据同步失败', '提示', {
+            let msg = "确认删除该数据库类型吗？"
+            if (item.projectCount && item.projectCount > 0) {
+                msg += "该类型关联了 "+item.projectCount+" 个项目"
+            }
+            this.$confirm(msg, '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'warning'
@@ -395,6 +408,7 @@ export default{
                         this.$message.success('删除成功')
                         this.onPageChange(1, true)
                     }
+                    this.isShowEditDialog = false
                 })
             })
             

@@ -190,7 +190,7 @@
                             </el-col>
                         </el-row>
                         <el-form-item :label="index > 0 ? '':'属性'" v-for="(item, index) in projectForm.dataSource.properties" :key="index">
-                            <el-col :xs="24" :sm="8" :md="6" style="margin-right:18px;margin-bottom:12px;">
+                            <el-col :xs="24" :sm="8" :md="6" style="margin-right:18px;">
                                 <el-input v-model.trim="item.key" placeholder="Key"></el-input>
                             </el-col>
                             <el-col  :xs="24" :sm="8" :md="6" style="margin-right:18px;">
