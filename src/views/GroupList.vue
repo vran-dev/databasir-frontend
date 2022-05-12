@@ -53,7 +53,7 @@
                                                     </el-icon>
                                                     <template #dropdown>
                                                     <el-dropdown-menu>
-                                                        <el-dropdown-item v-for="(owner, index) in group.groupOwnerNames.slice(3)" :key="index">
+                                                        <el-dropdown-item v-for="(owner, index) in group.groupOwnerNames.slice(2)" :key="index">
                                                             <el-tag type="info">{{ owner }}</el-tag>
                                                         </el-dropdown-item>
                                                     </el-dropdown-menu>
