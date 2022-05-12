@@ -92,7 +92,7 @@
             @change="onMultiSelectionModeChange"
             :loading="loadings.multiSelectionModeChanging"/>
 
-            <el-input prefix-icon="Search" class="search-input" placeholder="输入表名、注释进行搜索" v-model="searchTableText"></el-input>
+            <el-input prefix-icon="Search" class="search-input" placeholder="输入表名、注释、描述进行搜索" v-model="searchTableText"></el-input>
             <el-tree
               ref="treeRef"
               :data="tocData.value" 
