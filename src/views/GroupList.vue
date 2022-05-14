@@ -6,7 +6,7 @@
                     <el-row :gutter="12">
                         <el-col :xs="24" :sm="24" :md="12" :lg="5" :xl="3"  v-require-roles="['SYS_OWNER']">
                             <el-tooltip content="创建一个分组" placement="top">
-                                <el-button type="primary"  icon="plus"  style="width:100%;" @click="toCreatePage()"></el-button>
+                                <el-button type="plain"  icon="plus"  style="width:100%;" @click="toCreatePage()"></el-button>
                             </el-tooltip>
                         </el-col>
                         <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" >
@@ -20,23 +20,21 @@
                     </el-row>
                     <el-row v-else :gutter="20" >
                         <el-col :xs="24" :sm="12" :md="12" :lg="8" :xl="6"  v-for="(group) in groupPageData.data" :key="group.id" style="margin-bottom:20px;">
-                            <el-card shadow="hover" @mouseenter="mouseEnterGroupId=group.id" @mouseleave="mouseEnterGroupId=null" @click="toGroupDashboard(group.id, group.name)">
-                                <el-divider content-position="right">
-                                        <el-link :underline="false" 
-                                            v-show="group.id == mouseEnterGroupId" 
-                                            v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]" 
-                                            v-on:click.stop="toEditPage(group.id, group.name)"
-                                            icon="Edit"
-                                            style="margin-right: 8px;" >
-                                        </el-link>
-                                        <el-link :underline="false">
-                                            <span @click="toGroupDashboard(group.id, group.name)">
-                                                <h4>
-                                                    {{ group.name }}
-                                                </h4>    
-                                            </span>
-                                        </el-link>
-                                </el-divider>
+                            <el-card shadow="hover" @mouseenter="mouseEnterGroupId=group.id" @mouseleave="mouseEnterGroupId=null" @click="toGroupDashboard(group.id, group.name)" class="box">
+                                <div style="display:flex;justify-content: space-between;">
+                                    <el-link :underline="false" >
+                                        <div @click="toGroupDashboard(group.id, group.name)" style="margin: 0 auto;">
+                                            <h4>{{ group.name }}</h4> 
+                                        </div>
+                                    </el-link>
+                                    <el-link :underline="false" 
+                                        v-show="group.id == mouseEnterGroupId" 
+                                        v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+group.id]" 
+                                        v-on:click.stop="toEditPage(group.id, group.name)"
+                                        icon="Edit"
+                                        style="margin-left: 8px;" >
+                                    </el-link>
+                                </div>
                                 <el-space direction="vertical" alignment="stretch" :size="16">
                                         <span style="color:#909399;font-size:13px;">
                                             {{ group.description }}
@@ -237,6 +235,11 @@
 
 .el-col {
     margin-bottom: 20px;
+}
+
+.box {
+    border-radius: 6px;
+    border-width:1px;
 }
 
 </style>
