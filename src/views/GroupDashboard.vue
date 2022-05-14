@@ -567,6 +567,7 @@ export default {
                 page: 0,
                 size: 10,
                 involveProjectId: null,
+                involveGroupId: null,
                 module: 'project',
             },
             // ======= common domain ======
@@ -860,6 +861,7 @@ export default {
         },
         toProjectOperationLogDrawer(project) {
             this.projectOperationLogPageQuery.involveProjectId = project.id
+            this.projectOperationLogPageQuery.involveGroupId = this.groupId
             this.onProjectOperationLogCurrentPageChange(1)
             this.isShowProjectOperationLogDrawer = true
         },
