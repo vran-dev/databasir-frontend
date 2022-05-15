@@ -37,8 +37,13 @@
           <span>{{ menu.meta.nav }}</span>
         </template> 
       </el-menu-item>
+      
     </template>
+    <el-menu-item index="" @click="showSearchDialog()">
+      <el-button type="text" icon="Search" style="color: #303133;"></el-button>
+    </el-menu-item>
   </el-menu>
+  
 </template>
 <style>
 .left-menu:not(.el-menu--collapse) {
@@ -47,12 +52,13 @@
 </style>
 <script>
 import { useRouter } from 'vue-router'
-import { computed } from 'vue'
+import { computed, defineComponent } from 'vue'
 import { user } from '../utils/auth'
 import store from '../store/index'
 
-export default {
-  setup() {
+export default defineComponent({
+  emits: ['on-search'],
+  setup(props, context) {
     const isCollapse = computed(() => store.state.menu.isCollapse)
     const router = useRouter()
     const routes = router.options.routes
@@ -74,12 +80,17 @@ export default {
       store.commit('expandMenu')
     }
 
+    const showSearchDialog = () => {
+      context.emit('on-search')
+    }
+
     return {
       isCollapse,
       isShowMenu,
       expandMenu,
       routes,
+      showSearchDialog,
     }
   }
-}
+})
 </script>
