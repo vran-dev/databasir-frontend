@@ -17,15 +17,17 @@
         <el-dialog
             v-model="showSearchDialog"
             title="搜索"
-            width="60%"
+            :width="dialogWidth()"
         >
-            <el-input 
+            <el-input
                 v-model="queryKeyword"
-                prefix-icon="Search"
                 placeholder="分组、项目、database、schema 搜索"
                 style="width:100%;border:none;"
                 @change="onQuery"
             >
+                <template #prepend>
+                    <el-button type="text" :loading="queryLoading" icon="Search"></el-button>
+                </template>
             </el-input>
             <div style="margin-top:16px;">
                 <el-link :underline="false" v-for="(item, index) in searchSelectHistory" :key="index" @click="jumpToPath(item.path)" style="margin-right: 12px;margin-bottom:12px;">
@@ -36,10 +38,7 @@
             </div>
             <el-divider v-if="queryData.projects.length > 0 || queryData.groups.length > 0"></el-divider>
             
-            <div class="search-container" v-loading="queryLoading">
-                <div v-if="queryLoading && queryData.projects.length == 0 && queryData.groups.length == 0" style="height: 80px;">
-                    
-                </div>
+            <div class="search-container">
                 <div class="search-item" v-for="(project,index) in queryData.projects" :key="index" @click="jumpToProject(project)">
                     <span>
                         <el-tag type="success">project</el-tag> <el-link :underline="false"> {{project.groupName}} / {{project.projectName}}</el-link>
@@ -153,6 +152,8 @@ import AppNav from '../components/AppNav.vue'
 import Breadcrumb from '../components/Breadcrumb.vue'
 import Avatar from '../components/Avatar.vue'
 import { query } from '@/api/Search.js'
+import { dialogPercentWidth } from "@/utils/DialogWidthCalculator"
+
 
 export default {
     components: { AppNav, Breadcrumb, Avatar },
@@ -231,6 +232,9 @@ export default {
             const history = this.searchSelectHistory.filter(item => item.label != label)
             this.searchSelectHistory = history
             window.localStorage.setItem(this.searchSelectHistoryKey, JSON.stringify(this.searchSelectHistory))
+        },
+        dialogWidth() {
+            return dialogPercentWidth()
         }
     }
 }

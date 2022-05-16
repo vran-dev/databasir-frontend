@@ -162,8 +162,7 @@
         </el-tab-pane>
     </el-tabs>
 
-
-    <el-dialog v-model="isShowEditGroupDialog" width="38%" center destroy-on-close>
+    <el-dialog v-model="isShowEditGroupDialog" center destroy-on-close :width="dialogWidth()">
         <el-form :model="groupData" :rules="groupDataRule" ref="groupFormRef" label-position="top">
             <el-form-item label="名称"  prop="name">
                 <el-input v-model="groupData.name"></el-input>
@@ -250,6 +249,7 @@ import { listUsers } from "@/api/User"
 import { listFavorites, removeFavorite } from "../api/UserProject"
 import { deleteProjectById } from "../api/Project"
 import { user } from '../utils/auth'
+import { dialogPercentWidth } from "../utils/DialogWidthCalculator"
 
 export default {
     data() {
@@ -478,6 +478,9 @@ export default {
         },
         onTabClick(tab) {
             this.$store.commit('switchGroupListActiveTab', tab.props.name)
+        },
+        dialogWidth() {
+            return dialogPercentWidth()
         }
     }
 }
