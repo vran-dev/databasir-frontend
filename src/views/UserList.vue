@@ -13,6 +13,7 @@
             </el-row>
         </el-header>
         <el-main>
+            <el-row></el-row>
             <el-table :data="userPageData.content" width='80%'>
                 <el-table-column prop="id" label="ID" min-width="60" />
                 <el-table-column prop="nickname" label="昵称" min-width="120" resizable />
@@ -67,7 +68,6 @@
                     </template>
                 </el-table-column>
             </el-table>
-
         </el-main>
         <el-footer>
             <el-pagination layout="sizes, prev, pager, next" 

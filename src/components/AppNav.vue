@@ -39,8 +39,10 @@
       </el-menu-item>
       
     </template>
-    <el-menu-item index="" @click="showSearchDialog()">
-      <el-button type="text" icon="Search" style="color: #303133;"></el-button>
+    <el-menu-item index="" @click="showSearchDialog()" style="color: #303133;">
+          <el-icon style="vertical-align: middle" >
+            <Search />
+          </el-icon>
     </el-menu-item>
   </el-menu>
   

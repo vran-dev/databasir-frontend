@@ -39,6 +39,7 @@ const routes = [
     {
         path: '/groups',
         icon: 'Collection',
+        hidden: true,
         component: Layout,
         meta: {
             nav: '项目中心',

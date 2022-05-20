@@ -26,7 +26,7 @@
                 @change="onQuery"
             >
                 <template #prepend>
-                    <el-button type="text" :loading="queryLoading" icon="Search"></el-button>
+                    <el-button :loading="queryLoading" icon="Search"></el-button>
                 </template>
             </el-input>
             <div style="margin-top:16px;">

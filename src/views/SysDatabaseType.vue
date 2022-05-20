@@ -146,7 +146,7 @@
                                                 </el-tooltip>
                                             </template>
                                             <template #suffix v-if="databaseTypeForm.jdbcDriverFilePath && databaseTypeForm.jdbcDriverFileUrl != ''">
-                                                <el-button type="text" icon="SuccessFilled" style="color:#67C23A;"></el-button>
+                                                <el-button text icon="SuccessFilled" style="color:#67C23A;"></el-button>
                                             </template>
                                         </el-input>
                                     </el-form-item>
@@ -183,7 +183,7 @@
                                                 </el-tooltip>
                                             </template>
                                             <template #append>
-                                                <el-button type="text" :loading="loadingClassName" @click="autoObtainDriverClassName()" style="color:#409EFF; font-size: 12px; padding: 3px;">
+                                                <el-button :loading="loadingClassName" @click="autoObtainDriverClassName()" style="color:#409EFF; font-size: 12px; padding: 3px;">
                                                     自动获取
                                                 </el-button>
                                             </template>

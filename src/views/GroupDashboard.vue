@@ -189,7 +189,7 @@
                                 </el-form-item>
                             </el-col>
                         </el-row>
-                        <el-form-item :label="index > 0 ? '':'属性'" v-for="(item, index) in projectForm.dataSource.properties" :key="index">
+                        <el-form-item :label="index > 0 ? '':'连接参数'" v-for="(item, index) in projectForm.dataSource.properties" :key="index" class="param-item">
                             <el-col :xs="24" :sm="8" :md="6" style="margin-right:18px;">
                                 <el-input v-model.trim="item.key" placeholder="Key"></el-input>
                             </el-col>
@@ -197,24 +197,23 @@
                                 <el-input v-model.trim="item.value" placeholder="Value" />
                             </el-col>
                             <el-col :xs="24" :sm="12" :md="8">
-                                <el-button type="text" size="small" @click="removeDataSourceProperty(index)" style="color:#F56C6C">- 删除</el-button>
-                                <el-button type="text" size="small" @click="addDataSourceProperty" v-if="(index+1) == projectForm.dataSource.properties.length">+ 添加</el-button>
+                                <el-button text type="danger"  size="small" @click="removeDataSourceProperty(index)">- 删除</el-button>
+                                <el-button text type="primary"  size="small" @click="addDataSourceProperty" v-if="(index+1) == projectForm.dataSource.properties.length">+ 添加</el-button>
                             </el-col>
                         </el-form-item>
-                        <el-form-item label="属性" v-if="projectForm.dataSource.properties.length == 0">
-                            <el-button type="text" size="small" @click="addDataSourceProperty" >+ 添加</el-button>
+                        <el-form-item label="连接参数" v-if="projectForm.dataSource.properties.length == 0" class="param-item">
+                            <el-button text type="primary" size="small" @click="addDataSourceProperty" >+ 添加</el-button>
                         </el-form-item>
-                        <el-descriptions :column="2" border style="margin-bottom: 20px">
-                                    <el-descriptions-item label="连接地址验证">
-                                        <el-tooltip content="地址不包含属性配置，若地址不对请联系管理员修改对应数据库类型配置">
-                                            <el-link :underline="false" type="warning">
-                                                {{sampleUrl()}}
-                                            </el-link>
-                                        </el-tooltip>
-                                    </el-descriptions-item>
+                        <el-descriptions :column="2" border style="margin-bottom: 10p;margin-top:15px;" >
+                            <el-descriptions-item label="连接地址验证">
+                                <el-tooltip content="地址不包含属性配置，若地址不对请联系管理员修改对应数据库类型配置">
+                                    <el-link :underline="false" type="warning">
+                                        {{sampleUrl()}}
+                                    </el-link>
+                                </el-tooltip>
+                            </el-descriptions-item>
                         </el-descriptions>
-
-                        <el-form-item>
+                        <el-form-item style="margin-top:10px;">
                             <el-col>
                                 <el-button v-if="testConnectionState.isTest" plain circle :type="testConnectionState.buttonType" size="small">
                                     <el-icon v-if="testConnectionState.success"><check /></el-icon>
@@ -246,37 +245,37 @@
                         </el-form-item>
 
                         <!-- ignore table name regex -->
-                        <el-form-item :label="index > 0 ? '': '忽略表名称（支持正则表达式）'" v-for="(item, index) in projectForm.projectSyncRule.ignoreTableNameRegexes" :key="index">
+                        <el-form-item :label="index > 0 ? '': '忽略表名称（支持正则表达式）'" v-for="(item, index) in projectForm.projectSyncRule.ignoreTableNameRegexes" :key="index" class="param-item">
                             <el-col :xs="24" :sm="12" :md="8" style="margin-right:18px;">
                                 <el-input v-model="projectForm.projectSyncRule.ignoreTableNameRegexes[index]" placeholder="name regex"></el-input>
                             </el-col>
                             <el-col :xs="24" :sm="12" :md="8">
-                                <el-button type="text" size="small" @click="removeIgnoreTableName(index)" style="color:#F56C6C">- 删除</el-button>
-                                <el-button type="text" size="small" @click="addIgnoreTableName" v-if="(index+1) == projectForm.projectSyncRule.ignoreTableNameRegexes.length">+ 添加</el-button>
+                                <el-button text type="danger" size="small" @click="removeIgnoreTableName(index)" style="color:#F56C6C">- 删除</el-button>
+                                <el-button text type="primary" size="small" @click="addIgnoreTableName" v-if="(index+1) == projectForm.projectSyncRule.ignoreTableNameRegexes.length" >+ 添加</el-button>
                             </el-col>
                         </el-form-item>
-                        <el-form-item label="忽略表名称（支持正则表达式）" v-if="projectForm.projectSyncRule.ignoreTableNameRegexes.length == 0">
-                            <el-button type="text" size="small" @click="addIgnoreTableName" >+ 添加</el-button>
+                        <el-form-item label="忽略表名称（支持正则表达式）" v-if="projectForm.projectSyncRule.ignoreTableNameRegexes.length == 0" class="param-item">
+                            <el-button text type="primary" size="small" @click="addIgnoreTableName" >+ 添加</el-button>
                         </el-form-item>
 
                         <!-- ignore column name regex -->
-                        <el-form-item :label="index > 0 ? '' : '忽略列名称（支持正则表达式）'" v-for="(item, index) in projectForm.projectSyncRule.ignoreColumnNameRegexes" :key="index">
+                        <el-form-item :label="index > 0 ? '' : '忽略列名称（支持正则表达式）'" v-for="(item, index) in projectForm.projectSyncRule.ignoreColumnNameRegexes" :key="index" class="param-item">
                             <el-col :xs="24" :sm="12" :md="8" style="margin-right:18px;">
                                 <el-input v-model="projectForm.projectSyncRule.ignoreColumnNameRegexes[index]" placeholder="name regex"></el-input>
                             </el-col>
                             
                             <el-col :xs="24" :sm="12" :md="8">
-                                <el-button type="text" size="small" @click="removeIgnoreColumnName(index)" style="color:#F56C6C">- 删除</el-button>
-                                <el-button type="text" size="small" @click="addIgnoreColumnName" v-if="(index+1) == projectForm.projectSyncRule.ignoreColumnNameRegexes.length">+ 添加</el-button>
+                                <el-button text type="danger" size="small" @click="removeIgnoreColumnName(index)" style="color:#F56C6C">- 删除</el-button>
+                                <el-button text type="primary" size="small" @click="addIgnoreColumnName" v-if="(index+1) == projectForm.projectSyncRule.ignoreColumnNameRegexes.length">+ 添加</el-button>
                             </el-col>
                         </el-form-item>
-                        <el-form-item label="忽略列名称（支持正则表达式）" v-if="projectForm.projectSyncRule.ignoreColumnNameRegexes.length == 0">
-                            <el-button type="text" size="small" @click="addIgnoreColumnName" >+ 添加</el-button>
+                        <el-form-item label="忽略列名称（支持正则表达式）" v-if="projectForm.projectSyncRule.ignoreColumnNameRegexes.length == 0" class="param-item">
+                            <el-button text type="primary" size="small" @click="addIgnoreColumnName" >+ 添加</el-button>
                         </el-form-item>
                     </el-tab-pane>
                 </el-tabs>
-                <el-form-item>
-                    <el-divider content-position="center"></el-divider>
+
+                <el-form-item style="margin-top: 6px;">
                     <el-button type="primary" @click="onProjectFormSave('projectFormRulesRef')" >保存</el-button>
                     <el-button @click="onProjectFormCancel">取消</el-button>
                 </el-form-item>
@@ -453,7 +452,11 @@
 
 <style>
 .el-row {
-    margin-top: 33px
+    margin-top: 18px
+}
+
+.param-item {
+    margin-bottom: 8px;
 }
 </style>
 <script>

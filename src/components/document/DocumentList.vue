@@ -278,7 +278,8 @@
                     <el-tooltip content="点击复制">
                         <el-button 
                             icon="copy-document"
-                            type="text" 
+                            type="primary"
+                            text
                             class="copy-button"
                              @click="copyMockSql()" 
                             v-clipboard:copy="mockDataSql" 
@@ -384,7 +385,7 @@
 .copy-button {
     position:absolute;
     right: 12px;
-    top: 12px;
+    top: 16px;
     color:#fff;
 }
 

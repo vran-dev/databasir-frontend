@@ -3,8 +3,9 @@
   <el-card id="task-list" v-if="projectTaskData.showTaskList && projectTaskData.tasks.length > 0" style="position:fixed;right: 20px !important; top: 80px !important;width:300px;z-index:1000;">
     <template #header>
       <div class="card-header">
-        <el-button type="text" icon="List" style="color:#303133">任务列表</el-button>
-        <el-button icon="Close" type="text" @click="projectTaskData.showTaskList = false" style="color:#303133;"></el-button>
+        <!-- <el-link icon="List" style="color:#303133" underline="false">任务列表</el-link> -->
+        <el-link icon="List" :underline="false">任务列表</el-link>
+        <el-button icon="Close" text @click="projectTaskData.showTaskList = false" style="color:#303133;"></el-button>
       </div>
     </template>
     <div 
@@ -17,7 +18,7 @@
             :status="taskStatusToProgressStatus(task)">
             <el-tooltip content="点击刷新文档" v-if="task.status == 'FINISHED'">
                 <el-button 
-                  type="text" 
+                  text
                   icon="RefreshRight" 
                   style="color:#67C23A"
                   @click="onClickTaskProgress(task)">
@@ -26,7 +27,7 @@
             </el-tooltip>
             <el-tooltip :content="task.result" v-else-if="task.status == 'FAILED'">
                 <el-button 
-                  type="text" 
+                  text 
                   icon="WarningFilled" 
                   style="color:#F56C6C"
                   @click="onClickTaskProgress(task)">
@@ -35,7 +36,7 @@
             </el-tooltip>
             <el-tooltip :content="task.result" v-else-if="task.status == 'CANCELED'">
                 <el-button 
-                  type="text" 
+                  text
                   icon="WarningFilled" 
                   style="color:#E6A23C"
                   @click="onClickTaskProgress(task)">
@@ -43,7 +44,8 @@
                 </el-button>
             </el-tooltip>
             <el-tooltip content="点击取消同步" v-else-if="task.status == 'NEW'">
-                <el-button type="text" 
+                <el-button 
+                  text
                   icon="CircleCloseFilled" 
                   @click="onClickTaskProgress(task)"
                   style="color:#303133">
@@ -51,7 +53,8 @@
                 </el-button>
             </el-tooltip>
             <el-tooltip content="点击取消同步" v-else>
-                <el-button type="text" 
+                <el-button 
+                  text
                   icon="CircleCloseFilled" 
                   @click="onClickTaskProgress(task)">
                   同步中
@@ -84,7 +87,7 @@
   <template  v-else>
     <el-container >
       <el-aside>
-          <el-space direction="vertical" :size="26" alignment="left" class="doc-toc-aside">
+          <el-space direction="vertical" :size="26" alignment="left" class="doc-toc-aside" style="width: 300px;">
             <el-switch 
             v-model="tocData.isMultiSelectionMode" 
             active-text="多选模式" 
