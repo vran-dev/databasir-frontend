@@ -66,7 +66,6 @@
 
   <template v-if="isShowNoDataPage">
       <el-empty description="似乎还没有同步过文档" >
-        
         <el-button-group>
           <el-button 
             type="success" 
@@ -96,16 +95,18 @@
             :loading="loadings.multiSelectionModeChanging"/>
 
             <el-input prefix-icon="Search" class="search-input" placeholder="输入表名、注释、描述进行搜索" v-model="searchTableText"></el-input>
-            <el-tree
+            <div id="toc-tree-wrapper">
+            <el-tree-v2
               ref="treeRef"
               :data="tocData.value" 
               :show-checkbox="tocData.isMultiSelectionMode"
-              :default-checked-keys="defaultCheckedKeys"
+              :default-expanded-keys="[-1]"
               node-key="id" 
               highlight-current
               @node-click="onTocNodeClick" 
               @check-change="onTocNodeCheckChange" 
-              :filter-node-method="searchTables"
+              :filter-method="searchTables"
+              :height="tocTreeHeight"
             >
               <template #default="{ data }">
                 <span class="span-ellipsis" >
@@ -134,7 +135,8 @@
                   </el-tooltip>
                 </span>
               </template>
-            </el-tree>
+            </el-tree-v2>
+            </div>
           </el-space>
       </el-aside>
       <el-container>
@@ -204,7 +206,7 @@
               </el-select>
               <el-switch 
               v-model="documentDiffData.diffModeEnabled" 
-              :before-change="onDiffModeChange"
+              :before-change="beforeDiffModeChange"
               v-if="activeTab == 'tableDocument'" 
               active-text="显示版本差异"/>
             </el-space>
@@ -284,7 +286,7 @@
 }
 
 .doc-toc-aside:hover {
-  overflow-y: auto;
+  overflow-y: hidden;
   scrollbar-width: thin;
 }
 
@@ -319,7 +321,7 @@
 </style>
 
 <script>
-import { reactive, computed, ref, watch, onBeforeUnmount } from 'vue'
+import { reactive, computed, ref, watch, onBeforeUnmount, nextTick } from 'vue'
 import {  useRoute } from 'vue-router'
 import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables } from '@/api/Document'
 import { listProjectManualTasks, cancelProjectTask } from '@/api/Project'
@@ -352,6 +354,7 @@ export default {
       documentFilter: {
         version: null
       },
+      projectName: null,
       projectId: route.params.projectId,
       groupId: route.params.groupId,
     })
@@ -367,7 +370,7 @@ export default {
     // toc
     const tocData = reactive({
       value: [{id: -1, name: '概览'}],
-      checkedValue: [{id: -1, name: '概览'}],
+      lastCheckedKeys: [],
       treeProps: {
         children: 'children',
         label: 'name',
@@ -402,7 +405,6 @@ export default {
       return ""
     }
 
-    const defaultCheckedKeys = computed(() => tocData.checkedValue.map(item => item.id))
     // document component
     const documentData = reactive({
       tables: [],
@@ -418,11 +420,11 @@ export default {
 
     const fetchDocumentTables = (tableIds, callback) => {
       let documentId = projectData.simpleDocumentData.id
-      // 为了避免超时，将 id 分为多个组进行查询，每个组的数据量为 40
+      // 为了避免超时，将 id 分为多个组进行查询，每个组的数据量为 100
       let multiArray = []
       let currArray = []
       for (var i = 0; i< tableIds.length; i++) {
-        if (i != 0 && i % 35 == 0) {
+        if (i != 0 && i % 100 == 0) {
           multiArray.push(currArray)
           currArray = []
         }
@@ -482,37 +484,52 @@ export default {
       }
     }
 
-    const onTocNodeCheckChange = (callback) => {
-      fetchDocumentTables(treeRef.value.getCheckedKeys(), data => {
-        if (treeRef.value.getCheckedKeys().some(n => n== -1)) {
-          documentData.overview = projectData.simpleDocumentData
-        } else {
-          documentData.overview = null
+    const onTocNodeCheckChange = (node, selected) => {
+      const checkedNodes = treeRef.value.getCheckedKeys()
+      tocData.lastCheckedKeys = checkedNodes
+      // element 的 tree 结构中，父级全选，那么对应子级事件也会一个过来，所以这里判断父级已被选中了的话，就直接 return
+      if (checkedNodes.some(id => id == -1)) {
+        if (node.id == -1 && selected) {
+          fetchDocumentTables(checkedNodes, data => {
+            if (!documentData.overview) {
+              documentData.overview = projectData.simpleDocumentData
+            }
+            documentData.tables = data
+            umlData.tables = data
+          })
         }
-        documentData.tables = data
-        umlData.tables = data
-        if (callback) {
-          callback()
-        }
-      })
-    }
+        return
+      }
 
-    const onMultiSelectionModeChange = (val) => {
-      loadings.multiSelectionModeChanging = true
-      if (val) {
-        onTocNodeCheckChange(() => { loadings.multiSelectionModeChanging = false})
+      // 父级反选以后，那么就相当于全部取消了
+      if (node.id == -1 && !selected && checkedNodes.length == 0) {
+        documentData.tables = []
+        umlData.tables = []
+        return
+      }
+
+      // 父级反选以后，子级的取消事件也会一个一个过来，需要忽略
+      if (!selected && (checkedNodes.length == 0 )) {
+        return
+      }
+
+      if (selected) {
+        // 单个选中
+        fetchDocumentTables(checkedNodes, data => {
+          if (!documentData.overview) {
+            documentData.overview = projectData.simpleDocumentData
+          }
+          documentData.tables = data
+          umlData.tables = data
+        })
       } else {
-        const curr = treeRef.value.getCurrentNode()
-        tocData.checkedValue = tocData.value.map(item => { return {id: item.id, name: item.name} })
-        if (curr == null) {
-          onTocNodeClick({id: -1})
-        } else {
-          onTocNodeClick(curr)
-        }
-        loadings.multiSelectionModeChanging = false
+        // 单个反选
+        documentData.tables = documentData.tables.filter(item => item.id != node.id)
+        umlData.tables = umlData.tables.filter(item => item.id != node.id)
       }
     }
 
+    const tocTreeHeight = ref(300)
     const initPageData = async () => {
       // init version data
       const versionResp = await getVersionByProjectId(route.params.projectId)
@@ -531,35 +548,85 @@ export default {
         projectData.simpleDocumentData = documentResp.data
         projectData.groupId = route.params.groupId
         projectData.projectId = route.params.projectId
+        projectData.projectName = documentResp.data.projectName
+
         // init toc data
-        tocData.value = documentResp.data.tables.filter(item => item.diffType != 'REMOVED')
-        tocData.value.unshift({ id: -1, name: '概览'})
         if (tocData.isMultiSelectionMode) {
-          // 根据名称恢复用户已选择的节点
-          const checkedNames = new Set(treeRef.value.getCheckedNodes().map(item => item.name))
-          const checkedNodes = tocData.value.filter(item => checkedNames.has(item.name)).map(item => { return {id: item.id, name: item.name} })
-          tocData.checkedValue = checkedNodes
-          fetchDocumentTables(checkedNodes.map(item => item.id), data => {
-            if (checkedNodes.some(item => item.id == -1)) {
-              documentData.overview = projectData.simpleDocumentData
-            } else {
-              documentData.overview = null
-            }
-            documentData.tables = data
-            umlData.tables = data
-          })
+          multiSelectMode(documentResp)
         } else {
-          tocData.checkedValue = tocData.value.map(item => { return {id: item.id, name: item.name} })
-          // init document data
-          documentData.overview = documentResp.data
-          documentData.tables = []
+          singleSelectMode(documentResp)
         }
-        
+
+        nextTick(() => {
+          const ele = document.getElementById("toc-tree-wrapper")
+          if (ele) {
+            const eleClientRect = ele.getBoundingClientRect()
+            const innerHeight = window.innerHeight
+            tocTreeHeight.value =  innerHeight - eleClientRect.y - 60
+          } 
+        })
       } else {
         messageNotify('warn', '无可用数据')
       }
       loadings.init = true
     }
+
+    const singleSelectMode = (documentResp) => {
+      tocData.value = documentResp.data.tables.filter(item => item.diffType != 'REMOVED')
+      tocData.value.unshift({ id: -1, name: '概览'})
+
+      documentData.overview = documentResp.data
+      documentData.tables = []
+    }
+
+    const multiSelectMode = (documentResp) => {
+      const tablesList = documentResp.data.tables.filter(item => item.diffType != 'REMOVED')
+      tocData.value = [{id: -1, name: projectData.projectName, children: tablesList }]
+      // 根据名称恢复用户已选择的节点
+      const checkedNames = new Set(treeRef.value.getCheckedNodes().map(item => item.name))
+      let checkedKeys = tocData.value.length > 0 ? tocData.value[0].children.filter(item => checkedNames.has(item.name)).map(item => item.id ) : []
+      if (!checkedKeys.some(key => key == -1)) {
+        checkedKeys.push(-1)
+      }
+      tocData.lastCheckedKeys = checkedKeys
+      fetchDocumentTables(checkedKeys, data => {
+        if (checkedKeys.some(key => key == -1)) {
+          documentData.overview = projectData.simpleDocumentData
+        } else {
+          documentData.overview = null
+        }
+        documentData.tables = data
+        umlData.tables = data
+      })
+    }
+
+    const onMultiSelectionModeChange = (val) => {
+      loadings.multiSelectionModeChanging = true
+      if (val) {
+        fetchDocumentTables(tocData.lastCheckedKeys, data => {
+          if (documentData.overview == null) {
+            documentData.overview = projectData.simpleDocumentData
+          }
+          documentData.tables = data
+          umlData.tables = data
+          // switch toc tree
+          const tablesList = tocData.value.filter(item => item.id != -1)
+          tocData.value = [{id: -1, name: projectData.projectName, children: tablesList }]
+          loadings.multiSelectionModeChanging = false
+        })
+      } else {
+        const curr = treeRef.value.getCurrentNode()
+        if (curr == null) {
+          onTocNodeClick({id: -1})
+        } else {
+          onTocNodeClick(curr)
+        }
+        tocData.value = tocData.value.length > 0 && tocData.value[0].children? tocData.value[0].children : []
+        tocData.value.unshift({ id: -1, name: '概览'})
+        loadings.multiSelectionModeChanging = false
+      }
+    }
+
     initPageData()
 
     const isShowNoDataPage = computed(() => !projectData.simpleDocumentData && loadings.init)
@@ -668,7 +735,7 @@ export default {
       documentDiffData.originalVersion = null
     }
 
-    const onDiffModeChange = () => {
+    const beforeDiffModeChange = () => {
       return new Promise((resolve) => {
         if(documentDiffData.diffModeEnabled) {
           clearDocumentDiffData()
@@ -838,7 +905,6 @@ export default {
     return {
       tocData,
       tocItemComment,
-      defaultCheckedKeys,
       documentData,
       projectData,
       versionData,
@@ -848,6 +914,7 @@ export default {
       isShowLoadingPage,
       treeRef,
       umlDiagramComponentRef,
+      tocTreeHeight,
       onTocNodeClick,
       onTocNodeCheckChange,
       onMultiSelectionModeChange,
@@ -861,7 +928,7 @@ export default {
       activeTab,
       onTabClick,
       documentDiffData,
-      onDiffModeChange,
+      beforeDiffModeChange,
       onProjectDocumentCompareVersionChange,
       searchTables,
       searchTableText,

@@ -30,9 +30,10 @@
         </template>
       </el-sub-menu>
       <el-menu-item  v-else-if="isShowMenu(menu)" :index="menu.path">
-        <el-icon>
+        <el-icon v-if="menu.icon">
           <component :is="menu.icon" />
         </el-icon>
+        <img v-if="menu.iconImage" :src="menu.iconImage" class="icon-image"/>
         <template #title>
           <span>{{ menu.meta.nav }}</span>
         </template> 

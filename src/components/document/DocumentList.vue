@@ -31,7 +31,39 @@
             </el-descriptions>
 
             <div class="h3">Tables</div>
-            <el-table :data="simpleTables"  border width='80%' @row-dblclick="onCellClick" :row-class-name="predicateRowClass" highlight-current-row  row-key="id">
+            <vxe-table
+                v-if="simpleTables.length > useVirtualTableThreshold" 
+                border="inner"
+                :data="simpleTables" 
+                max-height="800"
+                :tree-config="{transform: true, expandAll: false, rowField: 'id', parentField: 'parentId'}"
+                :row-class-name="predicateRowClass"
+                :row-config="{isHover: true, height: 60}"
+                :edit-config="{trigger: 'dblclick', mode: 'cell'}">
+                <vxe-column type="seq" width="60"></vxe-column>
+                <vxe-column field="name" :title="tableFieldNameMapping('name')" tree-node>
+                    <template #default="{ row }">
+                        <span> {{ row.name }}</span>
+                    </template>
+                </vxe-column>
+                <vxe-column field="type" :title="tableFieldNameMapping('type')"></vxe-column>
+                <vxe-column field="comment" :title="tableFieldNameMapping('comment')"></vxe-column>
+                <vxe-column field="description" :title="tableFieldNameMapping('description')" :edit-render="{ name: 'textarea'}">
+                    <template #edit="{ row }">
+                        <el-input v-model="row.description" type="textarea" style="width: 100%;z-index: 1000;" autosize :rows="10" :input-style="style.noBorderInput" @change="onUpdateDescription(row.name, null, row)"/>
+                    </template>
+                </vxe-column>
+                <vxe-column field="remark" title="讨论">
+                    <template #default="{ row }">
+                        <el-badge :value="row.discussionCount" :max="99" class="item" v-if="row.discussionCount" type="info">
+                            <el-button @click="onRemark(row.name)" size="small" icon="chat-line-round"></el-button>
+                        </el-badge>
+                        <el-button v-else @click="onRemark(row.name)" size="small" icon="chat-line-round"></el-button>
+                    </template>
+                </vxe-column>
+            </vxe-table>
+            
+            <el-table v-else :data="simpleTables"  border width='80%' @row-dblclick="onCellClick" :row-class-name="predicateRowClass" highlight-current-row  row-key="id">
                 <el-table-column type="index" />
                 <el-table-column :label="tableFieldNameMapping('name')" min-width="160" resizable>
                     <template v-slot="scope">
@@ -260,7 +292,7 @@
             </div>
         </el-col>
     </el-row>
-              <el-backtop :right="100" :bottom="100"/>
+    <el-backtop :right="100" :bottom="100"/>
 
 
      <el-dialog
@@ -499,6 +531,8 @@ export default {
                     border: 'none'
                 }
             },
+            useVirtualTableThreshold: 500,
+
         }
     },
     created(){
@@ -542,14 +576,77 @@ export default {
     },
     computed: {
         simpleTables() {
-            return this.overviewData.tables.map(item => {
-                const that = Object.assign({}, item)
-                if(item.original) {
-                    that.original.isOriginal = true
-                    that.children = [that.original]
-                }
-                return that
-            })
+            const raw = this.overviewData.tables
+            if(raw.length > this.useVirtualTableThreshold) {
+                const d =  raw.flatMap((item, index) => {
+                    const that = Object.assign({}, item)
+                    that.index = index + 1
+                    if(item.original) {
+                        that.original.isOriginal = true
+                        that.original.parentId = that.id
+                        that.children = [that.original]
+                        return  [that, that.original]
+                    } else {
+                        return [that]
+                    }
+                    
+                })
+                return d
+            } else {
+                return raw.map((item, index) => {
+                    const that = Object.assign({}, item)
+                    if(item.original) {
+                        that.original.isOriginal = true
+                        that.children = [that.original]
+                    }
+                    that.index = index + 1
+                    return that
+                })
+            }
+        },
+
+        simpleTableColumns() {
+            const columns = [
+                    {
+                        key: 0,
+                        dataKey: "index",
+                        title: "",
+                        width: 100,
+                    }, 
+                    {
+                        key: 1,
+                        dataKey: "name",
+                        title: this.tableFieldNameMapping('name'),
+                        width: 350,
+                    }, 
+                    {
+                        key: 2,
+                        dataKey: "type",
+                        title: this.tableFieldNameMapping('type'), 
+                        width: 180,
+                    },
+                    {
+                        key: 3,
+                        dataKey: "comment",
+                        title: this.tableFieldNameMapping('comment'), 
+                        width: 450,
+                    }
+                    , 
+                    {
+                        key: 4,
+                        dataKey: "description",
+                        title: this.tableFieldNameMapping('description'), 
+                        width: 450,
+                    }
+                    , 
+                    {
+                        key: 5,
+                        dataKey: "remark",
+                        title: '讨论', 
+                        width: 150
+                    }
+                ]
+            return columns
         },
 
         tables() {
