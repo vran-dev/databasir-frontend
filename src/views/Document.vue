@@ -165,16 +165,9 @@
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item @click="onMarkdownExport()">
-                      Markdown
+                    <el-dropdown-item v-for="(fileType, index) in fileTypes" :key="index" @click="onFileExport(fileType.type, fileType.fileExtension)">
+                      {{ fileType.name }}
                     </el-dropdown-item>
-                    <el-dropdown-item @click="onUmlExport('png')">
-                      UML PNG
-                    </el-dropdown-item>
-                    <el-dropdown-item @click="onUmlExport('svg')">
-                      UML SVG
-                    </el-dropdown-item>
-                    <!-- <el-dropdown-item>Excel</el-dropdown-item> -->
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -323,7 +316,7 @@
 <script>
 import { reactive, computed, ref, watch, onBeforeUnmount, nextTick } from 'vue'
 import {  useRoute } from 'vue-router'
-import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables } from '@/api/Document'
+import { getSimpleOneByProjectId, syncByProjectId, getVersionByProjectId, exportDocument, getTables, supportFileTypes } from '@/api/Document'
 import { listProjectManualTasks, cancelProjectTask } from '@/api/Project'
 import { ElMessage, ElNotification } from 'element-plus'
 import axios from '@/utils/fetch'
@@ -367,6 +360,14 @@ export default {
       totalPage: 0,
       versions: []
     })
+
+    const fileTypes = ref([])
+    supportFileTypes().then(resp => {
+      if (!resp.errCode) {
+        fileTypes.value = resp.data
+      }
+    })
+
     // toc
     const tocData = reactive({
       value: [{id: -1, name: '概览'}],
@@ -647,13 +648,14 @@ export default {
       loadings.loadingVersions = false
     }
 
-    const onMarkdownExport = () => {
+    const onFileExport = (type, fileExtension) => {
       const projectId = route.params.projectId
       loadings.export = true
+      const name = projectData.simpleDocumentData.databaseName +"." +fileExtension
       exportDocument(projectId, {
         version: projectData.documentFilter.version,
-        fileType: 'MARKDOWN',
-      }, projectData.simpleDocumentData.databaseName, () => loadings.export = false)
+        fileType: type,
+      }, name, () => loadings.export = false)
     }
 
     const umlDiagramComponentRef = ref()
@@ -904,6 +906,7 @@ export default {
     
     return {
       tocData,
+      fileTypes,
       tocItemComment,
       documentData,
       projectData,
@@ -921,7 +924,7 @@ export default {
       loadMoreDocumentVersions,
       onProjectDocumentVersionChange,
       onSyncProjectDocument,
-      onMarkdownExport,
+      onFileExport,
       onUmlExport,
       documentDiscussionData,
       showDiscussionDrawer,

@@ -38,6 +38,10 @@ export const exportDocument = (projectId, params, name, callback) => {
     return fileDownload(base + "/projects/"+projectId+"/document_files", params, name, callback)
 }
 
+export const supportFileTypes = () => {
+    return axios.get(base + "/document_file_types")
+}
+
 export const listTables =(projectId, parameters) => {
     return axios.get(base + "/projects/"+projectId+"/tables", {
         params: parameters
@@ -52,7 +56,7 @@ function fileDownload(path, params, name, callback){
         let urlObj = window.URL || window.webkitURL || window;
         const link = document.createElement('a');
         link.href = urlObj.createObjectURL(new Blob([response]));
-        link.download = name +".md"; //or any other extension
+        link.download = name; //or any other extension
         document.body.appendChild(link);
         link.click();
         callback()
