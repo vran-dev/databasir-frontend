@@ -652,9 +652,17 @@ export default {
       const projectId = route.params.projectId
       loadings.export = true
       const name = projectData.simpleDocumentData.databaseName +"." +fileExtension
+      const checkedTables = treeRef.value.getCheckedKeys()
+      let tableIds;
+      if (checkedTables && checkedTables.length > 0) {
+        tableIds = checkedTables.reduce((a, b) => a + ',' + b)
+      } else {
+        tableIds = null
+      }
       exportDocument(projectId, {
         version: projectData.documentFilter.version,
         fileType: type,
+        tableIds: tableIds
       }, name, () => loadings.export = false)
     }
 
