@@ -94,7 +94,47 @@
             @change="onMultiSelectionModeChange"
             :loading="loadings.multiSelectionModeChanging"/>
 
-            <el-input prefix-icon="Search" class="search-input" placeholder="输入表名、注释、描述进行搜索" v-model="searchTableText"></el-input>
+            <el-input
+              v-model="searchTableText"
+              placeholder="输入表名、注释、描述进行搜索"
+              class="search-input"
+            >
+              <template #suffix v-if="documentDiffData.diffModeEnabled">
+                  <el-icon><Search /></el-icon>
+              </template>
+              <template #prefix v-if="documentDiffData.diffModeEnabled && projectData.documentFilter.version != documentDiffData.originalVersion && documentDiffData.originalVersion != null">
+                <el-dropdown>
+                  <span >
+                    <el-icon>
+                      <arrow-down />
+                    </el-icon>
+                  </span>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item>
+                        <el-checkbox v-model="searchFilter.filterAdded" true-label=1 false-label=0 label="新增" size="small" @change="onSearchFilterChange"/>
+                      </el-dropdown-item>
+                      <el-dropdown-item>
+                        <el-checkbox v-model="searchFilter.filterRemoved" true-label=1 false-label=0 label="删除" size="small"  @change="onSearchFilterChange"/>
+                      </el-dropdown-item>
+                      <el-dropdown-item>
+                        <el-checkbox v-model="searchFilter.filterModified" true-label=1 false-label=0 label="修改" size="small"  @change="onSearchFilterChange"/>
+                      </el-dropdown-item>
+                      <el-dropdown-item>
+                        <el-checkbox v-model="searchFilter.filterNone" true-label=1 false-label=0 label="无变化" size="small"  @change="onSearchFilterChange"/>
+                      </el-dropdown-item>
+                      <el-dropdown-item divided @click="resetSearchFilter">
+                        <span style="font-size: 12px;">重置</span>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </template>
+              <template #prefix v-else>
+                  <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            
             <div id="toc-tree-wrapper">
             <el-tree-v2
               ref="treeRef"
@@ -121,6 +161,12 @@
                       <span v-else-if="documentDiffData.diffModeEnabled && data.diffType == 'MODIFIED'" style="color: #E6A23C">
                         {{ data.name }}
                         <span  style="color: #f3d19e;">
+                          {{ tocItemComment(data) }}
+                        </span>
+                      </span>
+                      <span v-else-if="documentDiffData.diffModeEnabled && data.diffType == 'REMOVED'" style="color: #F56C6C">
+                        {{ data.name }}
+                        <span  style="color: #fab6b6;">
                           {{ tocItemComment(data) }}
                         </span>
                       </span>
@@ -286,7 +332,6 @@
 .search-input {
     border-width: 0 0 0px 0;
     border-style: solid;
-    width: 90% !important;
     min-height: 33px;
     margin-right: 10px;
 }
@@ -380,10 +425,36 @@ export default {
     })
     const treeRef = ref()
     const searchTableText = ref('')
+    const searchFilter = reactive({
+      filterAdded: 0,
+      filterRemoved: 0,
+      filterModified: 0,
+      filterNone: 0
+    })
     watch(searchTableText, (val) => {
       treeRef.value.filter(val)
     })
+
+    const diffTypeMap = new Map([['ADDED', 0], ['REMOVED', 1], ['MODIFIED', 2], ['NONE', 3]])
+    const resetSearchFilter = () => {
+      searchFilter.filterAdded = 0
+      searchFilter.filterRemoved = 0
+      searchFilter.filterModified = 0
+      searchFilter.filterNone = 0
+      treeRef.value.filter(searchTableText.value)
+    }
+    const onSearchFilterChange = () => {
+      treeRef.value.filter(searchTableText.value)
+    }
     const searchTables = (value, data) => {
+      const filterBitmap = [searchFilter.filterAdded, searchFilter.filterRemoved, searchFilter.filterModified, searchFilter.filterNone]
+      const ignoreFilter = filterBitmap.every(item => item == 0)
+      if (documentDiffData.diffModeEnabled && !ignoreFilter && data.diffType) {
+        const bitPosition = diffTypeMap.get(data.diffType)
+        if (filterBitmap[bitPosition] != 1) {
+          return false
+        }
+      }
       if (!value) return true
       if(data.name.includes(value)) {
         return true;
@@ -557,14 +628,14 @@ export default {
         } else {
           singleSelectMode(documentResp)
         }
-
+        
         nextTick(() => {
           const ele = document.getElementById("toc-tree-wrapper")
           if (ele) {
             const eleClientRect = ele.getBoundingClientRect()
             const innerHeight = window.innerHeight
             tocTreeHeight.value =  innerHeight - eleClientRect.y - 60
-          } 
+          }
         })
       } else {
         messageNotify('warn', '无可用数据')
@@ -573,7 +644,7 @@ export default {
     }
 
     const singleSelectMode = (documentResp) => {
-      tocData.value = documentResp.data.tables.filter(item => item.diffType != 'REMOVED')
+      tocData.value = documentResp.data.tables
       tocData.value.unshift({ id: -1, name: '概览'})
 
       documentData.overview = documentResp.data
@@ -581,7 +652,7 @@ export default {
     }
 
     const multiSelectMode = (documentResp) => {
-      const tablesList = documentResp.data.tables.filter(item => item.diffType != 'REMOVED')
+      const tablesList = documentResp.data.tables
       tocData.value = [{id: -1, name: projectData.projectName, children: tablesList }]
       // 根据名称恢复用户已选择的节点
       const checkedNames = new Set(treeRef.value.getCheckedNodes().map(item => item.name))
@@ -643,6 +714,9 @@ export default {
 
     const onProjectDocumentVersionChange = async () => {
       loadings.loadingVersions = true
+      if (projectData.documentFilter.version == '') {
+        projectData.documentFilter.version = null
+      }
       initPageData()
       messageNotify('success', '切换成功')
       loadings.loadingVersions = false
@@ -743,6 +817,7 @@ export default {
         documentData.overview.diffType = 'NONE'
       }
       documentDiffData.originalVersion = null
+      resetSearchFilter()
     }
 
     const beforeDiffModeChange = () => {
@@ -943,6 +1018,9 @@ export default {
       onProjectDocumentCompareVersionChange,
       searchTables,
       searchTableText,
+      onSearchFilterChange,
+      resetSearchFilter,
+      searchFilter,
       projectTaskData,
       onClickTaskProgress,
       taskStatusToProgressStatus,
