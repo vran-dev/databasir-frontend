@@ -21,7 +21,7 @@
         >
             <el-input
                 v-model="queryKeyword"
-                placeholder="支持分组、项目、数据库、表、列"
+                placeholder="支持分组、项目、数据库、表、列、描述"
                 style="width:100%;border:none;"
                 :autofocus="true"
                 @change="onQuery"
@@ -129,9 +129,13 @@
                                         </el-tag>
                                     </el-tooltip>
                                 </p>
-                                <span style="color:#909399">
-                                    {{ item.tableComment }}
-                                </span> 
+                                <p v-if="item.tableComment"  style="color:#909399">
+                                    <pre>{{ item.tableComment }}</pre> 
+                                </p>
+                                <p v-if="item.tableDescription" style="color:#909399">
+                                    <span class="second-title">描述</span> 
+                                    <pre>{{ item.tableDescription }}</pre>
+                                </p>
                             </div>
                         </div>
                     </el-tab-pane>
@@ -173,9 +177,13 @@
                                         </el-tag>
                                     </el-tooltip>
                                 </p>
-                                <span style="color:#909399">
-                                    {{ item.colComment }}
-                                </span> 
+                                <p v-if="item.colComment" style="color:#909399">
+                                    <pre>{{ item.colComment }}</pre> 
+                                </p>
+                                <p v-if="item.colDescription" style="color:#909399">
+                                    <span class="second-title">描述</span> 
+                                    <pre>{{ item.colDescription }}</pre> 
+                                </p>
                             </div>
                         </div>
                     </el-tab-pane>
@@ -200,9 +208,9 @@
                                 </span>
                             </div>
                             <div class="content" v-if="item.groupDescription && item.groupDescription != ''">
-                                <span style="color:#909399">
-                                    {{ item.groupDescription }}
-                                </span> 
+                                <p style="color:#909399">
+                                    <pre>{{ item.groupDescription }}</pre>
+                                </p>
                             </div>
                         </div>
                     </el-tab-pane>
@@ -262,6 +270,10 @@
     line-height: unset;
 }
 
+.second-title {
+    color:#909399;
+    font-size: 14px;
+}
 
 .databasir-nav {
     position: fixed;
@@ -419,7 +431,7 @@ export default {
             }
             const history = this.searchSelectHistory.filter(item => item.label != select.label)
             history.unshift(select)
-            history.splice(15)
+            history.splice(10)
             this.searchSelectHistory = history
             window.localStorage.setItem(this.searchSelectHistoryKey, JSON.stringify(this.searchSelectHistory))
             window.location=path
@@ -446,7 +458,7 @@ export default {
             }
             const history = this.searchSelectHistory.filter(item => item.label != select.label)
             history.unshift(select)
-            history.splice(15)
+            history.splice(10)
             this.searchSelectHistory = history
 
             window.localStorage.setItem(this.searchSelectHistoryKey, JSON.stringify(this.searchSelectHistory))
