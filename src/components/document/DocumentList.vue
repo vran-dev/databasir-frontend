@@ -235,11 +235,9 @@
                     </el-table-column>
                     <el-table-column :label="indexFieldNameMapping('columnNames')" min-width="150">
                         <template v-slot="scope">
-                            <el-space>
-                                <el-tag v-for="(item, index) in scope.row.columnNames" :key="index" type="info">
-                                    {{ item }}
-                                </el-tag>
-                            </el-space>
+                            <el-tag v-for="(item, index) in scope.row.columnNames" :key="index" type="info" style="margin-right: 12px;margin-bottom: 6px;">
+                                <span>{{ item }}</span>
+                            </el-tag>
                         </template>
                     </el-table-column>
                 </el-table>

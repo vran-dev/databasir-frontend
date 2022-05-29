@@ -21,9 +21,11 @@
         >
             <el-input
                 v-model="queryKeyword"
-                placeholder="分组、项目、database、schema 搜索"
+                placeholder="支持分组、项目、数据库、表、列"
                 style="width:100%;border:none;"
+                :autofocus="true"
                 @change="onQuery"
+                ref="queryInputRef"
             >
                 <template #prepend>
                     <el-button :loading="queryLoading" icon="Search"></el-button>
@@ -31,30 +33,181 @@
             </el-input>
             <div style="margin-top:16px;">
                 <el-link :underline="false" v-for="(item, index) in searchSelectHistory" :key="index" @click="jumpToPath(item.path)" style="margin-right: 12px;margin-bottom:12px;">
-                    <el-tag closable :type="item.type == 'group'?'primary':'success'" @close="onRemoveSelectHistoryItem(item.label)">
+                    <el-tag closable :type="historyItemTypeToTagType(item.type)" @close="onRemoveSelectHistoryItem(item.label)">
                         {{item.label}}
                     </el-tag>
                 </el-link>
             </div>
-            <el-divider v-if="queryData.projects.length > 0 || queryData.groups.length > 0"></el-divider>
-            
-            <div class="search-container">
-                <div class="search-item" v-for="(project,index) in queryData.projects" :key="index" @click="jumpToProject(project)">
-                    <span>
-                        <el-tag type="success">project</el-tag> <el-link :underline="false"> {{project.groupName}} / {{project.projectName}}</el-link>
-                    </span>
-                    <span class="jump">
-                        <el-icon><Right /></el-icon>
-                    </span>
-                </div>
-                <div class="search-item" v-for="(group,index) in queryData.groups" :key="index" @click="jumpToGroup(group)">
-                    <span>
-                    <el-tag>group</el-tag> <el-link :underline="false"> {{group.name}}</el-link>
-                    </span>
-                    <span class="jump">
-                        <el-icon><Right /></el-icon>
-                    </span>
-                </div>
+            <div v-if="!hasMatchData && showEmpty && !queryLoading">
+                <el-empty :image-size="60" />
+            </div>
+            <div v-if="queryLoading">
+                <el-skeleton :rows="5" :animated="queryLoading" :throttle="500"/>
+            </div>
+            <div class="search-container" v-if="hasMatchData">
+                <el-tabs v-model="activeSearchTabName">
+                    <!-- projects -->
+                    <el-tab-pane label="项目" name="projects" v-if="queryData.projectPageData.numberOfElements > 0">
+                        <template #label>
+                            <el-badge :value="queryData.projectPageData.totalElements" :max="50" class="badge">
+                                <el-button type="plain" text>项目</el-button>
+                            </el-badge>
+                        </template>
+                        <div v-for="(item,index) in queryData.projectPageData.content" :key="index" @click="jumpToProject(item)" class="search-item" >
+                            <div class="header" @click="jumpToProject(item)">
+                                <span >
+                                    <el-tag type="success" style="margin-right: 8px;">项目</el-tag>
+                                    <el-link>
+                                        {{item.groupName}} / {{item.projectName}}
+                                    </el-link>
+                                </span>
+                                <span class="jump">
+                                    <el-icon><Right /></el-icon>
+                                </span>
+                            </div>
+                            <div class="content" style="color:#909399">
+                                <p>
+                                    <el-tooltip content="数据库类型" v-if="item.databaseProductName">
+                                        <el-tag size="small" type="info" effect="plain" class="item">
+                                            {{ item.databaseProductName }}
+                                        </el-tag>
+                                    </el-tooltip>
+                                    <el-tooltip content="database" v-if="item.databaseName">
+                                        <el-tag size="small" type="info" effect="plain" class="item">
+                                            {{ item.databaseName }}
+                                        </el-tag>
+                                    </el-tooltip>
+                                    <el-tooltip content="schema" v-if="item.schemaName">
+                                        <el-tag size="small" type="info" effect="plain" class="item">
+                                            {{ item.schemaName }}
+                                        </el-tag>
+                                    </el-tooltip>
+                                </p>
+                                <p v-if="item.projectDescription && item.projectDescription != ''" >
+                                    <span>
+                                        {{ item.projectDescription }}
+                                    </span> 
+                                </p>
+                            </div>
+                        </div>
+                    </el-tab-pane>
+
+                    <!-- tables -->
+                    <el-tab-pane label="表" name="tables" v-if="queryData.tablePageData.numberOfElements > 0">
+                        <template #label>
+                            <el-badge :value="queryData.tablePageData.totalElements" :max="50" class="badge">
+                                <el-button type="plain" text>表</el-button>
+                            </el-badge>
+                        </template>
+                        <div v-for="(item,index) in queryData.tablePageData.content" :key="index" @click="jumpToProject(item)" class="search-item">
+                            <div class="header">
+                                <span>
+                                    <el-tag type="primary" style="margin-right: 8px;"> 表</el-tag>
+                                    <el-link>
+                                        {{ item.groupName }} / {{ item.projectName }} / {{ item.tableName }}
+                                    </el-link>
+                                </span>
+                                <span class="jump">
+                                    <el-icon><Right /></el-icon>
+                                </span>
+                            </div>
+                            <div class="content">
+                                <p>
+                                    <el-tooltip content="数据库发行商" v-if="item.databaseProductName">
+                                        <el-tag size="small" type="info" effect="plain" class="item">
+                                            {{ item.databaseProductName }}
+                                        </el-tag>
+                                    </el-tooltip>
+                                    <el-tooltip content="database" v-if="item.databaseName">
+                                        <el-tag size="small" type="info" effect="plain" class="item">
+                                            {{ item.databaseName }}
+                                        </el-tag>
+                                    </el-tooltip>
+                                    <el-tooltip content="schema" v-if="item.schemaName">
+                                        <el-tag size="small" type="info" effect="plain" class="item">
+                                            {{ item.schemaName }}
+                                        </el-tag>
+                                    </el-tooltip>
+                                </p>
+                                <span style="color:#909399">
+                                    {{ item.tableComment }}
+                                </span> 
+                            </div>
+                        </div>
+                    </el-tab-pane>
+
+                    <!-- columns -->
+                    <el-tab-pane label="列" name="columns" v-if="queryData.columnPageData.numberOfElements > 0">
+                        <template #label>
+                            <el-badge :value="queryData.columnPageData.totalElements" :max="50" class="badge">
+                                <el-button type="plain" text>列</el-button>
+                            </el-badge>
+                        </template>
+                        <div v-for="(item,index) in queryData.columnPageData.content" :key="index" @click="jumpToProject(item)" class="search-item">
+                            <div class="header">
+                                <span>
+                                    <el-tag type="warning" style="margin-right: 8px;">列</el-tag>
+                                    <el-link>
+                                        {{ item.groupName }} / {{ item.projectName }} / {{ item.tableName }} / {{ item.colName}}
+                                    </el-link>
+                                </span>
+                                <span class="jump">
+                                    <el-icon><Right /></el-icon>
+                                </span>
+                            </div>
+                            <div class="content">
+                                <p>
+                                    <el-tooltip content="数据库类型" v-if="item.databaseProductName">
+                                        <el-tag size="small" type="info" effect="plain" class="item">
+                                            {{ item.databaseProductName }}
+                                        </el-tag>
+                                    </el-tooltip>
+                                    <el-tooltip content="database" v-if="item.databaseName">
+                                        <el-tag size="small" type="info" effect="plain" class="item">
+                                            {{ item.databaseName }}
+                                        </el-tag>
+                                    </el-tooltip>
+                                    <el-tooltip content="schema" v-if="item.schemaName">
+                                        <el-tag size="small" type="info" effect="plain" class="item">
+                                            {{ item.schemaName }}
+                                        </el-tag>
+                                    </el-tooltip>
+                                </p>
+                                <span style="color:#909399">
+                                    {{ item.colComment }}
+                                </span> 
+                            </div>
+                        </div>
+                    </el-tab-pane>
+
+                    <!-- groups -->
+                    <el-tab-pane label="组" name="groups" v-if="queryData.groupPageData.numberOfElements > 0">
+                        <template #label>
+                            <el-badge :value="queryData.groupPageData.totalElements" :max="99" class="badge">
+                                <el-button type="plain" text>组</el-button>
+                            </el-badge>
+                        </template>
+                        <div v-for="(item,index) in queryData.groupPageData.content" :key="index" @click="jumpToGroup(item)" class="search-item">
+                            <div class="header">
+                                <span>
+                                    <el-tag type="info" style="margin-right: 8px;">组</el-tag>
+                                    <el-link>
+                                        {{ item.groupName }}
+                                    </el-link>
+                                </span>
+                                <span class="jump">
+                                    <el-icon><Right /></el-icon>
+                                </span>
+                            </div>
+                            <div class="content" v-if="item.groupDescription && item.groupDescription != ''">
+                                <span style="color:#909399">
+                                    {{ item.groupDescription }}
+                                </span> 
+                            </div>
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
+                
             </div>
         </el-dialog>
     </el-container>
@@ -63,25 +216,52 @@
 <style>
 .search-item {
     padding: 10px;
-    width: 99%;
+    width: 95%;
     margin-bottom: 12px;
-    margin-right:12px;
-    display: flex;
-    justify-content: space-between;
+    margin-right: 12px;
     border-radius: 8px;
+    border-width: 0 0 1px 0;
+    border-color: #DDD;
+    border-style: solid;
 }
+
 .search-item:hover {
     background-color: #F0F2F5;
+    border-color: transparent;
 }
 .search-item .jump {
     margin-right: 8px;
 }
 
+.search-item .header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.search-item .content {
+    padding: 10px;
+}
+
+.search-item .content .item{
+    margin-right: 8px;
+}
+
 .search-container {
     max-height: 420px;
+    margin-top: 12px;
     overflow-y: auto;
     overflow-x: hidden;
 }
+
+.badge{
+    margin-top:12px;
+    margin-right: 20px;
+}
+
+.search-container .el-tabs__item {
+    line-height: unset;
+}
+
 
 .databasir-nav {
     position: fixed;
@@ -162,20 +342,60 @@ export default {
             showSearchDialog: false,
             queryKeyword: '',
             queryData: {
-                projects: [],
-                groups: []
+                projectPageData: {},
+                tablePageData: {},
+                groupPageData: {},
+                columnPageData: {},
             },
             queryLoading: false,
             searchSelectHistory: [],
-            searchSelectHistoryKey: 'globalSearchSelectHistory'
+            searchSelectHistoryKey: 'globalSearchSelectHistory',
+            showEmpty: false,
         }
     },
     mounted() {
         this.loadSearchSelectHistory()
     },
+    computed: {
+        hasMatchData() {
+            return this.queryData.projectPageData.numberOfElements > 0
+            || this.queryData.tablePageData.numberOfElements > 0
+            || this.queryData.groupPageData.numberOfElements > 0
+            || this.queryData.columnPageData.numberOfElements > 0
+        },
+        activeSearchTabName() {
+            if (this.queryData.tablePageData.numberOfElements > 0) {
+                return "tables"
+            }
+            if (this.queryData.columnPageData.numberOfElements > 0) {
+                return "columns"
+            }
+            if (this.queryData.projectPageData.numberOfElements > 0) {
+                return "projects"
+            }
+            if (this.queryData.groupPageData.numberOfElements > 0) {
+                return "groups"
+            }
+            return ""
+        },
+
+    },
+
+    created() {
+        document.onkeydown = (e) => {
+            if(e.code == 'KeyK' && (e.ctrlKey || e.metaKey)){
+                this.search()
+                e.preventDefault()
+            }
+        }
+    },
     methods: {
         search() {
             this.showSearchDialog = true
+            this.$nextTick(() => {
+                this.$refs.queryInputRef.focus()
+            })
+            
         },
         onQuery(val) {
             this.queryLoading = true;
@@ -184,13 +404,16 @@ export default {
                 if (!resp.errCode) {
                    this.queryData = resp.data
                 }
-            }).finally(() => this.queryLoading = false)
+            }).finally(() => {
+                this.queryLoading = false
+                this.showEmpty = true
+            })
         },
         jumpToGroup(group) {
             this.showSearchDialog = false
-            const path = '/groups/'+group.id+"?groupName="+group.name;
+            const path = '/groups/'+group.groupId+"?groupName="+group.groupName;
             const select = {
-                label: group.name,
+                label: group.groupName,
                 path: path,
                 type: 'group'
             }
@@ -203,12 +426,23 @@ export default {
         },
         jumpToProject(project) {
             this.showSearchDialog = false
-            const path = '/groups/'+project.groupId+'/projects/'+project.projectId+'/documents?groupName='+project.groupName+"&projectName="+project.projectName
+            const tableDocumentParam = project.tableDocumentId ? '&tableDocumentId='+project.tableDocumentId:""
+            const path = '/groups/'+project.groupId+'/projects/'+project.projectId+'/documents?groupName='+project.groupName+"&projectName="+project.projectName+tableDocumentParam;
             
+            const tablePath = project.tableName ? ' / ' + project.tableName : ''
+            const columnPath = project.colName ? ' / ' +project.colName : ''
+            let type = 'project'
+            if (project.tableName) {
+                type = 'table'
+            }
+            if (project.colName) {
+                type = 'column'
+            }
+            const label = project.groupName+ ' / '+project.projectName + tablePath + columnPath
             const select = {
-                label: project.groupName+ ' / '+project.projectName,
+                label: label,
                 path: path,
-                type: 'project'
+                type: type
             }
             const history = this.searchSelectHistory.filter(item => item.label != select.label)
             history.unshift(select)
@@ -226,6 +460,18 @@ export default {
             if (window.localStorage.getItem(key) != null) {
                 const obj = JSON.parse(window.localStorage.getItem(key));
                 this.searchSelectHistory = obj
+            }
+        },
+        
+        historyItemTypeToTagType(type) {
+            if (type == 'group') {
+                return 'info'
+            } else  if (type == 'table') {
+                return 'primary'
+            } else if (type == 'column') {
+                return 'warning'
+            } else if (type == 'project') {
+                return 'success'
             }
         },
         onRemoveSelectHistoryItem(label) {

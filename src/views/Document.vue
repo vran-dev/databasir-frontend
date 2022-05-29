@@ -145,6 +145,7 @@
               highlight-current
               @node-click="onTocNodeClick" 
               @check-change="onTocNodeCheckChange" 
+              :current-node-key="tocData.currentTocNodeKey"
               :filter-method="searchTables"
               :height="tocTreeHeight"
             >
@@ -422,6 +423,7 @@ export default {
         label: 'name',
       },
       isMultiSelectionMode: false,
+      currentTocNodeKey: route.query.tableDocumentId ? parseInt(route.query.tableDocumentId) : -1,
     })
     const treeRef = ref()
     const searchTableText = ref('')
@@ -635,6 +637,10 @@ export default {
             const eleClientRect = ele.getBoundingClientRect()
             const innerHeight = window.innerHeight
             tocTreeHeight.value =  innerHeight - eleClientRect.y - 60
+          }
+          if (route.query.tableDocumentId) {
+            const tableDocumentId = parseInt(route.query.tableDocumentId)
+            onTocNodeClick({ id: tableDocumentId })
           }
         })
       } else {

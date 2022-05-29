@@ -44,6 +44,9 @@
           <el-icon style="vertical-align: middle" >
             <Search />
           </el-icon>
+          <template #title>
+            <span>Ctrl+k / Meta+k</span>
+          </template> 
     </el-menu-item>
   </el-menu>
   
