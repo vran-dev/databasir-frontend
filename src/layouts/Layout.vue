@@ -44,7 +44,7 @@
             <div v-if="queryLoading">
                 <el-skeleton :rows="5" :animated="queryLoading" :throttle="500"/>
             </div>
-            <div class="search-container" v-if="hasMatchData">
+            <div class="search-container" v-if="hasMatchData && !queryLoading">
                 <el-tabs v-model="activeSearchTabName">
                     <!-- projects -->
                     <el-tab-pane label="项目" name="projects" v-if="queryData.projectPageData.numberOfElements > 0">
