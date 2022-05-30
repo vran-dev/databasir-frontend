@@ -5,7 +5,7 @@
         <el-row :gutter="12">
             <el-col :xs="24" :sm="6" :md="4" :lg="2" v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId, 'GROUP_MEMBER?groupId='+groupId]" style="margin-bottom:12px;">
                 <el-tooltip content="新建一个新项目" placement="top">
-                    <el-button type="primary" style="width:100%" icon="plus" @click="toCreateProject">新建</el-button>
+                    <el-button  style="width:100%" icon="plus" @click="toCreateProject">新建</el-button>
                 </el-tooltip>
             </el-col>
             <el-col :xs="24" :sm="8" :md="5" :lg="6" style="margin-bottom:12px;">
@@ -29,9 +29,25 @@
                 </el-select>
             </el-col>
         </el-row>
+        
         <el-row>
             <el-table :data="projectPageData.data">
-                <el-table-column prop="id" label="ID" min-width="60" />
+                <el-table-column min-width="60"  type="expand" >
+                    <template #default="props">
+                        <el-descriptions title="" :column="1">
+                            <el-descriptions-item label="项目说明">
+                                <span v-if="!props.row.description || props.row.description == ''"> N/A</span>
+                                <span v-else>{{ props.row.description }}</span>
+                            </el-descriptions-item>
+                            <el-descriptions-item label="创建时间">{{ props.row.createAt }}</el-descriptions-item>
+                        </el-descriptions>
+                    </template>
+
+                </el-table-column>
+                
+                <el-table-column prop="id" label="ID" min-width="60" >
+                
+                </el-table-column>
                 <el-table-column label="项目名称" min-width="120" resizable>
                     <template v-slot="scope">
                         <el-link :underline="false">
@@ -49,7 +65,7 @@
                         <database-icon :databaseType="scope.row.databaseType" :icon="databaseTypeIcon(scope.row)"/>
                     </template>
                 </el-table-column>
-                <el-table-column prop="description" label="说明" min-width="160" resizable />
+                <!-- <el-table-column prop="description" label="说明" min-width="160" resizable /> -->
                 <el-table-column label="定时同步" align="center">
                     <template v-slot="scope">
                         <el-tag v-if="scope.row.isAutoSync">
@@ -60,29 +76,24 @@
                         </span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="createAt" label="创建时间" min-width="120" resizable ></el-table-column>
+                <!-- <el-table-column prop="createAt" label="创建时间" min-width="120" resizable ></el-table-column> -->
                 <el-table-column label="操作" min-width="180" align="center"  resizable>
                     <template v-slot="scope">
-                        <el-dropdown>
-                            <span>
-                                更多
-                            <el-icon >
-                                <arrow-down />
-                            </el-icon>
+                        <el-dropdown split-button>
+                            <el-icon><Grid /></el-icon>
+                            <span  @click="toDocumentPage(scope.row)">
+                               详情
                             </span>
                             <template #dropdown>
                             <el-dropdown-menu>
                                 <el-dropdown-item>
-                                    <el-button type="primary" plain size="small" @click="toEditProject(scope.row)" icon="Edit">编辑项目</el-button>
-                                </el-dropdown-item>
-                                <el-dropdown-item>
-                                    <el-button type="primary" plain size="small" @click="toDocumentPage(scope.row)" icon="View">查看文档</el-button>
+                                    <el-button type="primary"  text size="small" @click="toEditProject(scope.row)" icon="Edit">编辑项目</el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
                                     <el-button 
                                         v-if="!scope.row.isFavorite"
                                         type="primary" 
-                                        plain
+                                        text
                                         size="small" 
                                         @click="onAddProjectFavorite(scope.row)" 
                                         icon="Star">
@@ -90,7 +101,8 @@
                                     </el-button>
                                     <el-button 
                                         v-else
-                                        type="primary" 
+                                        type="warning" 
+                                        text
                                         size="small" 
                                         @click="onRemoveProjectFavorite(scope.row)" 
                                         icon="StarFilled">
@@ -98,10 +110,10 @@
                                     </el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item>
-                                    <el-button type="primary" plain size="small" @click="toProjectOperationLogDrawer(scope.row)" icon="Tickets">查看日志</el-button>
+                                    <el-button type="primary" text size="small" @click="toProjectOperationLogDrawer(scope.row)" icon="Tickets">查看日志</el-button>
                                 </el-dropdown-item>
                                 <el-dropdown-item v-require-roles="['SYS_OWNER', 'GROUP_OWNER?groupId='+groupId]">
-                                    <el-button type="danger" plain size="small" @click="onProjectDelete(scope.row.id)"  icon="Remove">删除项目</el-button>
+                                    <el-button type="danger" text size="small" @click="onProjectDelete(scope.row.id)"  icon="Remove">删除项目</el-button>
                                 </el-dropdown-item>
                             </el-dropdown-menu>
                             </template>
