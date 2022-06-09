@@ -323,7 +323,7 @@
 
 .h2 {
     font-size: 24px;
-    color: #606266;
+    color: #303133;
     font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
   'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
     margin-top: 13px;
@@ -331,7 +331,7 @@
 }
 .h3 {
     font-size: 20px;
-    color: #909399;
+    color: #303133;
     font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
   'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
     margin-top: 18px;
