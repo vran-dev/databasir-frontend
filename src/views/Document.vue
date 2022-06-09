@@ -117,7 +117,32 @@
   </template>
   <template v-else>
     <el-container>
-      <el-aside>
+        <el-button
+          v-if="isHideAside"
+          icon="ArrowRightBold"
+          @click="showAside()"
+          style="
+            height: 50px;
+            width: 30px;
+            position: fixed;
+            top: 48%;
+            left: 46px;
+            z-index: 1000;
+          "
+        ></el-button>
+      <el-aside v-show="!isHideAside">
+        <el-button
+          icon="ArrowLeftBold"
+          @click="hideAside()"
+          style="
+            height: 50px;
+            width: 30px;
+            position: fixed;
+            top: 48%;
+            left: var(--el-aside-width, 390px);
+            z-index: 1000;
+          "
+        ></el-button>
         <el-space
           direction="vertical"
           :size="26"
@@ -1207,7 +1232,20 @@ export default {
       clearInterval(pollNewOrRunningTaskTimer);
     });
 
+    const isHideAside = ref(false);
+
+    const hideAside = () => {
+      isHideAside.value = true;
+    };
+
+    const showAside = () => {
+      isHideAside.value = false;
+    };
+
     return {
+      isHideAside,
+      hideAside,
+      showAside,
       tocData,
       fileTypes,
       tocItemComment,
