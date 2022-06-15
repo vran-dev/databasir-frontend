@@ -3,7 +3,27 @@
         <el-main>
             <el-table :data="projectOperationLogPageData.data">
                 <el-table-column prop="id" label=""/>
-                <el-table-column prop="operationModule" label="系统模块" />
+                <el-table-column label="系统模块" >
+                    <template #header>
+                        <el-dropdown>
+                            <span>
+                                {{logModuleColumnLabel}}
+                            <el-icon>
+                                <arrow-down />
+                            </el-icon>
+                            </span>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item v-for="(item, index) in logModuleMap" :key="index" @click="onLogModuleFilter(item)" :icon="item.icon">{{ item.text }}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </template>
+                    
+                    <template v-slot="scope">
+                        {{ scope.row.operationModule }}
+                    </template>
+                </el-table-column>
                 <el-table-column prop="operatorNickname" label="操作人" />
                 <el-table-column prop="operationName" label="操作" />
                 <el-table-column label="状态" >
@@ -104,8 +124,21 @@ export default {
                 involveProjectId: null,
                 module: null,
             },
-            logStatusColumnLabel: '全部',
-            logStatusMap: [{text: '全部', icon:'List', value: null }, {text: '成功', icon:'CircleCheck', value: true },{text: '失败', icon:'CircleClose', value: false },]
+            logStatusColumnLabel: '状态',
+            logStatusMap: [{text: '全部', icon:'List', value: null }, {text: '成功', icon:'CircleCheck', value: true },{text: '失败', icon:'CircleClose', value: false },],
+            logModuleColumnLabel: '模块',
+            logModuleMap: [
+                { text: '全部', icon:'List', value: null },
+                { text: '项目', icon:'Filter', value: 'project' },
+                { text: '分组', icon:'Filter', value: 'group' },
+                { text: '用户', icon:'Filter', value: 'user' },
+                { text: 'OAuth2', icon:'Filter', value: 'login_app' },
+                { text: '设置', icon:'Filter', value: 'setting' },
+                { text: '数据库扩展', icon:'Filter', value: 'database_type' },
+                { text: '登录', icon:'Filter', value: 'login' },
+                { text: '未知', icon:'Filter', value: 'UNKNOWN' },
+            ],
+
         }
     },
 
@@ -145,6 +178,15 @@ export default {
                 this.logStatusColumnLabel = '状态'
             } else {
                 this.logStatusColumnLabel = item.text
+            }
+            this.onQuery();
+        },
+        onLogModuleFilter(item) {
+            this.projectOperationLogPageQuery.module = item.value
+            if (item.value == null){
+                this.logModuleColumnLabel = '模块'
+            } else {
+                this.logModuleColumnLabel = item.text
             }
             this.onQuery();
         }
