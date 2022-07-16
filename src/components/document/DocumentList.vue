@@ -10,208 +10,112 @@
     </el-col>
   </el-row>
   <!-- overview -->
-  <el-row
-    v-if="overviewData"
-    style="margin-top: 0px !important; margin-bottom: 20px"
-  >
+  <el-row v-if="overviewData" style="margin-top: 0px !important; margin-bottom: 20px">
     <el-col :span="24">
       <!-- database overview -->
-      <el-badge
-        v-if="diffEnabled"
-        :value="overviewData.diffType"
-        :type="diffTagType(overviewData.diffType)"
-        class="badge-item"
-      >
+      <el-badge v-if="diffEnabled" :value="overviewData.diffType" :type="diffTagType(overviewData.diffType)"
+        class="badge-item">
         <div id="overview[-1]" class="h2">Overview</div>
       </el-badge>
       <el-descriptions :column="1" size="large" border>
-        <el-descriptions-item
-          label="Database Name"
-          label-align="left"
-          width="200px"
-          >{{ overviewData.databaseName }}</el-descriptions-item
-        >
-        <el-descriptions-item
-          label="Schema Name"
-          label-align="left"
-          width="200px"
-          >{{ overviewData.schemaName }}</el-descriptions-item
-        >
+        <el-descriptions-item label="Database Name" label-align="left" width="200px">{{ overviewData.databaseName }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Schema Name" label-align="left" width="200px">{{ overviewData.schemaName }}
+        </el-descriptions-item>
         <el-descriptions-item label="Product Name" label-align="left">{{
-          overviewData.productName
+            overviewData.productName
         }}</el-descriptions-item>
         <el-descriptions-item label="Product Version" label-align="left">{{
-          overviewData.productVersion
+            overviewData.productVersion
         }}</el-descriptions-item>
         <el-descriptions-item label="Document Version" label-align="left">{{
-          overviewData.documentVersion
+            overviewData.documentVersion
         }}</el-descriptions-item>
         <el-descriptions-item label="Create At" label-align="left">{{
-          overviewData.createAt
+            overviewData.createAt
         }}</el-descriptions-item>
       </el-descriptions>
 
       <div class="h3">Tables</div>
-      <vxe-table
-        v-if="simpleTables.length > useVirtualTableThreshold"
-        border="inner"
-        :data="simpleTables"
-        max-height="800"
-        :tree-config="{
+      <vxe-table v-if="overviewData.tables.length > useVirtualTableThreshold" border="inner"
+        :data="filteralbeSimpleTables" max-height="800" :tree-config="{
           transform: true,
           expandAll: false,
           rowField: 'id',
           parentField: 'parentId',
-        }"
-        :row-class-name="predicateRowClass"
-        :row-config="{ isHover: true, height: 60 }"
-        :edit-config="{ trigger: 'dblclick', mode: 'cell' }"
-      >
+        }" :row-class-name="predicateRowClass" :row-config="{ isHover: true, height: 60 }"
+        :edit-config="{ trigger: 'dblclick', mode: 'cell' }">
         <vxe-column type="seq" width="60"></vxe-column>
-        <vxe-column
-          field="name"
-          :title="tableFieldNameMapping('name')"
-          tree-node
-        >
+        <vxe-column field="name" :title="tableFieldNameMapping('name')" tree-node>
+          <template #header>
+            <el-input v-model="simpleTablesFilterText" placeholder="表名" class="search-input">
+              <template #prefix>
+                <el-icon>
+                  <Search />
+                </el-icon>
+              </template>
+            </el-input>
+          </template>
           <template #default="{ row }">
             <span> {{ row.name }}</span>
           </template>
         </vxe-column>
-        <vxe-column
-          field="type"
-          :title="tableFieldNameMapping('type')"
-        ></vxe-column>
-        <vxe-column
-          field="comment"
-          :title="tableFieldNameMapping('comment')"
-        ></vxe-column>
-        <vxe-column
-          field="description"
-          :title="tableFieldNameMapping('description')"
-          :edit-render="{ name: 'textarea' }"
-        >
+        <vxe-column field="type" :title="tableFieldNameMapping('type')"></vxe-column>
+        <vxe-column field="comment" :title="tableFieldNameMapping('comment')"></vxe-column>
+        <vxe-column field="description" :title="tableFieldNameMapping('description')"
+          :edit-render="{ name: 'textarea' }">
           <template #edit="{ row }">
-            <el-input
-              v-model="row.description"
-              type="textarea"
-              style="width: 100%; z-index: 1000"
-              autosize
-              :rows="10"
-              :input-style="style.noBorderInput"
-              @change="onUpdateDescription(row.name, null, row)"
-            />
+            <el-input v-model="row.description" type="textarea" style="width: 100%; z-index: 1000" autosize :rows="10"
+              :input-style="style.noBorderInput" @change="onUpdateDescription(row.name, null, row)" />
           </template>
         </vxe-column>
         <vxe-column field="remark" title="讨论">
           <template #default="{ row }">
-            <el-badge
-              :value="row.discussionCount"
-              :max="99"
-              class="item"
-              v-if="row.discussionCount"
-              type="info"
-            >
-              <el-button
-                @click="onRemark(row.name)"
-                size="small"
-                icon="chat-line-round"
-              ></el-button>
+            <el-badge :value="row.discussionCount" :max="99" class="item" v-if="row.discussionCount" type="info">
+              <el-button @click="onRemark(row.name)" size="small" icon="chat-line-round"></el-button>
             </el-badge>
-            <el-button
-              v-else
-              @click="onRemark(row.name)"
-              size="small"
-              icon="chat-line-round"
-            ></el-button>
+            <el-button v-else @click="onRemark(row.name)" size="small" icon="chat-line-round"></el-button>
           </template>
         </vxe-column>
       </vxe-table>
 
-      <el-table
-        v-else
-        :data="simpleTables"
-        border
-        width="80%"
-        @row-dblclick="onCellClick"
-        :row-class-name="predicateRowClass"
-        highlight-current-row
-        row-key="id"
-      >
-        <el-table-column type="index" />
-        <el-table-column
-          :label="tableFieldNameMapping('name')"
-          min-width="160"
-          resizable
-        >
+      <el-table v-else :data="filteralbeSimpleTables" border width="80%" @row-dblclick="onCellClick"
+        :row-class-name="predicateRowClass" highlight-current-row row-key="id">
+        <el-table-column type="index" label="#" />
+        <el-table-column :label="tableFieldNameMapping('name')" min-width="160" resizable>
+          <template #header>
+            <el-input v-model="simpleTablesFilterText" placeholder="表名" class="search-input">
+              <template #prefix>
+                <el-icon>
+                  <Search />
+                </el-icon>
+              </template>
+            </el-input>
+          </template>
           <template v-slot="scope">
             <span> {{ scope.row.name }}</span>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="type"
-          :label="tableFieldNameMapping('type')"
-          width="200"
-          resizable
-        />
-        <el-table-column
-          prop="comment"
-          :label="tableFieldNameMapping('comment')"
-          min-width="160"
-          resizable
-        />
-        <el-table-column
-          :label="tableFieldNameMapping('description')"
-          min-width="160"
-          resizable
-        >
+        <el-table-column prop="type" :label="tableFieldNameMapping('type')" width="200" resizable />
+        <el-table-column prop="comment" :label="tableFieldNameMapping('comment')" min-width="160" resizable />
+        <el-table-column :label="tableFieldNameMapping('description')" min-width="160" resizable>
           <template v-slot="scope">
             <span v-if="!scope.row.toEditDescription">
               {{ scope.row.description }}
             </span>
-            <el-space
-              v-else
-              direction="vertical"
-              alignment="left"
-              style="width: 100%"
-            >
-              <el-input
-                v-model="scope.row.description"
-                type="textarea"
-                style="width: 100%"
-                autosize
-                :input-style="style.noBorderInput"
-                @change="onUpdateDescription(scope.row.name, null, scope.row)"
-              />
+            <el-space v-else direction="vertical" alignment="left" style="width: 100%">
+              <el-input v-model="scope.row.description" type="textarea" style="width: 100%" autosize
+                :input-style="style.noBorderInput" @change="onUpdateDescription(scope.row.name, null, scope.row)" />
             </el-space>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="remark"
-          label="讨论"
-          min-width="120"
-          resizable
-          fixed="right"
-        >
+        <el-table-column prop="remark" label="讨论" min-width="120" resizable fixed="right">
           <template v-slot="scope">
-            <el-badge
-              :value="scope.row.discussionCount"
-              :max="99"
-              class="item"
-              v-if="scope.row.discussionCount"
-              type="info"
-            >
-              <el-button
-                @click="onRemark(scope.row.name)"
-                size="small"
-                icon="chat-line-round"
-              ></el-button>
+            <el-badge :value="scope.row.discussionCount" :max="99" class="item" v-if="scope.row.discussionCount"
+              type="info">
+              <el-button @click="onRemark(scope.row.name)" size="small" icon="chat-line-round"></el-button>
             </el-badge>
-            <el-button
-              v-else
-              @click="onRemark(scope.row.name)"
-              size="small"
-              icon="chat-line-round"
-            ></el-button>
+            <el-button v-else @click="onRemark(scope.row.name)" size="small" icon="chat-line-round"></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -224,93 +128,55 @@
       <div>
         <div style="margin-bottom: 36px">
           <div v-if="diffEnabled">
-            <el-badge
-              :value="tableMeta.diffType"
-              :type="diffTagType(tableMeta.diffType)"
-              class="badge-item"
-            >
+            <el-badge :value="tableMeta.diffType" :type="diffTagType(tableMeta.diffType)" class="badge-item">
               <div :id="tableMeta.name + '[' + tableMeta.id + ']'" class="h2">
-                <img
-                  :src="require('@/assets/icon/doc-table.svg')"
-                  style="height: 20px; margin-right: 6px"
-                />{{ tableMeta.name }}
+                <img :src="require('@/assets/icon/doc-table.svg')" style="height: 20px; margin-right: 6px" />{{
+                    tableMeta.name
+                }}
               </div>
             </el-badge>
-            <div
-              v-if="tableMeta.comment && tableMeta.comment != ''"
-              class="table-quote"
-            >
+            <div v-if="tableMeta.comment && tableMeta.comment != ''" class="table-quote">
               {{ tableMeta.comment }}
             </div>
-            <div
-              v-else-if="tableMeta.description && tableMeta.description != ''"
-              class="table-quote"
-            >
+            <div v-else-if="tableMeta.description && tableMeta.description != ''" class="table-quote">
               {{ tableMeta.description }}
             </div>
             <!-- original -->
-            <div
-              v-if="
-                diffEnabled &&
-                tableMeta.original &&
-                tableMeta.original.comment != tableMeta.comment
-              "
-              style="color: #c8c9cc"
-              class="table-quote"
-            >
+            <div v-if="
+              diffEnabled &&
+              tableMeta.original &&
+              tableMeta.original.comment != tableMeta.comment
+            " style="color: #c8c9cc" class="table-quote">
               <del>
                 {{ tableMeta.original.comment }}
               </del>
             </div>
           </div>
 
-          <div
-            v-else
-            :id="tableMeta.name + '[' + tableMeta.id + ']'"
-            class="h2"
-          >
-            <span
-              style="
+          <div v-else :id="tableMeta.name + '[' + tableMeta.id + ']'" class="h2">
+            <span style="
                 margin-right: 6px;
                 display: inline-block;
                 vertical-align: middle;
-              "
-            >
-              <img
-                :src="require('@/assets/icon/doc-table.svg')"
-                style="height: 20px; margin-right: 6px"
-              />
-              {{ tableMeta.name }}</span
-            >
+              ">
+              <img :src="require('@/assets/icon/doc-table.svg')" style="height: 20px; margin-right: 6px" />
+              {{ tableMeta.name }}</span>
             <el-tooltip content="SQL 测试数据生成">
-              <el-button
-                @click="showMockDataRules(tableMeta)"
-                round
-                size="small"
-                >Insert</el-button
-              >
+              <el-button @click="showMockDataRules(tableMeta)" round size="small">Insert</el-button>
             </el-tooltip>
             <el-button @click="onRemark(tableMeta.name)" size="small" round icon="chat-line-round"></el-button>
 
-            <div
-              v-if="tableMeta.comment && tableMeta.comment != ''"
-              class="table-quote"
-            >
+            <div v-if="tableMeta.comment && tableMeta.comment != ''" class="table-quote">
               {{ tableMeta.comment }}
-              <span
-                v-if="
-                  diffEnabled &&
-                  tableMeta.original &&
-                  tableMeta.original.comment != tableMeta.comment
-                "
-              >
+              <span v-if="
+                diffEnabled &&
+                tableMeta.original &&
+                tableMeta.original.comment != tableMeta.comment
+              ">
                 <em>{{ tableMeta.original.comment }}</em>
               </span>
             </div>
-            <div
-              v-else-if="tableMeta.description && tableMeta.description != ''"
-              class="table-quote"
-            >
+            <div v-else-if="tableMeta.description && tableMeta.description != ''" class="table-quote">
               {{ tableMeta.description }}
             </div>
           </div>
@@ -318,55 +184,26 @@
 
         <div class="table-document-block">
           <div v-if="tableMeta.columns.length > 0" class="h3">Columns</div>
-          <el-table
-            :data="tableMeta.columns"
-            :flexible="true"
-            width="80%"
-            @cell-dblclick="onCellClick"
-            :row-class-name="predicateRowClass"
-            default-expand-all
-            row-key="id"
-            highlight-current-row
-          >
+          <el-table :data="tableMeta.columns" :flexible="true" width="80%" @cell-dblclick="onCellClick"
+            :row-class-name="predicateRowClass" default-expand-all row-key="id" highlight-current-row>
             <el-table-column type="index" fixed="left" />
-            <el-table-column
-              prop="name"
-              :label="columnFieldNameMapping('name')"
-              min-width="200"
-            >
+            <el-table-column prop="name" :label="columnFieldNameMapping('name')" min-width="200">
               <template v-slot="scope">
                 <el-space wrap>
                   <span> {{ scope.row.name }}</span>
                   <el-tooltip content="主键" v-if="scope.row.isPrimaryKey">
                     <el-tag size="small"> PK </el-tag>
                   </el-tooltip>
-                  <el-tooltip
-                    content="自增"
-                    v-if="scope.row.autoIncrement == 'YES'"
-                  >
+                  <el-tooltip content="自增" v-if="scope.row.autoIncrement == 'YES'">
                     <el-tag type="danger" size="small"> INCR </el-tag>
                   </el-tooltip>
                 </el-space>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="type"
-              :label="columnFieldNameMapping('type')"
-              min-width="120"
-            />
-            <el-table-column
-              prop="size"
-              :label="columnFieldNameMapping('size')"
-            />
-            <el-table-column
-              prop="decimalDigits"
-              :label="columnFieldNameMapping('decimalDigits')"
-            />
-            <el-table-column
-              prop="nullable"
-              :label="columnFieldNameMapping('nullable')"
-              width="80"
-            >
+            <el-table-column prop="type" :label="columnFieldNameMapping('type')" min-width="120" />
+            <el-table-column prop="size" :label="columnFieldNameMapping('size')" />
+            <el-table-column prop="decimalDigits" :label="columnFieldNameMapping('decimalDigits')" />
+            <el-table-column prop="nullable" :label="columnFieldNameMapping('nullable')" width="80">
               <template v-slot="scope">
                 <el-tag type="primary" v-if="scope.row.nullable == 'YES'">
                   YES
@@ -374,19 +211,12 @@
                 <el-tag type="info" v-else> NO </el-tag>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="defaultValue"
-              :label="columnFieldNameMapping('defaultValue')"
-              min-width="120"
-            >
+            <el-table-column prop="defaultValue" :label="columnFieldNameMapping('defaultValue')" min-width="120">
               <template v-slot="scope">
-                <el-tag
-                  v-if="
-                    scope.row.nullable == 'YES' &&
-                    scope.row.defaultValue == null
-                  "
-                  type="danger"
-                >
+                <el-tag v-if="
+                  scope.row.nullable == 'YES' &&
+                  scope.row.defaultValue == null
+                " type="danger">
                   null
                 </el-tag>
                 <span v-else>
@@ -394,41 +224,22 @@
                 </span>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="comment"
-              :label="columnFieldNameMapping('comment')"
-              min-width="180"
-            />
-            <el-table-column
-              :label="columnFieldNameMapping('description')"
-              min-width="160"
-              resizable
-              show-overflow-tooltip
-            >
+            <el-table-column prop="comment" :label="columnFieldNameMapping('comment')" min-width="180" />
+            <el-table-column :label="columnFieldNameMapping('description')" min-width="160" resizable
+              show-overflow-tooltip>
               <template v-slot="scope">
                 <span v-if="!scope.row.toEditDescription">
                   <pre>{{ scope.row.description }}</pre>
                 </span>
-                <el-space
-                  v-else
-                  direction="vertical"
-                  alignment="left"
-                  style="width: 100%"
-                >
-                  <el-input
-                    v-model="scope.row.description"
-                    type="textarea"
-                    style="width: 100%"
-                    autosize
-                    :input-style="style.noBorderInput"
-                    @change="
+                <el-space v-else direction="vertical" alignment="left" style="width: 100%">
+                  <el-input v-model="scope.row.description" type="textarea" style="width: 100%" autosize
+                    :input-style="style.noBorderInput" @change="
                       onUpdateDescription(
                         tableMeta.name,
                         scope.row.name,
                         scope.row
                       )
-                    "
-                  />
+                    " />
                 </el-space>
               </template>
             </el-table-column>
@@ -445,47 +256,25 @@
 
         <div v-if="tableMeta.indexes.length > 0" class="table-document-block">
           <div class="h3">Indexes</div>
-          <el-table
-            :data="tableMeta.indexes"
-            fit
-            width="80%"
-            :row-class-name="predicateRowClass"
-            default-expand-all
-            row-key="id"
-            highlight-current-row
-          >
+          <el-table :data="tableMeta.indexes" fit width="80%" :row-class-name="predicateRowClass" default-expand-all
+            row-key="id" highlight-current-row>
             <el-table-column type="index" fixed="left" />
-            <el-table-column
-              prop="name"
-              :label="indexFieldNameMapping('name')"
-              min-width="120"
-            >
+            <el-table-column prop="name" :label="indexFieldNameMapping('name')" min-width="120">
               <template v-slot="scope">
                 <span> {{ scope.row.name }}</span>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="isUnique"
-              :label="indexFieldNameMapping('isUnique')"
-              width="120"
-            >
+            <el-table-column prop="isUnique" :label="indexFieldNameMapping('isUnique')" width="120">
               <template v-slot="scope">
                 <el-tooltip content="YES" v-if="scope.row.isUnique">
                   <el-tag> UK </el-tag>
                 </el-tooltip>
               </template>
             </el-table-column>
-            <el-table-column
-              :label="indexFieldNameMapping('columnNames')"
-              min-width="150"
-            >
+            <el-table-column :label="indexFieldNameMapping('columnNames')" min-width="150">
               <template v-slot="scope">
-                <el-tag
-                  v-for="(item, index) in scope.row.columnNames"
-                  :key="index"
-                  type="info"
-                  style="margin-right: 12px; margin-bottom: 6px"
-                >
+                <el-tag v-for="(item, index) in scope.row.columnNames" :key="index" type="info"
+                  style="margin-right: 12px; margin-bottom: 6px">
                   <span>{{ item }}</span>
                 </el-tag>
               </template>
@@ -493,110 +282,50 @@
           </el-table>
         </div>
 
-        <div
-          v-if="tableMeta.foreignKeys.length > 0"
-          class="table-document-block"
-        >
+        <div v-if="tableMeta.foreignKeys.length > 0" class="table-document-block">
           <div class="h3">Foreign Keys</div>
-          <el-table
-            :data="tableMeta.foreignKeys"
-            fit
-            width="80%"
-            :row-class-name="predicateRowClass"
-            default-expand-all
-            row-key="id"
-            highlight-current-row
-          >
+          <el-table :data="tableMeta.foreignKeys" fit width="80%" :row-class-name="predicateRowClass" default-expand-all
+            row-key="id" highlight-current-row>
             <el-table-column type="index" fixed="left" />
-            <el-table-column
-              prop="fkName"
-              :label="foreignKeyFieldNameMapping('fkName')"
-              min-width="120"
-            >
+            <el-table-column prop="fkName" :label="foreignKeyFieldNameMapping('fkName')" min-width="120">
               <template v-slot="scope">
                 <span> {{ scope.row.fkName }}</span>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="fkColumnName"
-              :label="foreignKeyFieldNameMapping('fkColumnName')"
-              min-width="120"
-            >
+            <el-table-column prop="fkColumnName" :label="foreignKeyFieldNameMapping('fkColumnName')" min-width="120">
               <template v-slot="scope">
                 <el-tag type="info">{{ scope.row.fkColumnName }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="pkName"
-              :label="foreignKeyFieldNameMapping('pkName')"
-              min-width="120"
-            />
-            <el-table-column
-              prop="pkTableName"
-              :label="foreignKeyFieldNameMapping('pkTableName')"
-            >
+            <el-table-column prop="pkName" :label="foreignKeyFieldNameMapping('pkName')" min-width="120" />
+            <el-table-column prop="pkTableName" :label="foreignKeyFieldNameMapping('pkTableName')">
               <template v-slot="scope">
                 <el-link>
                   {{ scope.row.pkTableName }}
                 </el-link>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="pkColumnName"
-              :label="foreignKeyFieldNameMapping('pkColumnName')"
-              min-width="120"
-            >
+            <el-table-column prop="pkColumnName" :label="foreignKeyFieldNameMapping('pkColumnName')" min-width="120">
               <template v-slot="scope">
                 <el-tag type="info">{{ scope.row.pkColumnName }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="updateRule"
-              :label="foreignKeyFieldNameMapping('updateRule')"
-            />
-            <el-table-column
-              prop="deleteRule"
-              :label="foreignKeyFieldNameMapping('deleteRule')"
-            />
+            <el-table-column prop="updateRule" :label="foreignKeyFieldNameMapping('updateRule')" />
+            <el-table-column prop="deleteRule" :label="foreignKeyFieldNameMapping('deleteRule')" />
           </el-table>
         </div>
 
         <div v-if="tableMeta.triggers.length > 0" class="table-document-block">
           <div class="h3">Triggers</div>
-          <el-table
-            :data="tableMeta.triggers"
-            fit
-            width="80%"
-            :row-class-name="predicateRowClass"
-            default-expand-all
-            row-key="id"
-            highlight-current-row
-          >
+          <el-table :data="tableMeta.triggers" fit width="80%" :row-class-name="predicateRowClass" default-expand-all
+            row-key="id" highlight-current-row>
             <el-table-column type="index" fixed="left" />
-            <el-table-column
-              prop="name"
-              :label="triggerFieldNameMapping('name')"
-              min-width="120"
-            >
+            <el-table-column prop="name" :label="triggerFieldNameMapping('name')" min-width="120">
             </el-table-column>
-            <el-table-column
-              prop="timing"
-              :label="triggerFieldNameMapping('timing')"
-            />
-            <el-table-column
-              prop="manipulation"
-              :label="triggerFieldNameMapping('manipulation')"
-              width="120"
-            />
-            <el-table-column
-              prop="statement"
-              :label="triggerFieldNameMapping('statement')"
-            />
-            <el-table-column
-              prop="triggerCreateAt"
-              :label="triggerFieldNameMapping('triggerCreateAt')"
-              width="150"
-            />
+            <el-table-column prop="timing" :label="triggerFieldNameMapping('timing')" />
+            <el-table-column prop="manipulation" :label="triggerFieldNameMapping('manipulation')" width="120" />
+            <el-table-column prop="statement" :label="triggerFieldNameMapping('statement')" />
+            <el-table-column prop="triggerCreateAt" :label="triggerFieldNameMapping('triggerCreateAt')" width="150" />
           </el-table>
         </div>
       </div>
@@ -610,16 +339,8 @@
         <div style="min-height: 120px">
           <highlightjs language="sql" :code="mockDataSql" />
           <el-tooltip content="点击复制">
-            <el-button
-              icon="copy-document"
-              type="primary"
-              text
-              class="copy-button"
-              @click="copyMockSql()"
-              v-clipboard:copy="mockDataSql"
-              v-clipboard:success="handleCopySuccess"
-              v-clipboard:error="handleCopyFail"
-            >
+            <el-button icon="copy-document" type="primary" text class="copy-button" @click="copyMockSql()"
+              v-clipboard:copy="mockDataSql" v-clipboard:success="handleCopySuccess" v-clipboard:error="handleCopyFail">
             </el-button>
           </el-tooltip>
         </div>
@@ -634,69 +355,38 @@
           </el-table-column>
           <el-table-column prop="mockDataType" label="Mock 类型">
             <template v-slot="scope">
-              <el-select
-                v-model="scope.row.mockDataType"
-                placeholder="请选择 Mock 类型"
-              >
-                <el-option
-                  v-for="item in mockDataTypes"
-                  :key="item.value"
-                  :label="item.name"
-                  :value="item.value"
-                >
+              <el-select v-model="scope.row.mockDataType" placeholder="请选择 Mock 类型">
+                <el-option v-for="item in mockDataTypes" :key="item.value" :label="item.name" :value="item.value">
                 </el-option>
               </el-select>
             </template>
           </el-table-column>
           <el-table-column prop="dependentTableName" label="依赖表">
             <template v-slot="scope">
-              <el-select
-                v-model="scope.row.dependentTableName"
-                placeholder="选择关联表"
-                @change="scope.row.dependentColumnName = null"
-                v-if="scope.row.mockDataType == 'REF'"
-              >
-                <el-option
-                  v-for="item in mockRefTables"
-                  :key="item.name"
-                  :label="item.name"
-                  :value="item.name"
-                />
+              <el-select v-model="scope.row.dependentTableName" placeholder="选择关联表"
+                @change="scope.row.dependentColumnName = null" v-if="scope.row.mockDataType == 'REF'">
+                <el-option v-for="item in mockRefTables" :key="item.name" :label="item.name" :value="item.name" />
               </el-select>
             </template>
           </el-table-column>
           <el-table-column prop="dependentColumnName" label="依赖列">
             <template v-slot="scope">
-              <el-select
-                v-model="scope.row.dependentColumnName"
-                placeholder="选择关联列"
-                v-if="scope.row.mockDataType == 'REF'"
-              >
-                <el-option
-                  v-for="item in mockRefColumns(scope.row.dependentTableName)"
-                  :key="item.name"
-                  :label="item.name"
-                  :value="item.name"
-                >
+              <el-select v-model="scope.row.dependentColumnName" placeholder="选择关联列"
+                v-if="scope.row.mockDataType == 'REF'">
+                <el-option v-for="item in mockRefColumns(scope.row.dependentTableName)" :key="item.name"
+                  :label="item.name" :value="item.name">
                 </el-option>
               </el-select>
             </template>
           </el-table-column>
           <el-table-column prop="mockDataScript" label="脚本">
             <template v-slot="scope">
-              <el-input
-                v-model="scope.row.mockDataScript"
-                :autosize="{ minRows: 2, maxRows: 4 }"
-                type="textarea"
-                placeholder="表达式"
-                v-if="scope.row.mockDataType == 'SCRIPT'"
-              />
+              <el-input v-model="scope.row.mockDataScript" :autosize="{ minRows: 2, maxRows: 4 }" type="textarea"
+                placeholder="表达式" v-if="scope.row.mockDataType == 'SCRIPT'" />
             </template>
           </el-table-column>
         </el-table>
-        <el-button style="margin-top: 33px" @click="saveTableMockRules()"
-          >保存</el-button
-        >
+        <el-button style="margin-top: 33px" @click="saveTableMockRules()">保存</el-button>
       </el-tab-pane>
     </el-tabs>
 
@@ -765,6 +455,7 @@ pre code.hljs {
   overflow-x: auto;
   padding: 1em;
 }
+
 code.hljs {
   padding: 3px 5px;
   min-height: 100px;
@@ -794,89 +485,109 @@ code.hljs {
   background: #333;
   color: #fff;
 }
+
 .hljs-doctag,
 .hljs-meta-keyword,
 .hljs-name,
 .hljs-strong {
   font-weight: 700;
 }
+
 .hljs-code,
 .hljs-emphasis {
   font-style: italic;
 }
+
 .hljs-section,
 .hljs-tag {
   color: #62c8f3;
 }
+
 .hljs-selector-class,
 .hljs-selector-id,
 .hljs-template-variable,
 .hljs-variable {
   color: #ade5fc;
 }
+
 .hljs-meta-string,
 .hljs-string {
   color: #a2fca2;
 }
+
 .hljs-attr,
 .hljs-quote,
 .hljs-selector-attr {
   color: #7bd694;
 }
+
 .hljs-tag .hljs-attr {
   color: inherit;
 }
+
 .hljs-attribute,
 .hljs-title,
 .hljs-type {
   color: #ffa;
 }
+
 .hljs-number,
 .hljs-symbol {
   color: #d36363;
 }
+
 .hljs-bullet,
 .hljs-template-tag {
   color: #b8d8a2;
 }
+
 .hljs-built_in,
 .hljs-keyword,
 .hljs-literal,
 .hljs-selector-tag {
   color: #fcc28c;
 }
+
 .hljs-code,
 .hljs-comment,
 .hljs-formula {
   color: #888;
 }
+
 .hljs-link,
 .hljs-regexp,
 .hljs-selector-pseudo {
   color: #c6b4f0;
 }
+
 .hljs-meta {
   color: #fc9b9b;
 }
+
 .hljs-deletion {
   background: #fc9b9b;
   color: #333;
 }
+
 .hljs-addition {
   background: #a2fca2;
   color: #333;
 }
+
 .hljs-subst {
   color: #fff;
 }
+
 .hljs a {
   color: inherit;
 }
+
 .hljs a:focus,
 .hljs a:hover {
   color: inherit;
   text-decoration: underline;
 }
+
 .hljs mark {
   background: #555;
   color: inherit;
@@ -956,7 +667,8 @@ export default {
           border: "none",
         },
       },
-      useVirtualTableThreshold: 500,
+      useVirtualTableThreshold: 200,
+      simpleTablesFilterText: null,
     };
   },
   created() {
@@ -1029,25 +741,41 @@ export default {
     }
   },
   computed: {
-    simpleTables() {
+    filteralbeSimpleTables() {
       const raw = this.overviewData.tables;
       if (raw.length > this.useVirtualTableThreshold) {
-        const d = raw.flatMap((item, index) => {
-          const that = Object.assign({}, item);
-          that.index = index + 1;
-          if (item.original) {
-            that.original.isOriginal = true;
-            that.original.parentId = that.id;
-            that.children = [that.original];
-            return [that, that.original];
-          } else {
-            return [that];
-          }
-        });
+        const d = raw
+          .filter((item) => item.id != -1)
+          .filter((item) => {
+            if (this.simpleTablesFilterText) {
+              return item.name.indexOf(this.simpleTablesFilterText) >= 0;
+            } else {
+              return true;
+            }
+          })
+          .flatMap((item, index) => {
+            const that = Object.assign({}, item);
+            that.index = index + 1;
+            if (item.original) {
+              that.original.isOriginal = true;
+              that.original.parentId = that.id;
+              that.children = [that.original];
+              return [that, that.original];
+            } else {
+              return [that];
+            }
+          });
         return d;
       } else {
         return raw
           .filter((item) => item.id != -1)
+          .filter((item) => {
+            if (this.simpleTablesFilterText) {
+              return item.name.indexOf(this.simpleTablesFilterText) >= 0;
+            } else {
+              return true;
+            }
+          })
           .map((item, index) => {
             const that = Object.assign({}, item);
             if (item.original) {
@@ -1333,7 +1061,7 @@ export default {
       });
     },
 
-    copyMockSql() {},
+    copyMockSql() { },
     handleCopySuccess() {
       this.$message.success("复制成功");
     },
