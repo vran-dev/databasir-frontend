@@ -35,3 +35,7 @@ export const createApp = (body) => {
 export const updateApp = (body) => {
     return axios.patch(apiBase, body)
 }
+
+export const listPlatforms = () => {
+    return axios.get(apiBase +"/platforms")
+}

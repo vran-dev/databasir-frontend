@@ -15,8 +15,8 @@
                         <el-option
                         v-for="item in appTypes"
                         :key="item"
-                        :label="item"
-                        :value="item"
+                        :label="item.name"
+                        :value="item.type"
                         >
                         </el-option>
                     </el-select>
@@ -43,48 +43,20 @@
                             >   
                                 <el-descriptions-item label="appId">
                                     <template #label>
-                                        <el-icon><top-right /></el-icon>
                                         应用 ID
                                     </template>
                                     {{ item.registrationId }}
                                 </el-descriptions-item>
                                 <el-descriptions-item label="appType">
                                     <template #label>
-                                        <el-icon><top-right /></el-icon>
                                         应用类型
                                     </template>
                                     <el-tag>
                                     {{ item.appType }}
                                     </el-tag>
                                 </el-descriptions-item>
-                                <el-descriptions-item label="clientId">
-                                    <template #label>
-                                        <el-icon><tickets /></el-icon>
-                                        clientId
-                                    </template>
-                                    {{item.clientId}}
-                                </el-descriptions-item>
-                                <el-descriptions-item label="资源地址">
-                                    <template #label>
-                                        <el-icon>
-                                            <Link />
-                                        </el-icon>
-                                        资源地址
-                                    </template>
-                                    <el-link>{{item.authUrl}}</el-link>
-                                </el-descriptions-item>
-                                <el-descriptions-item label="授权地址">
-                                    <template #label>
-                                        <el-icon>
-                                            <Link />
-                                        </el-icon>
-                                        授权地址
-                                    </template>
-                                    <el-link>{{item.resourceUrl}}</el-link>
-                                </el-descriptions-item>
                                 <el-descriptions-item label="创建时间">
                                     <template #label>
-                                        <el-icon><clock /></el-icon>
                                         创建时间
                                     </template>
                                     {{item.createAt}}
@@ -122,37 +94,20 @@
                         </el-col>
                     </el-row>
                     <el-form-item label="应用类型" prop="appName">
-                        <el-select v-model="appFormData.appType" placeholder="请选择应用类型" size="default">
+                        <el-select v-model="appFormData.appType" placeholder="请选择应用类型" size="default" @change="onAppTypeChange()">
                             <el-option
                             v-for="item in appTypes"
                             :key="item"
-                            :label="item"
-                            :value="item"
+                            :label="item.name"
+                            :value="item.type"
                             >
                             </el-option>
                         </el-select>
                     </el-form-item>
                     <el-row :gutter="28">
-                        <el-col :xs="24" :sm="24" :md="12" :lg="10">
-                            <el-form-item label="Client Id" prop="clientId">
-                                <el-input v-model="appFormData.clientId" placeholder="Oauth2 平台下发的 clientId"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="10">
-                            <el-form-item label="Client Secret" prop="clientSecret">
-                                <el-input v-model="appFormData.clientSecret" placeholder="Oauth2 平台下发的秘钥"></el-input>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-                    <el-row :gutter="28">
-                        <el-col :xs="24" :sm="24" :md="12" :lg="10">
-                            <el-form-item label="授权地址" prop="authUrl">
-                                <el-input v-model="appFormData.authUrl" placeholder="用于获取 access token 的服务地址"></el-input>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="10">
-                            <el-form-item label="资源地址" prop="resourceUrl">
-                                <el-input v-model="appFormData.resourceUrl" placeholder="用于获取用户信息的服务地址"></el-input>
+                        <el-col :xs="24" :sm="24" :md="12" :lg="10" v-for="item in selectedPlatform.properties" :key="item.authAppType">
+                            <el-form-item :label="item.label" :prop="item.name">
+                                <el-input v-model="item.value" :placeholder="item.description"></el-input>
                             </el-form-item>
                         </el-col>
                     </el-row>
@@ -194,7 +149,7 @@
 
 <script>
 
-import { pageList, deleteById, updateApp, createApp, getById } from '../api/OAuthApp'
+import { pageList, deleteById, updateApp, createApp, getById, listPlatforms } from '../api/OAuthApp'
 import Oauth2AppType from '../components/Oauth2AppType.vue'
 
 export default {
@@ -243,17 +198,17 @@ export default {
                     { required: true,message: '请配置申请的 clientSecret', trigger: 'blur'},
                 ]
             },
-            appTypes: [
-                'GITLAB', 'GITHUB'
-            ]
+            appTypes: [],
+            platforms:[],
+            selectedPlatform:{}
         }
     },
 
     created() {
         this.redirectUri = window.location.protocol + "//" +window.location.host+"/login/oauth2/"
+        this.fetchPlatforms()
         this.onAppCurrentPageChange(1)
     },
-
     methods: {
         fetchApps(currentPage) {
             if (currentPage) {
@@ -273,6 +228,19 @@ export default {
                 }
             })
         },
+        fetchPlatforms() {
+            listPlatforms().then(resp => {
+                if(!resp.errCode) {
+                    this.platforms = resp.data,
+                    this.appTypes = resp.data.map(d => {
+                        return {
+                            type: d.authAppType,
+                            name: d.authAppName
+                        }
+                    })
+                }
+            })
+        },
         onAppCurrentPageChange(currentPage) {
             if (currentPage) {
                 this.fetchApps(currentPage - 1)
@@ -285,12 +253,14 @@ export default {
             getById(app.id).then(resp => {
                 if(!resp.errCode) {
                     this.appFormData = resp.data
+                    this.onAppTypeChange()
                     this.isShowEditAppDialog = true
                 }
             })
         },
         onAppCreate() {
             this.appFormData = {}
+            this.selectedPlatform = {}
             this.isShowEditAppDialog = true
         },
         onDelete(app) {
@@ -310,6 +280,12 @@ export default {
         onAppSave() {
             this.$refs.appFormDataRef.validate(valid => {
                 if (valid) {
+                    this.appFormData.properties = this.selectedPlatform.properties.map(item => {
+                        return {
+                            name: item.name,
+                            value: item.value
+                        }
+                    })
                     if(this.appFormData.id) {
                         updateApp(this.appFormData).then(resp => {
                             if (!resp.errCode) {
@@ -333,6 +309,35 @@ export default {
             })
             
         },
+        onAppTypeChange() {
+            const currentAppType = this.appFormData.appType
+            if (currentAppType) {
+                // eslint-disable-next-line
+                const formData = this.appFormData
+                const selected =  this.platforms.find(item => item.authAppType == currentAppType)
+                selected.properties.forEach(item => {
+                    if (item.defaultValue && item.defaultValue.startsWith("javaScript:")) {
+                        item.value = eval(item.defaultValue.substr("javaScript:".length))
+                    } else {
+                        item.value = item.defaultValue
+                    }
+                })
+
+                if (this.appFormData.properties) {
+                    const propertyMapByName = new Map(this.appFormData.properties.map(item => [item.name, item]))
+                    selected.properties.forEach(item => {
+                        item.value = item.defaultValue
+                        if (propertyMapByName.has(item.name)) {
+                            item.value = propertyMapByName.get(item.name).value
+                        }
+                    })
+                }
+                
+                this.selectedPlatform = selected;
+            } else {
+                this.selectedPlatform = {}
+            }
+        }
     }
 }
 

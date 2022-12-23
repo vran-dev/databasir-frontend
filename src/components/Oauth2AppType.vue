@@ -9,6 +9,11 @@
             <img :src="appIcon ? appIcon : require('@/assets/app/gitlab.svg')" style="max-width: 20px; max-height: 20px;"/>
         </el-tooltip>
     </template>
+    <template v-else-if="appType.toLowerCase() == 'we_work'">
+        <el-tooltip :content="appName"  effect="light">
+            <img :src="appIcon ? appIcon : require('@/assets/app/wework.svg')" style="max-width: 20px; max-height: 20px;"/>
+        </el-tooltip>
+    </template>
     <template v-else>
         {{ appType }}
     </template>
