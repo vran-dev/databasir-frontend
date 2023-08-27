@@ -6,17 +6,19 @@
                     <el-icon><box /></el-icon> 系统邮箱设置
                 </el-divider>
                 <el-form :model="form" label-position="top" :rules="formRule" ref="formRef" style="max-width: 900px">
-                    <el-form-item label="邮箱账号"  prop="username">
-                        <el-input v-model="form.username" placeholder="请输入邮箱账号"></el-input>
+                    <el-form-item label="SMTP 用户名"  prop="username">
+                        <el-input v-model="form.username" placeholder="请输入 SMTP 服务用户名"></el-input>
                     </el-form-item>
-
-                    <el-form-item label="邮箱密码" prop="password">
+                    <el-form-item label="SMTP 密码" prop="password">
                         <el-input
                             v-model="form.password"
                             type="password"
                             placeholder="请输入密码"
                             show-password
                         />
+                    </el-form-item>
+                    <el-form-item label="发送邮箱"  prop="mailFrom">
+                        <el-input v-model="form.mailFrom" placeholder="请输入邮箱账号"></el-input>
                     </el-form-item>
                     
                     <el-form-item label="SMTP" prop="smtpHost">
@@ -56,12 +58,13 @@ export default {
                 smtpHost: null,
                 smtpPort: null,
                 username: null,
+                mailFrom: null,
                 password: null,
                 useSSL: false,
             },
             formRule: {
-                username: [this.requiredInputValidRule('请输入邮箱账号'), { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }],
-                password: [this.requiredInputValidRule('请输入邮箱密码')],
+                username: [this.requiredInputValidRule('请输入 SMTP 服务用户名')],
+                password: [this.requiredInputValidRule('请输入 SMTP 服务密码')],
                 smtpHost: [this.requiredInputValidRule('请输入 SMTP 地址')],
                 smtpPort: [this.requiredInputValidRule('请输入 SMTP 端口'), { min: 1, max: 65535, message: '端口有效值为 1~65535', trigger: 'blur' }],
             }
