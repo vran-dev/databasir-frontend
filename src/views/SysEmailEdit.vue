@@ -20,7 +20,7 @@
                     <el-form-item label="发送邮箱"  prop="mailFrom">
                         <el-input v-model="form.mailFrom" placeholder="请输入邮箱账号"></el-input>
                     </el-form-item>
-                    
+
                     <el-form-item label="SMTP" prop="smtpHost">
                         <el-col :span="12">
                             <el-input v-model="form.smtpHost" placeholder="SMTP Host"/>
@@ -30,13 +30,18 @@
                         </el-col>
                         <el-col :span="6">
                             <el-input v-model="form.smtpPort" placeholder="SMTP Port" />
-                        </el-col>                                                                                                                                                                                                    
+                        </el-col>
                     </el-form-item>
                     <el-form-item  label="启用 SSL" prop="useSSL">
                         <el-switch
                             v-model="form.useSSL"
                         />
                     </el-form-item>
+                  <el-form-item  label="启用 TLS" prop="useTls">
+                    <el-switch
+                        v-model="form.useTls"
+                    />
+                  </el-form-item>
 
                     <el-form-item style="margin-top:38px">
                         <el-button type="primary" @click="onSubmit('formRef')">保存</el-button>
@@ -61,6 +66,7 @@ export default {
                 mailFrom: null,
                 password: null,
                 useSSL: false,
+                useTls: false,
             },
             formRule: {
                 username: [this.requiredInputValidRule('请输入 SMTP 服务用户名')],
@@ -92,6 +98,10 @@ export default {
 
         onSubmit() {
             this.$refs.formRef.validate((valid) => {
+                if(this.form.useTls && this.form.useSSL) {
+                  this.$message.error('不能同时启用 SSL 和 TLS')
+                  return false
+                }
                 if (valid) {
                     updateEmailSetting(this.form).then(resp => {
                         if (!resp.errCode) {
@@ -104,7 +114,7 @@ export default {
                     return false
                 }
             })
-            
+
         },
         onReset() {
             this.$confirm('确认重置系统邮件吗？删除后数据将无法恢复', '警告', {
