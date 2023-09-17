@@ -76,7 +76,7 @@ axios.interceptors.response.use(
   (error) => {
     if (error.response) {
       if(error.response.status == 401) {
-        if (error.response.data.errCode == 'X_0002') {
+        if (error.response.data.errCode == 'X_0002' || error.response.data.errCode == 'X_0001') {
           user.removeUserLoginData()
           notify('登陆状态失效，请重新登陆')
           redirectLogin()
